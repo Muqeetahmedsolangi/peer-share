@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgres:latest
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=peer_share
+      - POSTGRES_PASSWORD=mySecurePass123
+      - POSTGRES_DB=peer_share_db
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U peer_share -d peer_share_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=development
+      - PORT=4000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=peer_share_db
+      - DB_USER=peer_share
+      - DB_PASSWORD=mySecurePass123
+      - DB_DIALECT=postgres
+      - DATABASE_URL=postgres://peer_share:mySecurePass123@postgres:5432/peer_share_db
+
+volumes:
+  postgres-data:
