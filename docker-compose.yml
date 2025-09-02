@@ -33,5 +33,13 @@ services:
       - DB_DIALECT=postgres
       - DATABASE_URL=postgres://peer_share:mySecurePass123@postgres:5432/peer_share_db
 
+  frontend:
+      build: ./frontend
+      ports:
+        - "3000:3000"
+      depends_on:
+        - backend
+      volumes:
+        - ./frontend:/app
 volumes:
   postgres-data:

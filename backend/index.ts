@@ -1,16 +1,53 @@
 import express from 'express';
+const cors = require('cors');
 require('dotenv').config({ path: './config.env' });
 const { v4: uuidv4 } = require('uuid');
-
+const { setupWebRTC } = require('./services/webrtc');
+const http = require('http');
 const { sequelize } = require('./config/database');
 const { initUser } = require('./models/user');
 const { initRoom } = require('./models/room');
+const { ApolloServer } = require('apollo-server-express');
+const { typeDefs } = require('./graphql/schema');
+const { resolvers } = require('./graphql/resolvers');
 
 const app = express();
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true
+}));
 app.use(express.json());
+const server = http.createServer(app);
 
 initUser(sequelize);
 initRoom(sequelize);
+
+// Create Apollo Server
+const apolloServer = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: () => ({
+    sequelize,
+  }),
+});
+
+// Apply Apollo GraphQL middleware
+const startApolloServer = async () => {
+  await apolloServer.start();
+  apolloServer.applyMiddleware({ 
+    app, 
+    cors: {
+      origin: 'http://localhost:3000',
+      credentials: true,
+    }
+  });
+  
+  console.log(`GraphQL server ready at http://localhost:4000${apolloServer.graphqlPath}`);
+};
+
+startApolloServer().catch((error) => {
+  console.error('Error starting Apollo Server:', error);
+});
 
 // Test database connection
 sequelize.authenticate()
@@ -93,6 +130,8 @@ app.get('/users', async (req: express.Request, res: express.Response) => {
 app.get('/', (req: express.Request, res: express.Response) => {
   res.send('PeerShare Backend Running!');
 });
+setupWebRTC(server);
+
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
