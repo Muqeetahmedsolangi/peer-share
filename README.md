@@ -355,3 +355,13 @@ peer-share/
 ## License
 
 This project is licensed under the ISC License.
+
+
+## database access cammand 
+psql -h localhost -p 5433 -U peer_share -d peer_share_db
+
+## data base work cammands 
+
+\d "TableName"
+\d "Users"
+\d "Rooms"

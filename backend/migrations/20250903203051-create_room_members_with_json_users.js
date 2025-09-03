@@ -4,23 +4,23 @@ const { QueryInterface, DataTypes } = require('sequelize');
 
 module.exports = {
   up: async (queryInterface) => {
-    await queryInterface.createTable('Rooms', {
+    await queryInterface.createTable('RoomMembers', {
       id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
       },
-      name: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      code: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true,
-      },
-      createdBy: {
+      roomId: {
         type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      userId: {
+        type: DataTypes.JSON, // Changed to JSON for multiple users
+        allowNull: false,
+        defaultValue: [], // Default empty array
+      },
+      joinedAt: {
+        type: DataTypes.DATE,
         allowNull: false,
       },
       createdAt: {
@@ -35,6 +35,6 @@ module.exports = {
   },
 
   down: async (queryInterface) => {
-    await queryInterface.dropTable('Rooms');
+    await queryInterface.dropTable('RoomMembers');
   },
 };

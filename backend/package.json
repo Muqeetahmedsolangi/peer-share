@@ -19,7 +19,7 @@
     "@types/simple-peer": "^9.11.8",
     "@types/socket.io": "^3.0.1",
     "@types/ws": "^8.18.1",
-    "apollo-server-express": "^3.12.0",
+    "apollo-server-express": "^3.13.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^4.19.2",

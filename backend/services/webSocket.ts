@@ -1,31 +1,42 @@
-const WebSocket = require('ws');
+const { Server } = require('socket.io');
 const { sequelize } = require('../config/database');
 
 const setupWebSocket = (server: any) => {
-  const wss = new WebSocket.Server({ server });
+  const io = new Server(server, {
+    cors: {
+      origin: "http://localhost:3000",
+      methods: ["GET", "POST"]
+    }
+  });
 
-  wss.on('connection', (ws: any) => {
-    console.log('New client connected');
+  io.on('connection', (socket: any) => {
+    console.log('New client connected:', socket.id);
 
-    ws.on('message', async (message: any) => {
-      const data = JSON.parse(message);
-      if (data.type === 'join-room' && data.roomCode) {
-        const room = await sequelize.models.Room.findOne({ where: { code: data.roomCode } });
+    socket.on('join-room', async (data: any) => {
+      try {
+        const { roomCode } = data;
+        const room = await sequelize.models.Room.findOne({ where: { code: roomCode } });
+        
         if (room) {
-          ws.roomId = room.id;
-          ws.send(JSON.stringify({ type: 'room-joined', roomId: room.id }));
+          socket.join(roomCode);
+          socket.roomId = room.id;
+          socket.emit('room-joined', { roomId: room.id, roomCode });
+          console.log(`Client ${socket.id} joined room ${roomCode}`);
         } else {
-          ws.send(JSON.stringify({ type: 'error', message: 'Room not found' }));
+          socket.emit('error', { message: 'Room not found' });
         }
+      } catch (error) {
+        console.error('Error joining room:', error);
+        socket.emit('error', { message: 'Failed to join room' });
       }
     });
 
-    ws.on('close', () => {
-      console.log('Client disconnected');
+    socket.on('disconnect', () => {
+      console.log('Client disconnected:', socket.id);
     });
   });
 
-  return wss;
+  return io;
 };
 
 module.exports = { setupWebSocket };

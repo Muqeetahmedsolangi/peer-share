@@ -1,137 +1,82 @@
-import express from 'express';
-const cors = require('cors');
-require('dotenv').config({ path: './config.env' });
-const { v4: uuidv4 } = require('uuid');
-const { setupWebRTC } = require('./services/webrtc');
-const http = require('http');
+const { ApolloServer, gql } = require('apollo-server-express');
 const { sequelize } = require('./config/database');
 const { initUser } = require('./models/user');
 const { initRoom } = require('./models/room');
-const { ApolloServer } = require('apollo-server-express');
-const { typeDefs } = require('./graphql/schema');
-const { resolvers } = require('./graphql/resolvers');
+const { v4: uuidv4 } = require('uuid');
+const express = require('express');
+const http = require('http');
+const { setupWebRTC } = require('./services/webrtc');
 
 const app = express();
-app.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true
-}));
-app.use(express.json());
 const server = http.createServer(app);
 
 initUser(sequelize);
 initRoom(sequelize);
 
-// Create Apollo Server
-const apolloServer = new ApolloServer({
-  typeDefs,
-  resolvers,
-  context: () => ({
-    sequelize,
-  }),
+sequelize.sync({ force: false }).then(() => {
+  console.log('Database synced!');
 });
 
-// Apply Apollo GraphQL middleware
-const startApolloServer = async () => {
-  await apolloServer.start();
-  apolloServer.applyMiddleware({ 
-    app, 
-    cors: {
-      origin: 'http://localhost:3000',
-      credentials: true,
-    }
-  });
-  
-  console.log(`GraphQL server ready at http://localhost:4000${apolloServer.graphqlPath}`);
+const typeDefs = gql`
+  type Room {
+    id: ID
+    code: String
+    createdBy: ID
+  }
+
+  type Query {
+    hello: String
+  }
+
+  type Mutation {
+    createRoom: Room
+  }
+`;
+
+const resolvers = {
+  Query: {
+    hello: () => 'Hello World!',
+  },
+  Mutation: {
+    createRoom: async () => {
+      const user = await sequelize.models.User.findOne();
+      const roomCode = uuidv4().split('-')[0];
+      const room = await sequelize.models.Room.create({ code: roomCode, createdBy: user.id });
+      return room;
+    },
+  },
 };
 
-startApolloServer().catch((error) => {
-  console.error('Error starting Apollo Server:', error);
-});
-
-// Test database connection
-sequelize.authenticate()
-  .then(() => {
-    console.log('Database connection established successfully.');
-  })
-  .catch((err: any) => {
-    console.error('Unable to connect to the database:', err);
-  });
-
-// Add sample user on startup (for testing) - with delay to ensure migrations run first
-setTimeout(async () => {
-  try {
-    const count = await sequelize.models.User.count();
-    if (count === 0) {
-      await sequelize.models.User.create({
-        username: 'testuser',
-        email: 'test@example.com',
-        authProvider: 'google'
-      });
-      console.log('Sample user added!');
-    }
-    
-    // Log available models for debugging
-    console.log('Available models:', Object.keys(sequelize.models));
-  } catch (error) {
-    console.log('Sample user creation skipped:', error);
-  }
-}, 15000); // Wait 15 seconds for migrations to complete
-
-
-// Create Room API
-app.post('/create-room', async (req: express.Request, res: express.Response) => {
-  try {
-    const user = await sequelize.models.User.findOne(); // For now, use first user
-    
-    if (!user) {
-      return res.status(404).json({ error: 'No users found in database' });
-    }
-    
-    const roomCode = uuidv4().split('-')[0]; // Generate unique code
-    const room = await sequelize.models.Room.create({ 
-      code: roomCode, 
-      createdBy: user.id 
-    });
-    
-    res.json({ 
-      success: true,
-      code: room.code,
-      roomId: room.id 
-    });
-  } catch (error) {
-    console.error('Error creating room:', error);
-    res.status(500).json({ error: 'Failed to create room' });
-  }
-});
-
-// Get all rooms
-app.get('/rooms', async (req: express.Request, res: express.Response) => {
-  try {
-    const rooms = await sequelize.models.Room.findAll();
-    res.json(rooms);
-  } catch (error) {
-    console.error('Error fetching rooms:', error);
-    res.status(500).json({ error: 'Failed to fetch rooms' });
-  }
-});
-
-// Test API endpoint
-app.get('/users', async (req: express.Request, res: express.Response) => {
-  try {
-    const users = await sequelize.models.User.findAll();
-    res.json(users);
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).send('Error fetching users');
-  }
-});
-
-app.get('/', (req: express.Request, res: express.Response) => {
-  res.send('PeerShare Backend Running!');
-});
+// Setup WebRTC signaling
 setupWebRTC(server);
 
+// Add a simple root route
+app.get('/', (req: any, res: any) => {
+  res.send(`
+    <h1>PeerShare Backend Server</h1>
+    <p>Server is running successfully!</p>
+    <p><a href="/graphql">Go to GraphQL Playground</a></p>
+    <p>GraphQL endpoint: <code>POST /graphql</code></p>
+  `);
+});
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+// Start Apollo Server first
+const apolloServer = new ApolloServer({ 
+  typeDefs, 
+  resolvers,
+  introspection: true,
+  playground: true
+});
+
+apolloServer.start().then(() => {
+  apolloServer.applyMiddleware({ app, path: '/graphql' });
+  
+  // Start the HTTP server (which includes Socket.IO)
+  server.listen(4000, () => {
+    console.log('Server started on http://localhost:4000');
+    console.log('GraphQL Playground: http://localhost:4000/graphql');
+    console.log('Socket.IO server ready');
+  });
+}).catch((error: any) => {
+  console.error('Error starting Apollo Server:', error);
+});
