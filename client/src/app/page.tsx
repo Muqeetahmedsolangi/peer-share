@@ -1,17 +1,28 @@
 'use client';
 
+<<<<<<< Updated upstream
 import { useState } from 'react';
+=======
+import { useState, useEffect } from 'react';
+import Hero from './components/Hero';
+import FeatureCard from './components/FeatureCard';
+>>>>>>> Stashed changes
 
 export default function Home() {
   const [activeFeature, setActiveFeature] = useState<number | null>(null);
 
   return (
+<<<<<<< Updated upstream
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 relative">
+=======
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 relative scroll-smooth overflow-x-hidden pt-20 sm:pt-24 md:pt-28 lg:pt-32">
+>>>>>>> Stashed changes
       {/* Background Mesh */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(76,29,149,0.1),rgba(15,23,42,0.1))]"></div>
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
 
+<<<<<<< Updated upstream
       {/* Header Section - Optimized */}
       <header className="relative z-10 pt-20 pb-12">
         <div className="container mx-auto px-8 text-center">
@@ -205,6 +216,18 @@ export default function Home() {
             </div>
 
           </div>
+=======
+      {/* Hero Section */}
+      <Hero />
+
+      {/* Main Features Section - Hyper Responsive & Perfect */}
+      <section id="features" className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 xs:py-6 sm:py-8 md:py-10 lg:py-12 xl:py-16 relative z-10">
+        <div className="w-full">
+          <FeatureCard 
+            activeFeature={activeFeature} 
+            onFeatureChange={setActiveFeature} 
+          />
+>>>>>>> Stashed changes
         </div>
       </section>
 
