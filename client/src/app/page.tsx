@@ -1,46 +1,32 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Hero from './components/Hero';
 
 export default function Home() {
   const [activeFeature, setActiveFeature] = useState<number | null>(null);
 
+  useEffect(() => {
+    // Add smooth scrolling to the document
+    document.documentElement.style.scrollBehavior = 'smooth';
+    
+    return () => {
+      document.documentElement.style.scrollBehavior = 'auto';
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 relative">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 relative scroll-smooth overflow-x-hidden">
       {/* Background Mesh */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(76,29,149,0.1),rgba(15,23,42,0.1))]"></div>
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
 
-      {/* Header Section - Super Responsive */}
-      <header className="relative z-10 pt-8 sm:pt-12 md:pt-16 pb-4 sm:pb-6 md:pb-8">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="max-w-6xl mx-auto">
-            {/* Status Badge */}
-            <div className="inline-flex items-center px-3 sm:px-4 md:px-6 py-2 sm:py-3 rounded-full bg-gradient-to-r from-green-600/20 to-emerald-600/20 border border-green-400/30 backdrop-blur-sm mb-4 sm:mb-6">
-              <div className="w-2 h-2 bg-green-400 rounded-full mr-2 sm:mr-3 animate-pulse"></div>
-              <span className="text-xs sm:text-sm text-green-300 font-semibold tracking-wide">ENTERPRISE-GRADE SECURITY</span>
-            </div>
-            
-            {/* Main Title - Responsive Typography */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black mb-3 sm:mb-4 md:mb-6 tracking-tight leading-none">
-              <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent drop-shadow-2xl">
-                Dropsos
-              </span>
-            </h1>
-            
-            {/* Subtitle - Responsive */}
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-300 mb-4 sm:mb-6 max-w-xs sm:max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto font-light leading-relaxed px-4 sm:px-0">
-              Professional peer-to-peer file sharing with 
-              <span className="text-white font-semibold"> military-grade encryption </span>
-              and seamless collaboration
-            </p>
-          </div>
-        </div>
-      </header>
+      {/* Hero Section */}
+      <Hero />
 
       {/* Main Features Section - Hyper Responsive & Perfect */}
-      <section className="container mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 xl:px-12 py-4 xs:py-6 sm:py-8 md:py-10 lg:py-12 xl:py-16 relative z-10">
+      <section id="features" className="container mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 xl:px-12 py-4 xs:py-6 sm:py-8 md:py-10 lg:py-12 xl:py-16 relative z-10">
         <div className="max-w-8xl mx-auto">
 
           <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 xs:gap-5 sm:gap-6 md:gap-8 lg:gap-10 xl:gap-12">
@@ -208,7 +194,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section - Super Responsive */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 text-center relative z-10">
+      <section id="about" className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 text-center relative z-10">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 md:mb-8">Ready to Get Started?</h2>
           <p className="text-base sm:text-lg md:text-xl text-gray-400 mb-8 sm:mb-12 md:mb-16 max-w-2xl sm:max-w-3xl mx-auto px-4 sm:px-0">
