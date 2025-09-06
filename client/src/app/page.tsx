@@ -26,8 +26,8 @@ export default function Home() {
       <Hero />
 
       {/* Main Features Section - Hyper Responsive & Perfect */}
-      <section id="features" className="container mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 xl:px-12 py-4 xs:py-6 sm:py-8 md:py-10 lg:py-12 xl:py-16 relative z-10">
-        <div className="max-w-8xl mx-auto">
+      <section id="features" className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 xs:py-6 sm:py-8 md:py-10 lg:py-12 xl:py-16 relative z-10">
+        <div className="w-full">
 
           <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 xs:gap-5 sm:gap-6 md:gap-8 lg:gap-10 xl:gap-12">
             
@@ -194,8 +194,8 @@ export default function Home() {
       </section>
 
       {/* CTA Section - Super Responsive */}
-      <section id="about" className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 text-center relative z-10">
-        <div className="max-w-4xl mx-auto">
+      <section id="about" className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 text-center relative z-10">
+        <div className="w-full max-w-4xl mx-auto">
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 md:mb-8">Ready to Get Started?</h2>
           <p className="text-base sm:text-lg md:text-xl text-gray-400 mb-8 sm:mb-12 md:mb-16 max-w-2xl sm:max-w-3xl mx-auto px-4 sm:px-0">
             Experience enterprise-grade file sharing with military-level encryption and zero-configuration setup
@@ -246,7 +246,7 @@ export default function Home() {
 
       {/* Performance Metrics Footer - Super Responsive */}
       <footer className="border-t border-white/10 bg-gradient-to-r from-slate-900/70 to-gray-900/70 py-8 sm:py-10 md:py-12">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8 text-center mb-6 sm:mb-8">
             <div className="group">
               <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1 sm:mb-2 group-hover:text-blue-400 transition-colors">99.99%</h3>
