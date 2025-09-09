@@ -20,6 +20,7 @@ export default function Navigation() {
   const menuItems = [
     { id: 'home', label: 'Home', icon: '🏠', href: '/' },
     { id: 'about', label: 'About', icon: 'ℹ️', href: '/about' },
+    { id: 'pricing', label: 'Pricing', icon: '💰', href: '/pricing' },
     { id: 'blog', label: 'Blog', icon: '📝', href: '/blog' },
     { id: 'create-room', label: 'Create Room', icon: '➕', href: '/create-room' },
     { id: 'same-wifi', label: 'Same WiFi', icon: '📶', href: '/same-wifi' },
@@ -30,13 +31,13 @@ export default function Navigation() {
     { label: 'Profile', icon: '👤', action: () => console.log('Profile clicked') },
     { label: 'Settings', icon: '⚙️', action: () => console.log('Settings clicked') },
     { label: 'Help', icon: '❓', action: () => console.log('Help clicked') },
-    { label: 'Sign Out', icon: '🚪', action: () => console.log('Sign out clicked') },
   ];
 
   // Get current active section based on pathname
   const getActiveSection = () => {
     if (pathname === '/') return 'home';
     if (pathname === '/about') return 'about';
+    if (pathname === '/pricing') return 'pricing';
     if (pathname === '/blog') return 'blog';
     if (pathname === '/create-room') return 'create-room';
     if (pathname === '/same-wifi') return 'same-wifi';

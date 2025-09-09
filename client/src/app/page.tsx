@@ -287,6 +287,7 @@ export default function Home() {
                   <h4 className="text-white font-semibold mb-3">Quick Links</h4>
                   <div className="space-y-2">
                     <a href="/about" className="block text-gray-400 hover:text-white transition-colors text-sm">About</a>
+                    <a href="/pricing" className="block text-gray-400 hover:text-white transition-colors text-sm">Pricing</a>
                     <a href="/blog" className="block text-gray-400 hover:text-white transition-colors text-sm">Blog</a>
                     <a href="/create-room" className="block text-gray-400 hover:text-white transition-colors text-sm">Create Room</a>
                     <a href="/same-wifi" className="block text-gray-400 hover:text-white transition-colors text-sm">Same WiFi</a>
