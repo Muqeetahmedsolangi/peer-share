@@ -1,25 +1,25 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from "next/link";
 
 export default function Navigation() {
   const router = useRouter();
+  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [activeSection, setActiveSection] = useState('hero');
   const [searchQuery, setSearchQuery] = useState('');
   
   const navRef = useRef<HTMLElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
-  // Menu items
+  // Menu items with proper routing
   const menuItems = [
-    { id: 'hero', label: 'Home', icon: '🏠', href: '/' },
+    { id: 'home', label: 'Home', icon: '🏠', href: '/' },
     { id: 'about', label: 'About', icon: 'ℹ️', href: '/about' },
     { id: 'blog', label: 'Blog', icon: '📝', href: '/blog' },
     { id: 'create-room', label: 'Create Room', icon: '➕', href: '/create-room' },
@@ -34,31 +34,24 @@ export default function Navigation() {
     { label: 'Sign Out', icon: '🚪', action: () => console.log('Sign out clicked') },
   ];
 
-  // Scroll detection and active section tracking
+  // Get current active section based on pathname
+  const getActiveSection = () => {
+    if (pathname === '/') return 'home';
+    if (pathname === '/about') return 'about';
+    if (pathname === '/blog') return 'blog';
+    if (pathname === '/create-room') return 'create-room';
+    if (pathname === '/same-wifi') return 'same-wifi';
+    return 'home';
+  };
+
+  // Scroll detection
   useEffect(() => {
     const handleScroll = () => {
       const scrollTop = window.scrollY;
       setIsScrolled(scrollTop > 50);
-      
-      // Update active section based on current page
-      const currentPath = window.location.pathname;
-      if (currentPath === '/') {
-        setActiveSection('hero');
-      } else if (currentPath === '/about') {
-        setActiveSection('about');
-      } else if (currentPath === '/blog') {
-        setActiveSection('blog');
-      } else if (currentPath === '/create-room') {
-        setActiveSection('create-room');
-      } else if (currentPath === '/same-wifi') {
-        setActiveSection('same-wifi');
-      }
     };
 
     window.addEventListener('scroll', handleScroll);
-    // Set initial active section based on current path
-    handleScroll();
-    
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -85,15 +78,7 @@ export default function Navigation() {
 
   // Navigation function
   const handleNavigation = (item: any) => {
-    if (item.href === '/') {
-      // Handle home page
-      router.push('/');
-      setActiveSection('hero');
-    } else {
-      // Handle other pages
-      router.push(item.href);
-      setActiveSection(item.id);
-    }
+    router.push(item.href);
     setIsMobileMenuOpen(false);
   };
 
@@ -127,13 +112,10 @@ export default function Navigation() {
           }`}>
             
             {/* Logo Section - Fixed Width */}
-            <div 
+            <Link 
+              href="/"
               className="flex items-center space-x-2 sm:space-x-3 cursor-pointer group touch-manipulation flex-shrink-0 min-w-0"
-              onClick={() => handleNavigation({ href: '/', id: 'hero' })}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && handleNavigation({ href: '/', id: 'hero' })}
-              aria-label="Go to home section"
+              aria-label="Go to home page"
             >
               {/* Logo Icon */}
               <div className={`relative transition-all duration-700 rounded-xl group-hover:scale-105 flex-shrink-0 ${
@@ -173,30 +155,33 @@ export default function Navigation() {
                   </p>
                 )}
               </div>
-            </div>
+            </Link>
 
             {/* Desktop Navigation - Hidden on Mobile */}
             <div className="hidden lg:flex items-center space-x-2 flex-shrink-0">
-              {menuItems.map((item, index) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavigation(item)}
-                  className={`relative px-3 py-2 rounded-lg font-medium text-sm transition-all duration-500 touch-manipulation group overflow-hidden ${
-                    activeSection === item.id
-                      ? 'text-white bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-400/30 shadow-lg shadow-blue-500/10'
-                      : 'text-gray-300 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/20'
-                  }`}
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <span className="relative z-10 flex items-center space-x-2">
-                    <span className="text-sm group-hover:scale-110 transition-transform duration-300">{item.icon}</span>
-                    <span className="font-semibold">{item.label}</span>
-                  </span>
-                  {activeSection === item.id && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg animate-pulse"></div>
-                  )}
-                </button>
-              ))}
+              {menuItems.map((item, index) => {
+                const isActive = getActiveSection() === item.id;
+                return (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    className={`relative px-3 py-2 rounded-lg font-medium text-sm transition-all duration-500 touch-manipulation group overflow-hidden ${
+                      isActive
+                        ? 'text-white bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-400/30 shadow-lg shadow-blue-500/10'
+                        : 'text-gray-300 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/20'
+                    }`}
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <span className="relative z-10 flex items-center space-x-2">
+                      <span className="text-sm group-hover:scale-110 transition-transform duration-300">{item.icon}</span>
+                      <span className="font-semibold">{item.label}</span>
+                    </span>
+                    {isActive && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg animate-pulse"></div>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
 
             {/* Desktop Action Buttons - Hidden on Mobile */}
@@ -280,21 +265,25 @@ export default function Navigation() {
         {isMobileMenuOpen && (
           <div className="lg:hidden absolute top-full left-0 right-0 bg-slate-900/98 backdrop-blur-2xl border-t border-white/10 shadow-2xl shadow-black/30">
             <div className="px-4 py-6 space-y-4">
-              {menuItems.map((item, index) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavigation(item)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-300 ${
-                    activeSection === item.id
-                      ? 'bg-blue-500/20 text-white border border-blue-400/30'
-                      : 'text-gray-300 hover:text-white hover:bg-white/10'
-                  }`}
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <span className="text-lg">{item.icon}</span>
-                  <span className="font-semibold">{item.label}</span>
-                </button>
-              ))}
+              {menuItems.map((item, index) => {
+                const isActive = getActiveSection() === item.id;
+                return (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-300 ${
+                      isActive
+                        ? 'bg-blue-500/20 text-white border border-blue-400/30'
+                        : 'text-gray-300 hover:text-white hover:bg-white/10'
+                    }`}
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <span className="text-lg">{item.icon}</span>
+                    <span className="font-semibold">{item.label}</span>
+                  </Link>
+                );
+              })}
               
               {/* Mobile Action Buttons */}
               <div className="pt-4 border-t border-white/10 space-y-3">
