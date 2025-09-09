@@ -16,7 +16,8 @@ export default function Blog() {
       excerpt: "Exploring how P2P technology is revolutionizing the way we share files securely and efficiently.",
       date: "2024-01-15",
       readTime: "5 min read",
-      category: "Technology"
+      category: "Technology",
+      slug: "future-peer-to-peer-file-sharing"
     },
     {
       id: 2,
@@ -24,7 +25,8 @@ export default function Blog() {
       excerpt: "Understanding the importance of encryption in protecting your data during file transfers.",
       date: "2024-01-10",
       readTime: "3 min read",
-      category: "Security"
+      category: "Security",
+      slug: "end-to-end-encryption-why-it-matters"
     },
     {
       id: 3,
@@ -32,7 +34,8 @@ export default function Blog() {
       excerpt: "How modern P2P solutions eliminate the need for complex setup and configuration.",
       date: "2024-01-05",
       readTime: "4 min read",
-      category: "Tutorial"
+      category: "Tutorial",
+      slug: "zero-configuration-networking-explained"
     },
     {
       id: 4,
@@ -40,7 +43,8 @@ export default function Blog() {
       excerpt: "Best practices for developers looking to implement secure file sharing features.",
       date: "2024-01-01",
       readTime: "7 min read",
-      category: "Development"
+      category: "Development",
+      slug: "building-secure-file-sharing-applications"
     }
   ];
 
@@ -71,6 +75,7 @@ export default function Blog() {
             {blogPosts.map((post, index) => (
               <article 
                 key={post.id}
+                onClick={() => router.push(`/blog/${post.slug}`)}
                 className={`bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all duration-300 hover:scale-105 cursor-pointer group ${
                   isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                 }`}
