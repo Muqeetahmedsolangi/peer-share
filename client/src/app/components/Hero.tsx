@@ -46,7 +46,7 @@ export default function Hero() {
     }, 2500);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [words.length]);
 
   return (
     <header id="hero" className="relative z-10  pb-4 sm:pb-6 md:pb-8">
