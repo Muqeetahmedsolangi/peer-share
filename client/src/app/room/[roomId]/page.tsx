@@ -54,9 +54,7 @@ export default function RoomPage() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isConnected] = useState(true);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [showFileTypePicker] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const [typingUsers] = useState<string[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);

@@ -423,7 +423,7 @@ export default function Home() {
                       Joining...
                     </div>
                   ) : (
-                    &apos;Join Room&apos;
+                    'Join Room'
                   )}
                 </button>
               </div>

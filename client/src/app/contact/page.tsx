@@ -84,7 +84,7 @@ export default function ContactUs() {
               </span>
             </h1>
             <p className="text-xl text-gray-300 font-light leading-relaxed max-w-3xl mx-auto">
-              Get in touch with our team. We're here to help!
+              Get in touch with our team. We&apos;re here to help!
             </p>
           </div>
 

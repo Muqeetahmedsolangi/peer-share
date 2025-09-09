@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import Link from "next/link";
 
 export default function Navigation() {
-  const router = useRouter();
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -75,12 +74,6 @@ export default function Navigation() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  // Navigation function
-  const handleNavigation = (item: any) => {
-    router.push(item.href);
-    setIsMobileMenuOpen(false);
-  };
 
   // Handle search
   const handleSearch = (e: React.FormEvent) => {
