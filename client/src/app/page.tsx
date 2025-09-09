@@ -45,132 +45,7 @@ export default function Home() {
       <Hero />
 
       {/* Enhanced Quick Access Sections */}
-      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 relative z-10">
-        <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
-          {/* Same WiFi Section */}
-          <div className="group bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 lg:p-8 hover:border-white/20 transition-all duration-500 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-cyan-500/10">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-4">Same WiFi Sharing</h3>
-              <p className="text-gray-300 mb-6 leading-relaxed">
-                Ultra-fast local file sharing when devices are on the same network. No internet required!
-              </p>
-              <div className="space-y-3">
-                <div className="flex items-center text-sm text-gray-400">
-                  <svg className="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Lightning fast transfers
-                </div>
-                <div className="flex items-center text-sm text-gray-400">
-                  <svg className="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  No internet needed
-                </div>
-                <div className="flex items-center text-sm text-gray-400">
-                  <svg className="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Zero configuration
-                </div>
-              </div>
-              <a 
-                href="/same-wifi"
-                className="inline-block mt-6 px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-semibold rounded-xl hover:from-cyan-500 hover:to-blue-500 transition-all duration-300 transform hover:scale-105"
-              >
-                Start Local Sharing
-              </a>
-            </div>
-          </div>
 
-          {/* Create Room Section */}
-          <div className="group bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 lg:p-8 hover:border-white/20 transition-all duration-500 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-purple-500/10">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-4">Create Secure Room</h3>
-              <p className="text-gray-300 mb-6 leading-relaxed">
-                Create a private room for secure file sharing with friends, family, or colleagues.
-              </p>
-              <div className="space-y-3">
-                <div className="flex items-center text-sm text-gray-400">
-                  <svg className="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  End-to-end encryption
-                </div>
-                <div className="flex items-center text-sm text-gray-400">
-                  <svg className="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Password protection
-                </div>
-                <div className="flex items-center text-sm text-gray-400">
-                  <svg className="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Real-time chat
-                </div>
-              </div>
-              <button 
-                onClick={handleCreateRoom}
-                className="inline-block mt-6 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:from-purple-500 hover:to-pink-500 transition-all duration-300 transform hover:scale-105"
-              >
-                Create Room Now
-              </button>
-            </div>
-          </div>
-
-          {/* Encrypted Sharing Section */}
-          <div className="group bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 lg:p-8 hover:border-white/20 transition-all duration-500 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-green-500/10">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-4">Military-Grade Security</h3>
-              <p className="text-gray-300 mb-6 leading-relaxed">
-                Your files are protected with AES-256 encryption and never stored on our servers.
-              </p>
-              <div className="space-y-3">
-                <div className="flex items-center text-sm text-gray-400">
-                  <svg className="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  AES-256 encryption
-                </div>
-                <div className="flex items-center text-sm text-gray-400">
-                  <svg className="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Zero-knowledge architecture
-                </div>
-                <div className="flex items-center text-sm text-gray-400">
-                  <svg className="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  P2P file transfer
-                </div>
-              </div>
-              <a 
-                href="/security"
-                className="inline-block mt-6 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-xl hover:from-green-500 hover:to-emerald-500 transition-all duration-300 transform hover:scale-105"
-              >
-                Learn More
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Main Features Section - Hyper Responsive & Perfect */}
       <section id="features" className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 xs:py-6 sm:py-8 md:py-10 lg:py-12 xl:py-16 relative z-10">
@@ -206,7 +81,7 @@ export default function Home() {
                 className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all duration-300 transform hover:scale-105"
               >
                 Create Now
-              </button>
+            </button>
             </div>
 
             {/* Join Room CTA */}
@@ -223,7 +98,7 @@ export default function Home() {
                 className="w-full px-4 py-2 bg-gradient-to-r from-green-600 to-teal-600 text-white font-semibold rounded-lg hover:from-green-500 hover:to-teal-500 transition-all duration-300 transform hover:scale-105"
               >
                 Join Now
-              </button>
+            </button>
             </div>
 
             {/* Same WiFi CTA */}
@@ -475,8 +350,8 @@ export default function Home() {
                   <a href="/terms" className="hover:text-white transition-colors">Terms of Service</a>
                   <a href="/security" className="hover:text-white transition-colors">Security</a>
                   <a href="/contact" className="hover:text-white transition-colors">Contact</a>
-                </div>
-              </div>
+            </div>
+            </div>
             </div>
           </div>
         </div>
