@@ -37,7 +37,7 @@ export default function RoomPage() {
   const params = useParams();
   const roomId = params.roomId as string;
   
-  const [users, setUsers] = useState<User[]>([
+  const [users] = useState<User[]>([
     { id: '1', name: 'You', isOnline: true },
     { id: '2', name: 'Alice Johnson', isOnline: true },
     { id: '3', name: 'Bob Smith', isOnline: false },
@@ -52,11 +52,11 @@ export default function RoomPage() {
   
   const [newMessage, setNewMessage] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [isConnected, setIsConnected] = useState(true);
+  const [isConnected] = useState(true);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [showFileTypePicker, setShowFileTypePicker] = useState(false);
+  const [showFileTypePicker] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const [typingUsers] = useState<string[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);

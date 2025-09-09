@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Hero from './components/Hero';
 import FeatureCard from './components/FeatureCard';
@@ -62,7 +62,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <h2 className="text-5xl font-bold text-white mb-8">Choose Your Sharing Method</h2>
           <p className="text-xl text-gray-400 mb-16 max-w-4xl mx-auto">
-            Whether you need local WiFi sharing, secure room creation, or encrypted file transfers - we've got you covered with enterprise-grade security
+            Whether you need local WiFi sharing, secure room creation, or encrypted file transfers - we&apos;ve got you covered with enterprise-grade security
           </p>
           
           {/* Enhanced CTA Grid */}
@@ -423,7 +423,7 @@ export default function Home() {
                       Joining...
                     </div>
                   ) : (
-                    'Join Room'
+                    &apos;Join Room&apos;
                   )}
                 </button>
               </div>

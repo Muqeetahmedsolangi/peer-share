@@ -249,7 +249,7 @@ export default function Security() {
                 </svg>
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">Zero-Knowledge</h3>
-              <p className="text-gray-400 text-sm">We can't see your files</p>
+              <p className="text-gray-400 text-sm">We can&apos;t see your files</p>
             </div>
 
             <div className="bg-gradient-to-br from-cyan-500/10 to-teal-500/10 border border-cyan-400/30 rounded-2xl p-6 text-center">

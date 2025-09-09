@@ -275,7 +275,7 @@ export default function PrivacyPolicy() {
                         <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
-                        <span>We don't sell your data to third parties</span>
+                        <span>We don&apos;t sell your data to third parties</span>
                       </li>
                     </ul>
                   </div>
@@ -287,7 +287,7 @@ export default function PrivacyPolicy() {
           {/* Contact Information */}
           <div className="mt-16 bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-8 text-center">
             <h3 className="text-2xl font-bold text-white mb-4">Questions About Privacy?</h3>
-            <p className="text-gray-300 mb-6">We're here to help with any privacy-related questions or concerns</p>
+            <p className="text-gray-300 mb-6">We&apos;re here to help with any privacy-related questions or concerns</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a href="/contact" className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-500 hover:to-purple-500 transition-all duration-300 transform hover:scale-105">
                 Contact Us
