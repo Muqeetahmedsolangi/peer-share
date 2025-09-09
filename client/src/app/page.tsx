@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Hero from './components/Hero';
 import FeatureCard from './components/FeatureCard';
 import Creator from './components/Creator';
@@ -173,7 +174,7 @@ export default function Home() {
                   <div className="space-y-2">
                     <a href="/about" className="block text-gray-400 hover:text-white transition-colors text-sm">About</a>
                     <a href="/pricing" className="block text-gray-400 hover:text-white transition-colors text-sm">Pricing</a>
-                    <a href="/blog" className="block text-gray-400 hover:text-white transition-colors text-sm">Blog</a>
+                    <Link href="/blog" className="block text-gray-400 hover:text-white transition-colors text-sm">Blog</Link>
                     <a href="/create-room" className="block text-gray-400 hover:text-white transition-colors text-sm">Create Room</a>
                     <a href="/same-wifi" className="block text-gray-400 hover:text-white transition-colors text-sm">Same WiFi</a>
                   </div>
