@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 export default function Hero() {
   const [isVisible, setIsVisible] = useState(false);
   const [currentWord, setCurrentWord] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
   
   const words = [
     'Dropsos',
@@ -18,12 +19,30 @@ export default function Hero() {
     'Dropsos',
     'End-to-End'
   ];
+
+  const subtitles = [
+    'Professional peer-to-peer file sharing with military-grade encryption and seamless collaboration',
+    'Connect devices directly without servers for ultra-fast and secure file transfers',
+    'Your trusted platform for secure file sharing and real-time collaboration',
+    'Share files with end-to-end encryption ensuring your data stays private and secure',
+    'Your trusted platform for secure file sharing and real-time collaboration',
+    'Lightning-fast transfers with enterprise-grade reliability and performance',
+    'Your trusted platform for secure file sharing and real-time collaboration',
+    'Create secure rooms for team collaboration and instant file sharing',
+    'Your trusted platform for secure file sharing and real-time collaboration',
+    'Military-grade encryption protecting your files from source to destination'
+  ];
   
   useEffect(() => {
     setIsVisible(true);
     
     const interval = setInterval(() => {
-      setCurrentWord((prev) => (prev + 1) % words.length);
+      setIsAnimating(true);
+      
+      setTimeout(() => {
+        setCurrentWord((prev) => (prev + 1) % words.length);
+        setIsAnimating(false);
+      }, 300);
     }, 2500);
     
     return () => clearInterval(interval);
@@ -55,15 +74,19 @@ export default function Hero() {
             <div className="w-24 sm:w-32 md:w-40 lg:w-48 xl:w-56 h-1 sm:h-1.5 md:h-2 bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 mx-auto rounded-full animate-pulse"></div>
           </div>
           
-          {/* Subtitle - Responsive */}
+          {/* Subtitle - Animated Text Rotation */}
           <div className={`transition-all duration-1000 delay-500 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
           }`}>
-            <p className="pt-4 text-sm sm:text-base md:text-lg lg:text-xl text-gray-300 mb-4 sm:mb-6 max-w-xs sm:max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto font-light leading-relaxed px-4 sm:px-0">
-              Professional peer-to-peer file sharing with 
-              <span className="text-white font-semibold"> military-grade encryption </span>
-              and seamless collaboration
-            </p>
+            <div className="relative overflow-hidden">
+              <p className={`pt-4 text-sm sm:text-base md:text-lg lg:text-xl text-gray-300 mb-4 sm:mb-6 max-w-xs sm:max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto font-light leading-relaxed px-4 sm:px-0 transition-all duration-500 ease-in-out ${
+                isAnimating 
+                  ? 'opacity-0 translate-x-8 transform scale-95' 
+                  : 'opacity-100 translate-x-0 transform scale-100'
+              }`}>
+                {subtitles[currentWord]}
+              </p>
+            </div>
           </div>
         </div>
       </div>

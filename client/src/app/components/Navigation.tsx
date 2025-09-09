@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from "next/link";
 
 export default function Navigation() {
+  const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -17,10 +19,11 @@ export default function Navigation() {
 
   // Menu items
   const menuItems = [
-    { id: 'hero', label: 'Home', icon: '🏠' },
-    { id: 'features', label: 'Features', icon: '⚡' },
-    { id: 'about', label: 'About', icon: 'ℹ️' },
-    { id: 'contact', label: 'Contact', icon: '📞' },
+    { id: 'hero', label: 'Home', icon: '🏠', href: '/' },
+    { id: 'about', label: 'About', icon: 'ℹ️', href: '/about' },
+    { id: 'blog', label: 'Blog', icon: '📝', href: '/blog' },
+    { id: 'create-room', label: 'Create Room', icon: '➕', href: '/create-room' },
+    { id: 'same-wifi', label: 'Same WiFi', icon: '📶', href: '/same-wifi' },
   ];
 
   // User menu items
@@ -31,14 +34,31 @@ export default function Navigation() {
     { label: 'Sign Out', icon: '🚪', action: () => console.log('Sign out clicked') },
   ];
 
-  // Scroll detection
+  // Scroll detection and active section tracking
   useEffect(() => {
     const handleScroll = () => {
       const scrollTop = window.scrollY;
       setIsScrolled(scrollTop > 50);
+      
+      // Update active section based on current page
+      const currentPath = window.location.pathname;
+      if (currentPath === '/') {
+        setActiveSection('hero');
+      } else if (currentPath === '/about') {
+        setActiveSection('about');
+      } else if (currentPath === '/blog') {
+        setActiveSection('blog');
+      } else if (currentPath === '/create-room') {
+        setActiveSection('create-room');
+      } else if (currentPath === '/same-wifi') {
+        setActiveSection('same-wifi');
+      }
     };
 
     window.addEventListener('scroll', handleScroll);
+    // Set initial active section based on current path
+    handleScroll();
+    
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -63,12 +83,16 @@ export default function Navigation() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Scroll to section function
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-      setActiveSection(sectionId);
+  // Navigation function
+  const handleNavigation = (item: any) => {
+    if (item.href === '/') {
+      // Handle home page
+      router.push('/');
+      setActiveSection('hero');
+    } else {
+      // Handle other pages
+      router.push(item.href);
+      setActiveSection(item.id);
     }
     setIsMobileMenuOpen(false);
   };
@@ -105,10 +129,10 @@ export default function Navigation() {
             {/* Logo Section - Fixed Width */}
             <div 
               className="flex items-center space-x-2 sm:space-x-3 cursor-pointer group touch-manipulation flex-shrink-0 min-w-0"
-              onClick={() => scrollToSection('hero')}
+              onClick={() => handleNavigation({ href: '/', id: 'hero' })}
               role="button"
               tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && scrollToSection('hero')}
+              onKeyDown={(e) => e.key === 'Enter' && handleNavigation({ href: '/', id: 'hero' })}
               aria-label="Go to home section"
             >
               {/* Logo Icon */}
@@ -156,7 +180,7 @@ export default function Navigation() {
               {menuItems.map((item, index) => (
                 <button
                   key={item.id}
-                  onClick={() => scrollToSection(item.id)}
+                  onClick={() => handleNavigation(item)}
                   className={`relative px-3 py-2 rounded-lg font-medium text-sm transition-all duration-500 touch-manipulation group overflow-hidden ${
                     activeSection === item.id
                       ? 'text-white bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-400/30 shadow-lg shadow-blue-500/10'
@@ -259,7 +283,7 @@ export default function Navigation() {
               {menuItems.map((item, index) => (
                 <button
                   key={item.id}
-                  onClick={() => scrollToSection(item.id)}
+                  onClick={() => handleNavigation(item)}
                   className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-300 ${
                     activeSection === item.id
                       ? 'bg-blue-500/20 text-white border border-blue-400/30'
