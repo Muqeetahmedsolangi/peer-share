@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Metadata } from 'next';
 
 // Blog data - In a real app, this would come from a CMS or API
 const blogPosts = [
@@ -262,7 +261,7 @@ export default function BlogPost() {
   const params = useParams();
   const slug = params.slug as string;
   const [isVisible, setIsVisible] = useState(false);
-  const [relatedPosts, setRelatedPosts] = useState<any[]>([]);
+  const [relatedPosts, setRelatedPosts] = useState<typeof blogPosts>([]);
 
   useEffect(() => {
     setIsVisible(true);
@@ -279,7 +278,7 @@ export default function BlogPost() {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-white mb-4">Post Not Found</h1>
-          <p className="text-gray-400 mb-8">The blog post you're looking for doesn't exist.</p>
+          <p className="text-gray-400 mb-8">The blog post you&apos;re looking for doesn&apos;t exist.</p>
           <button
             onClick={() => router.push('/blog')}
             className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-500 hover:to-purple-500 transition-all duration-300"

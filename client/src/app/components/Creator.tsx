@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 export default function Creator() {
   const [isVisible, setIsVisible] = useState(false);
@@ -113,10 +114,10 @@ export default function Creator() {
               <span className="text-xs text-gray-300 group-hover:text-white transition-colors">About</span>
             </a>
             
-            <a href="/blog" className="group flex flex-col items-center p-2 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-all duration-300 hover:scale-105">
+            <Link href="/blog" className="group flex flex-col items-center p-2 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-all duration-300 hover:scale-105">
               <span className="text-sm mb-1">📝</span>
               <span className="text-xs text-gray-300 group-hover:text-white transition-colors">Blog</span>
-            </a>
+            </Link>
             
             <a href="/create-room" className="group flex flex-col items-center p-2 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-all duration-300 hover:scale-105">
               <span className="text-sm mb-1">➕</span>
