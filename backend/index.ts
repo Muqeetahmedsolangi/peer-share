@@ -1,82 +1,54 @@
-const { ApolloServer, gql } = require('apollo-server-express');
-const { sequelize } = require('./config/database');
-const { initUser } = require('./models/user');
-const { initRoom } = require('./models/room');
-const { v4: uuidv4 } = require('uuid');
+// backend/index.ts
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
-const { setupWebRTC } = require('./services/webrtc');
+const cors = require('cors');
+import { initializeSocket } from './services/socketService';
 
 const app = express();
 const server = http.createServer(app);
+const port = Number(process.env.PORT) || 4000;
+const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+const allowedOrigins = [frontendUrl];
 
-initUser(sequelize);
-initRoom(sequelize);
+// Initialize Socket.IO
+initializeSocket(server);
 
-sequelize.sync({ force: false }).then(() => {
-  console.log('Database synced!');
-});
-
-const typeDefs = gql`
-  type Room {
-    id: ID
-    code: String
-    createdBy: ID
-  }
-
-  type Query {
-    hello: String
-  }
-
-  type Mutation {
-    createRoom: Room
-  }
-`;
-
-const resolvers = {
-  Query: {
-    hello: () => 'Hello World!',
+// Middleware
+app.use(cors({
+  origin: (origin: any, callback: any) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(null, false);
   },
-  Mutation: {
-    createRoom: async () => {
-      const user = await sequelize.models.User.findOne();
-      const roomCode = uuidv4().split('-')[0];
-      const room = await sequelize.models.Room.create({ code: roomCode, createdBy: user.id });
-      return room;
-    },
-  },
-};
+  credentials: true
+}));
+app.use(express.json());
 
-// Setup WebRTC signaling
-setupWebRTC(server);
-
-// Add a simple root route
+// Root route
 app.get('/', (req: any, res: any) => {
-  res.send(`
-    <h1>PeerShare Backend Server</h1>
-    <p>Server is running successfully!</p>
-    <p><a href="/graphql">Go to GraphQL Playground</a></p>
-    <p>GraphQL endpoint: <code>POST /graphql</code></p>
-  `);
-});
-
-// Start Apollo Server first
-const apolloServer = new ApolloServer({ 
-  typeDefs, 
-  resolvers,
-  introspection: true,
-  playground: true
-});
-
-apolloServer.start().then(() => {
-  apolloServer.applyMiddleware({ app, path: '/graphql' });
-  
-  // Start the HTTP server (which includes Socket.IO)
-  server.listen(4000, () => {
-    console.log('Server started on http://localhost:4000');
-    console.log('GraphQL Playground: http://localhost:4000/graphql');
-    console.log('Socket.IO server ready');
+  res.json({
+    message: 'PeerShare Server',
+    status: 'running',
+    version: '1.0.0',
+    socketIO: 'enabled'
   });
-}).catch((error: any) => {
-  console.error('Error starting Apollo Server:', error);
+});
+
+// Health check route
+app.get('/health', (req: any, res: any) => {
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    server: 'peershare-api',
+    version: '1.0.0'
+  });
+});
+
+// Start server
+server.listen(port, () => {
+  console.log('🚀 PeerShare Server started!');
+  console.log(`📍 Server URL: http://localhost:${port}`);
+  console.log(`🔍 Health Check: http://localhost:${port}/health`);
+  console.log(`🔌 WebSocket enabled on same port`);
 });

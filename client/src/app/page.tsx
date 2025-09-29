@@ -112,12 +112,12 @@ export default function Home() {
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">Same WiFi</h3>
               <p className="text-sm text-gray-400 mb-4">Local network sharing</p>
-              <a 
+              <Link 
                 href="/same-wifi"
                 className="block w-full px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-semibold rounded-lg hover:from-cyan-500 hover:to-blue-500 transition-all duration-300 transform hover:scale-105 text-center"
               >
                 Start Sharing
-              </a>
+              </Link>
             </div>
 
             {/* Learn More CTA */}
@@ -129,12 +129,12 @@ export default function Home() {
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">Learn More</h3>
               <p className="text-sm text-gray-400 mb-4">Discover features</p>
-              <a 
+              <Link 
                 href="/about"
                 className="block w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-blue-500 hover:to-indigo-500 transition-all duration-300 transform hover:scale-105 text-center"
               >
                 Explore
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -172,11 +172,11 @@ export default function Home() {
                 <div className="text-center">
                   <h4 className="text-white font-semibold mb-3">Quick Links</h4>
                   <div className="space-y-2">
-                    <a href="/about" className="block text-gray-400 hover:text-white transition-colors text-sm">About</a>
-                    <a href="/pricing" className="block text-gray-400 hover:text-white transition-colors text-sm">Pricing</a>
+                    <Link href="/about" className="block text-gray-400 hover:text-white transition-colors text-sm">About</Link>
+                    <Link href="/pricing" className="block text-gray-400 hover:text-white transition-colors text-sm">Pricing</Link>
                     <Link href="/blog" className="block text-gray-400 hover:text-white transition-colors text-sm">Blog</Link>
-                    <a href="/create-room" className="block text-gray-400 hover:text-white transition-colors text-sm">Create Room</a>
-                    <a href="/same-wifi" className="block text-gray-400 hover:text-white transition-colors text-sm">Same WiFi</a>
+                    <Link href="/create-room" className="block text-gray-400 hover:text-white transition-colors text-sm">Create Room</Link>
+                    <Link href="/same-wifi" className="block text-gray-400 hover:text-white transition-colors text-sm">Same WiFi</Link>
                   </div>
                 </div>
                 
@@ -193,10 +193,10 @@ export default function Home() {
                 <div className="text-center">
                   <h4 className="text-white font-semibold mb-3">Support</h4>
                   <div className="space-y-2">
-                    <a href="/help" className="block text-gray-400 hover:text-white transition-colors text-sm">Help Center</a>
-                    <a href="/docs" className="block text-gray-400 hover:text-white transition-colors text-sm">Documentation</a>
-                    <a href="/contact" className="block text-gray-400 hover:text-white transition-colors text-sm">Contact Us</a>
-                    <a href="/status" className="block text-gray-400 hover:text-white transition-colors text-sm">Status</a>
+                    <Link href="/help" className="block text-gray-400 hover:text-white transition-colors text-sm">Help Center</Link>
+                    <Link href="/docs" className="block text-gray-400 hover:text-white transition-colors text-sm">Documentation</Link>
+                    <Link href="/contact" className="block text-gray-400 hover:text-white transition-colors text-sm">Contact Us</Link>
+                    <Link href="/status" className="block text-gray-400 hover:text-white transition-colors text-sm">Status</Link>
                   </div>
                 </div>
                 
@@ -233,10 +233,10 @@ export default function Home() {
                   Enterprise file sharing with military-grade security.
                 </p>
                 <div className="flex justify-center space-x-6 mt-4 text-xs text-gray-500">
-                  <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
-                  <a href="/terms" className="hover:text-white transition-colors">Terms of Service</a>
-                  <a href="/security" className="hover:text-white transition-colors">Security</a>
-                  <a href="/contact" className="hover:text-white transition-colors">Contact</a>
+                  <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+                  <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+                  <Link href="/security" className="hover:text-white transition-colors">Security</Link>
+                  <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
             </div>
             </div>
             </div>

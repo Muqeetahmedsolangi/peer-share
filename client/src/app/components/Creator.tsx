@@ -109,39 +109,39 @@ export default function Creator() {
         <div className="mt-6 pt-4 border-t border-white/10">
           <h5 className="text-sm font-semibold text-white mb-3 text-center">Quick Links</h5>
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-            <a href="/about" className="group flex flex-col items-center p-2 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-all duration-300 hover:scale-105">
+            <Link href="/about" className="group flex flex-col items-center p-2 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-all duration-300 hover:scale-105">
               <span className="text-sm mb-1">ℹ️</span>
               <span className="text-xs text-gray-300 group-hover:text-white transition-colors">About</span>
-            </a>
+            </Link>
             
             <Link href="/blog" className="group flex flex-col items-center p-2 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-all duration-300 hover:scale-105">
               <span className="text-sm mb-1">📝</span>
               <span className="text-xs text-gray-300 group-hover:text-white transition-colors">Blog</span>
             </Link>
             
-            <a href="/create-room" className="group flex flex-col items-center p-2 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-all duration-300 hover:scale-105">
+            <Link href="/create-room" className="group flex flex-col items-center p-2 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-all duration-300 hover:scale-105">
               <span className="text-sm mb-1">➕</span>
               <span className="text-xs text-gray-300 group-hover:text-white transition-colors">Create</span>
-            </a>
+            </Link>
             
-            <a href="/same-wifi" className="group flex flex-col items-center p-2 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-all duration-300 hover:scale-105">
+            <Link href="/same-wifi" className="group flex flex-col items-center p-2 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-all duration-300 hover:scale-105">
               <span className="text-sm mb-1">📶</span>
               <span className="text-xs text-gray-300 group-hover:text-white transition-colors">WiFi</span>
-            </a>
+            </Link>
             
-            <a href="/pricing" className="group flex flex-col items-center p-2 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-all duration-300 hover:scale-105">
+            <Link href="/pricing" className="group flex flex-col items-center p-2 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-all duration-300 hover:scale-105">
               <span className="text-sm mb-1">💰</span>
               <span className="text-xs text-gray-300 group-hover:text-white transition-colors">Pricing</span>
-            </a>
+            </Link>
           </div>
         </div>
 
         {/* Footer Text - Compact */}
-        <div className="mt-4 pt-3 border-t border-white/5">
+        {/* <div className="mt-4 pt-3 border-t border-white/5">
           <p className="text-xs text-gray-400 text-center">
             © 2024 Dropsos. Created with ❤️ by <span className="text-blue-400 font-semibold">Muqeet Ahmed</span>
           </p>
-        </div>
+        </div> */}
       </div>
     </div>
   );
