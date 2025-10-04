@@ -1,12 +1,12 @@
-// backend/services/socketService.ts
+
+// backend/services/socketService.ts - FIXED VERSION
 import { Server as HttpServer } from 'http';
 import { Server as SocketServer, Socket } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 
-// Store rooms based on network (WiFi)
+// Store rooms - NOW BASED ON USER-PROVIDED ROOM NAME, NOT IP
 const rooms = new Map<string, Set<string>>(); // roomId -> Set of socketIds
 const users = new Map<string, UserInfo>(); // socketId -> user info
-const networkRooms = new Map<string, string>(); // publicIP -> roomId
 
 interface UserInfo {
   id: string;
@@ -28,74 +28,94 @@ interface FileShare {
 export function initializeSocket(server: HttpServer) {
   const io = new SocketServer(server, {
     cors: {
-      origin: process.env.FRONTEND_URL || "http://localhost:3000",
-      credentials: true
+      origin: "*", // Allow all origins for local network testing
+      credentials: true,
+      methods: ["GET", "POST"]
     }
   });
 
   io.on('connection', (socket: Socket) => {
     console.log('✅ New user connected:', socket.id);
     
-    // Get user's public IP (this determines their network/WiFi)
+    // Get user's IP for logging purposes only
     const publicIP = socket.handshake.headers['x-forwarded-for'] || 
                     socket.handshake.address || 
                     'localhost';
     
-    // Step 1: User joins their WiFi-based room
-    socket.on('join-network', (userName: string) => {
-      console.log(`👤 ${userName} joining from IP: ${publicIP}`);
+    // FIXED: User joins by ROOM NAME, not by IP
+    socket.on('join-network', (data: { userName: string; roomName?: string }) => {
+      const userName = data.userName || 'Anonymous';
+      const roomName = data.roomName || 'default-room'; // User specifies room name
       
-      // Create or get room for this network
-      let roomId = networkRooms.get(String(publicIP));
-      if (!roomId) {
-        roomId = `room-${uuidv4()}`;
-        networkRooms.set(String(publicIP), roomId);
-        rooms.set(roomId, new Set());
+      console.log(`👤 ${userName} joining room "${roomName}" from IP: ${publicIP}`);
+      
+      // Create room if it doesn't exist
+      if (!rooms.has(roomName)) {
+        rooms.set(roomName, new Set());
+        console.log(`🏠 Created new room: ${roomName}`);
       }
       
       // Add user to room
-      socket.join(roomId);
-      rooms.get(roomId)?.add(socket.id);
+      socket.join(roomName);
+      rooms.get(roomName)?.add(socket.id);
       
       // Store user info
       const userInfo: UserInfo = {
         id: uuidv4(),
         socketId: socket.id,
-        roomId: roomId,
+        roomId: roomName,
         publicIP: String(publicIP),
-        name: userName || `User-${socket.id.slice(0, 4)}`
+        name: userName
       };
       users.set(socket.id, userInfo);
       
       // Send room info back to user
       socket.emit('joined-room', {
-        roomId: roomId,
+        roomId: roomName,
         userId: userInfo.id,
         userName: userInfo.name
       });
       
-      // Get all users in same network/room
-      const roomUsers = Array.from(rooms.get(roomId) || [])
+      // Get all users in same room
+      const roomUsers = Array.from(rooms.get(roomName) || [])
         .map(sid => users.get(sid))
         .filter(Boolean);
       
+      console.log(`📊 Room "${roomName}" now has ${roomUsers.length} users:`, 
+        roomUsers.map(u => u?.name).join(', '));
+      
       // Send updated user list to everyone in room
-      io.to(roomId).emit('users-update', {
+      io.to(roomName).emit('users-update', {
         users: roomUsers,
         totalCount: roomUsers.length
       });
       
       // Notify others that new user joined
-      socket.to(roomId).emit('user-joined', {
+      socket.to(roomName).emit('user-joined', {
         userId: userInfo.id,
-        userName: userInfo.name
+        userName: userInfo.name,
+        socketId: socket.id
+      });
+      
+      // IMPORTANT: Send list of existing peers to the new user
+      // This triggers WebRTC connection creation
+      const existingPeers = roomUsers
+        .filter(u => u && u.socketId !== socket.id)
+        .map(u => ({
+          userId: u!.id,
+          userName: u!.name,
+          socketId: u!.socketId
+        }));
+      
+      socket.emit('existing-peers', {
+        peers: existingPeers
       });
     });
     
     // Step 2: Handle WebRTC signaling for P2P connection
     socket.on('webrtc-offer', (data: any) => {
       console.log('📡 WebRTC offer from:', socket.id, 'to:', data.targetSocketId);
-      socket.to(data.targetSocketId).emit('webrtc-offer', {
+      io.to(data.targetSocketId).emit('webrtc-offer', {
         offer: data.offer,
         senderSocketId: socket.id
       });
@@ -103,14 +123,15 @@ export function initializeSocket(server: HttpServer) {
     
     socket.on('webrtc-answer', (data: any) => {
       console.log('📡 WebRTC answer from:', socket.id, 'to:', data.targetSocketId);
-      socket.to(data.targetSocketId).emit('webrtc-answer', {
+      io.to(data.targetSocketId).emit('webrtc-answer', {
         answer: data.answer,
         senderSocketId: socket.id
       });
     });
     
     socket.on('webrtc-ice-candidate', (data: any) => {
-      socket.to(data.targetSocketId).emit('webrtc-ice-candidate', {
+      console.log('🧊 ICE candidate from:', socket.id, 'to:', data.targetSocketId);
+      io.to(data.targetSocketId).emit('webrtc-ice-candidate', {
         candidate: data.candidate,
         senderSocketId: socket.id
       });
@@ -130,7 +151,7 @@ export function initializeSocket(server: HttpServer) {
         roomId: user.roomId
       };
       
-      // Only notify users in the same room (same WiFi)
+      // Only notify users in the same room
       socket.to(user.roomId).emit('file-available', fileShare);
       console.log(`📁 File shared: ${data.fileName} in room: ${user.roomId}`);
     });
@@ -147,13 +168,16 @@ export function initializeSocket(server: HttpServer) {
         // Notify others in room
         socket.to(user.roomId).emit('user-left', {
           userId: user.id,
-          userName: user.name
+          userName: user.name,
+          socketId: socket.id
         });
         
         // Update user list for room
         const roomUsers = Array.from(rooms.get(user.roomId) || [])
           .map(sid => users.get(sid))
           .filter(Boolean);
+        
+        console.log(`📊 Room "${user.roomId}" now has ${roomUsers.length} users`);
         
         io.to(user.roomId).emit('users-update', {
           users: roomUsers,
@@ -166,13 +190,7 @@ export function initializeSocket(server: HttpServer) {
         // Remove room if empty
         if (rooms.get(user.roomId)?.size === 0) {
           rooms.delete(user.roomId);
-          // Find and remove from networkRooms
-          for (const [ip, rid] of networkRooms.entries()) {
-            if (rid === user.roomId) {
-              networkRooms.delete(ip);
-              break;
-            }
-          }
+          console.log(`🗑️ Removed empty room: ${user.roomId}`);
         }
       }
     });
