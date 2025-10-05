@@ -1,9 +1,9 @@
-// backend/services/socketService.ts - COMPLETE VERSION WITH TEXT MESSAGING
+// backend/services/socketService.ts - AUTOMATIC WIFI NETWORK ISOLATION
 import { Server as HttpServer } from 'http';
 import { Server as SocketServer, Socket } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 
-// Store rooms - NOW BASED ON USER-PROVIDED ROOM NAME, NOT IP
+// Store rooms - AUTOMATICALLY GROUPED BY WIFI NETWORK
 const rooms = new Map<string, Set<string>>(); // roomId -> Set of socketIds
 const users = new Map<string, UserInfo>(); // socketId -> user info
 
@@ -11,7 +11,7 @@ interface UserInfo {
   id: string;
   socketId: string;
   roomId: string;
-  publicIP: string;
+  clientIP: string;
   name: string;
 }
 
@@ -24,10 +24,29 @@ interface FileShare {
   roomId: string;
 }
 
+// Extract network subnet from IP address
+function getNetworkSubnet(ip: string): string {
+  // Remove IPv6 prefix if present (::ffff:192.168.1.5 -> 192.168.1.5)
+  const cleanIP = ip.replace('::ffff:', '');
+  
+  // Split IP into parts
+  const parts = cleanIP.split('.');
+  
+  // Take first 3 octets to identify the network
+  // Example: 192.168.1.5 -> 192.168.1 (this is the subnet)
+  // All devices on 192.168.1.x will share the same room
+  if (parts.length >= 3) {
+    return parts.slice(0, 3).join('.');
+  }
+  
+  // Fallback for IPv6 or unusual formats
+  return cleanIP;
+}
+
 export function initializeSocket(server: HttpServer) {
   const io = new SocketServer(server, {
     cors: {
-      origin: "*", // Allow all origins for local network testing
+      origin: "*",
       credentials: true,
       methods: ["GET", "POST"]
     }
@@ -36,61 +55,73 @@ export function initializeSocket(server: HttpServer) {
   io.on('connection', (socket: Socket) => {
     console.log('✅ New user connected:', socket.id);
     
-    // Get user's IP for logging purposes only
-    const publicIP = socket.handshake.headers['x-forwarded-for'] || 
-                    socket.handshake.address || 
-                    'localhost';
+    // Get user's IP address
+    const clientIP = (socket.handshake.headers['x-forwarded-for'] as string) || 
+                     socket.handshake.address || 
+                     'unknown';
     
-    // User joins by ROOM NAME, not by IP
+    console.log('📍 Client IP:', clientIP);
+    
+    // Auto-join based on WiFi network (IP subnet)
     socket.on('join-network', (data: { userName: string; roomName?: string }) => {
       const userName = data.userName || 'Anonymous';
-      const roomName = data.roomName || 'default-wifi-room'; // User specifies room name
       
-      console.log(`👤 ${userName} joining room "${roomName}" from IP: ${publicIP}`);
+      // AUTOMATIC WIFI DETECTION
+      // Extract the network subnet from client IP
+      const subnet = getNetworkSubnet(clientIP);
+      
+      // Create a room name based on the subnet
+      // Example: subnet "192.168.1" -> room "wifi-192.168.1"
+      const autoRoomName = `wifi-${subnet}`;
+      
+      console.log(`👤 ${userName} joining from IP: ${clientIP}`);
+      console.log(`🌐 Detected subnet: ${subnet}`);
+      console.log(`🏠 Auto-assigned room: ${autoRoomName}`);
       
       // Create room if it doesn't exist
-      if (!rooms.has(roomName)) {
-        rooms.set(roomName, new Set());
-        console.log(`🏠 Created new room: ${roomName}`);
+      if (!rooms.has(autoRoomName)) {
+        rooms.set(autoRoomName, new Set());
+        console.log(`✨ Created new room for network: ${autoRoomName}`);
       }
       
       // Add user to room
-      socket.join(roomName);
-      rooms.get(roomName)?.add(socket.id);
+      socket.join(autoRoomName);
+      rooms.get(autoRoomName)?.add(socket.id);
       
       // Store user info
       const userInfo: UserInfo = {
         id: uuidv4(),
         socketId: socket.id,
-        roomId: roomName,
-        publicIP: String(publicIP),
+        roomId: autoRoomName,
+        clientIP: String(clientIP),
         name: userName
       };
       users.set(socket.id, userInfo);
       
       // Send room info back to user
       socket.emit('joined-room', {
-        roomId: roomName,
+        roomId: autoRoomName,
         userId: userInfo.id,
-        userName: userInfo.name
+        userName: userInfo.name,
+        networkSubnet: subnet
       });
       
-      // Get all users in same room
-      const roomUsers = Array.from(rooms.get(roomName) || [])
+      // Get all users in same WiFi network
+      const roomUsers = Array.from(rooms.get(autoRoomName) || [])
         .map(sid => users.get(sid))
         .filter(Boolean);
       
-      console.log(`📊 Room "${roomName}" now has ${roomUsers.length} users:`, 
+      console.log(`📊 Room "${autoRoomName}" now has ${roomUsers.length} users:`, 
         roomUsers.map(u => u?.name).join(', '));
       
-      // Send updated user list to everyone in room
-      io.to(roomName).emit('users-update', {
+      // Send updated user list to everyone in this WiFi network only
+      io.to(autoRoomName).emit('users-update', {
         users: roomUsers,
         totalCount: roomUsers.length
       });
       
-      // Notify others that new user joined
-      socket.to(roomName).emit('user-joined', {
+      // Notify others in same WiFi that new user joined
+      socket.to(autoRoomName).emit('user-joined', {
         userId: userInfo.id,
         userName: userInfo.name,
         socketId: socket.id
@@ -149,12 +180,12 @@ export function initializeSocket(server: HttpServer) {
         roomId: user.roomId
       };
       
-      // Only notify users in the same room
+      // Only notify users in the same WiFi network
       socket.to(user.roomId).emit('file-available', fileShare);
       console.log(`📁 File shared: ${data.fileName} in room: ${user.roomId}`);
     });
     
-    // NEW: Handle text/code message sharing
+    // Handle text/code message sharing
     socket.on('text-message', (data: any) => {
       const user = users.get(socket.id);
       if (!user) {
@@ -164,9 +195,8 @@ export function initializeSocket(server: HttpServer) {
       
       const messageType = data.isCode ? 'Code' : 'Text';
       console.log(`💬 ${messageType} message from ${user.name} in room: ${user.roomId}`);
-      console.log(`   Content preview: ${data.content.substring(0, 50)}...`);
       
-      // Broadcast to all users in the same room EXCEPT the sender
+      // Broadcast ONLY to users in the same WiFi network
       socket.to(user.roomId).emit('text-message', {
         content: data.content,
         senderName: user.name,
@@ -175,7 +205,7 @@ export function initializeSocket(server: HttpServer) {
         timestamp: Date.now()
       });
       
-      console.log(`✅ Message broadcasted to room: ${user.roomId}`);
+      console.log(`✅ Message broadcasted to WiFi network: ${user.roomId}`);
     });
     
     // Handle disconnection
@@ -187,14 +217,14 @@ export function initializeSocket(server: HttpServer) {
         // Remove from room
         rooms.get(user.roomId)?.delete(socket.id);
         
-        // Notify others in room
+        // Notify others in same WiFi network
         socket.to(user.roomId).emit('user-left', {
           userId: user.id,
           userName: user.name,
           socketId: socket.id
         });
         
-        // Update user list for room
+        // Update user list for WiFi network
         const roomUsers = Array.from(rooms.get(user.roomId) || [])
           .map(sid => users.get(sid))
           .filter(Boolean);
@@ -219,5 +249,7 @@ export function initializeSocket(server: HttpServer) {
   });
   
   console.log('🔌 Socket.IO initialized successfully!');
+  console.log('🌐 Network isolation: ENABLED');
+  console.log('📡 Users will be automatically grouped by WiFi subnet');
   return io;
 }
