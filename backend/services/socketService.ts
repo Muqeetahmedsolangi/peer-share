@@ -63,29 +63,29 @@ export function initializeSocket(server: HttpServer) {
     console.log('📍 Client IP:', clientIP);
     
     // Auto-join based on WiFi network (IP subnet)
-    socket.on('join-network', (data: { userName: string; roomName?: string }) => {
+    socket.on('join-network', async (data: { userName: string; roomName?: string }) => {
       const userName = data.userName || 'Anonymous';
-      
+
       // AUTOMATIC WIFI DETECTION
       // Extract the network subnet from client IP
       const subnet = getNetworkSubnet(clientIP);
-      
+
       // Create a room name based on the subnet
       // Example: subnet "192.168.1" -> room "wifi-192.168.1"
       const autoRoomName = `wifi-${subnet}`;
-      
+
       console.log(`👤 ${userName} joining from IP: ${clientIP}`);
       console.log(`🌐 Detected subnet: ${subnet}`);
       console.log(`🏠 Auto-assigned room: ${autoRoomName}`);
-      
+
       // Create room if it doesn't exist
       if (!rooms.has(autoRoomName)) {
         rooms.set(autoRoomName, new Set());
         console.log(`✨ Created new room for network: ${autoRoomName}`);
       }
-      
-      // Add user to room
-      socket.join(autoRoomName);
+
+      // Add user to room - AWAIT to ensure join completes before emitting events
+      await socket.join(autoRoomName);
       rooms.get(autoRoomName)?.add(socket.id);
       
       // Store user info
