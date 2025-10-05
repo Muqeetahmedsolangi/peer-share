@@ -31,4 +31,5 @@ jobs:
       working-directory: backend
     - run: npm run build --if-present
       working-directory: backend
-    - run: pm2 restart apiserver
+    - run: pm2 reload ecosystem.config.js --update-env
+      working-directory: backend
