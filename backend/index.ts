@@ -3,7 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
-import { initializeSocket } from './services/socketService';
+const { initializeSocket } = require('./services/socketService');
 
 const app = express();
 const server = http.createServer(app);
