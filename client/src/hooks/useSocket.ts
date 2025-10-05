@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import io, { Socket } from 'socket.io-client';
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://54.83.105.210:4000';
+const SOCKET_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://54.83.105.210';
 
 export function useSocket(userName: string, roomName: string = 'my-wifi-room') {
   const [socket, setSocket] = useState<Socket | null>(null);
