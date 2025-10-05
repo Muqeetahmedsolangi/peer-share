@@ -21,6 +21,7 @@ export default function SameWifiPage() {
     const [userName, setUserName] = useState('');
     const [isJoined, setIsJoined] = useState(false);
     const [receivedFiles, setReceivedFiles] = useState<File[]>([]);
+    const [sentFiles, setSentFiles] = useState<File[]>([]); // Track sent files
     const [webrtcService, setWebrtcService] = useState<WebRTCService | null>(null);
     const [previewFile, setPreviewFile] = useState<File | null>(null);
     const [showPreview, setShowPreview] = useState(false);
@@ -142,7 +143,18 @@ export default function SameWifiPage() {
                 fileName: selectedFile.name,
                 fileSize: selectedFile.size
             });
-            showNotification('📤 Sending...', 'info');
+
+            // Add to sent files so user can see what they shared
+            setSentFiles(prev => {
+                // Check if file already exists
+                const exists = prev.some(f => f.name === selectedFile.name && f.size === selectedFile.size);
+                if (!exists) {
+                    return [...prev, selectedFile];
+                }
+                return prev;
+            });
+
+            showNotification('📤 File sent!', 'success');
         }
     };
 
@@ -692,9 +704,55 @@ export default function SameWifiPage() {
                         </div>
                     </div>
 
+                    {/* Sent Files - Compact */}
+                    {sentFiles.length > 0 && (
+                        <div className={`bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-xl p-3 sm:p-4 transition-all duration-1000 delay-1100 ${
+                            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                        }`}>
+                            <h3 className="text-xs sm:text-sm font-bold text-white mb-2 sm:mb-3 flex items-center">
+                                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                </svg>
+                                <span className="hidden sm:inline">Shared Files ({sentFiles.length})</span>
+                                <span className="sm:hidden">Shared ({sentFiles.length})</span>
+                            </h3>
+                            <div className="space-y-1.5 sm:space-y-2">
+                                {sentFiles.map((file, index) => (
+                                    <div key={index} className="p-2.5 sm:p-3 bg-green-900/20 backdrop-blur-sm border border-green-400/20 rounded-lg">
+                                        <div className="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2">
+                                            <span className="text-xl sm:text-2xl flex-shrink-0">{getFileIcon(file)}</span>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-green-400 font-medium truncate text-xs sm:text-sm">{file.name}</p>
+                                                <p className="text-xs text-gray-400">
+                                                    {(file.size / 1024 / 1024).toFixed(2)} MB • Sent
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-1.5 sm:gap-2">
+                                            {canPreview(file) && (
+                                                <button
+                                                    onClick={() => openPreview(file)}
+                                                    className="flex-1 px-2.5 py-1.5 sm:py-2 bg-purple-600 text-white rounded-md hover:bg-purple-500 text-xs transition-all duration-300 active:scale-95"
+                                                >
+                                                    👁️ Preview
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={() => downloadFile(file)}
+                                                className="flex-1 px-2.5 py-1.5 sm:py-2 bg-blue-600 text-white rounded-md hover:bg-blue-500 text-xs transition-all duration-300 active:scale-95"
+                                            >
+                                                💾 Download
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Received Files - Compact */}
                     {receivedFiles.length > 0 && (
-                        <div className={`bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-xl p-3 sm:p-4 transition-all duration-1000 delay-1100 ${
+                        <div className={`bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-xl p-3 sm:p-4 transition-all duration-1000 delay-1200 ${
                             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                         }`}>
                             <h3 className="text-xs sm:text-sm font-bold text-white mb-2 sm:mb-3 flex items-center">
