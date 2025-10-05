@@ -1,5 +1,4 @@
-
-// backend/services/socketService.ts - FIXED VERSION
+// backend/services/socketService.ts - COMPLETE VERSION WITH TEXT MESSAGING
 import { Server as HttpServer } from 'http';
 import { Server as SocketServer, Socket } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
@@ -42,10 +41,10 @@ export function initializeSocket(server: HttpServer) {
                     socket.handshake.address || 
                     'localhost';
     
-    // FIXED: User joins by ROOM NAME, not by IP
+    // User joins by ROOM NAME, not by IP
     socket.on('join-network', (data: { userName: string; roomName?: string }) => {
       const userName = data.userName || 'Anonymous';
-      const roomName = data.roomName || 'default-room'; // User specifies room name
+      const roomName = data.roomName || 'default-wifi-room'; // User specifies room name
       
       console.log(`👤 ${userName} joining room "${roomName}" from IP: ${publicIP}`);
       
@@ -97,8 +96,7 @@ export function initializeSocket(server: HttpServer) {
         socketId: socket.id
       });
       
-      // IMPORTANT: Send list of existing peers to the new user
-      // This triggers WebRTC connection creation
+      // Send list of existing peers to the new user
       const existingPeers = roomUsers
         .filter(u => u && u.socketId !== socket.id)
         .map(u => ({
@@ -112,7 +110,7 @@ export function initializeSocket(server: HttpServer) {
       });
     });
     
-    // Step 2: Handle WebRTC signaling for P2P connection
+    // Handle WebRTC signaling for P2P connection
     socket.on('webrtc-offer', (data: any) => {
       console.log('📡 WebRTC offer from:', socket.id, 'to:', data.targetSocketId);
       io.to(data.targetSocketId).emit('webrtc-offer', {
@@ -137,7 +135,7 @@ export function initializeSocket(server: HttpServer) {
       });
     });
     
-    // Step 3: Handle file sharing notification
+    // Handle file sharing notification
     socket.on('file-share-start', (data: any) => {
       const user = users.get(socket.id);
       if (!user) return;
@@ -156,7 +154,31 @@ export function initializeSocket(server: HttpServer) {
       console.log(`📁 File shared: ${data.fileName} in room: ${user.roomId}`);
     });
     
-    // Step 4: Handle disconnection
+    // NEW: Handle text/code message sharing
+    socket.on('text-message', (data: any) => {
+      const user = users.get(socket.id);
+      if (!user) {
+        console.log('⚠️ User not found for socket:', socket.id);
+        return;
+      }
+      
+      const messageType = data.isCode ? 'Code' : 'Text';
+      console.log(`💬 ${messageType} message from ${user.name} in room: ${user.roomId}`);
+      console.log(`   Content preview: ${data.content.substring(0, 50)}...`);
+      
+      // Broadcast to all users in the same room EXCEPT the sender
+      socket.to(user.roomId).emit('text-message', {
+        content: data.content,
+        senderName: user.name,
+        senderId: socket.id,
+        isCode: data.isCode || false,
+        timestamp: Date.now()
+      });
+      
+      console.log(`✅ Message broadcasted to room: ${user.roomId}`);
+    });
+    
+    // Handle disconnection
     socket.on('disconnect', () => {
       console.log('❌ User disconnected:', socket.id);
       
