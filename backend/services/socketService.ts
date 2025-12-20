@@ -66,7 +66,7 @@ export function initializeSocket(server: HttpServer) {
     if (clientIP) {
       // x-forwarded-for can contain multiple IPs: "client, proxy1, proxy2"
       // Take the first one (original client IP)
-      clientIP = clientIP.split(',')[0].trim();
+      clientIP = clientIP.split(',')[0]?.trim() || 'unknown';
     } else {
       // Fallback to direct connection address
       clientIP = socket.handshake.address || socket.conn.remoteAddress || 'unknown';
