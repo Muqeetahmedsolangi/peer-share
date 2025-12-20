@@ -7,7 +7,7 @@ exports.signup = async (req: any, res: any) => {
     const user = await signup(username, email, password, authProvider);
     res.status(201).json({ message: 'User created', userId: user.id });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message })
   }
 };
 
