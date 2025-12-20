@@ -2,9 +2,10 @@
 import { useEffect, useRef, useState } from 'react';
 import io, { Socket } from 'socket.io-client';
 
-// Backend URL - MUST use HTTPS for secure WebSocket (WSS)
-// Set NEXT_PUBLIC_BACKEND_URL in Vercel environment variables
-// IMPORTANT: Backend server MUST have SSL certificate configured
+// Backend URL - should be set via environment variable in Vercel
+// Options:
+// 1. Use subdomain: https://api.dropsos.com (recommended - needs DNS + SSL setup)
+// 2. Use IP directly: https://54.83.105.210 (will show SSL warning - not recommended)
 const SOCKET_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://54.83.105.210';
 
 export function useSocket(userName: string, roomName: string = 'my-wifi-room') {
@@ -17,7 +18,7 @@ export function useSocket(userName: string, roomName: string = 'my-wifi-room') {
     // Don't connect if no userName
     if (!userName) return;
     
-    // Connect to socket server - URL must use https:// for WSS
+    // Connect to socket server
     const socketInstance = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
       reconnection: true,
