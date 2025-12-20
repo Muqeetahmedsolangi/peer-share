@@ -2,6 +2,10 @@
 import { useEffect, useRef, useState } from 'react';
 import io, { Socket } from 'socket.io-client';
 
+// Backend URL - should be set via environment variable in Vercel
+// Options:
+// 1. Use subdomain: https://api.dropsos.com (recommended - needs DNS + SSL setup)
+// 2. Use IP directly: https://54.83.105.210 (will show SSL warning - not recommended)
 const SOCKET_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://54.83.105.210';
 
 export function useSocket(userName: string, roomName: string = 'my-wifi-room') {

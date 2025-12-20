@@ -49,16 +49,30 @@ export function initializeSocket(server: HttpServer) {
       origin: "*",
       credentials: true,
       methods: ["GET", "POST"]
-    }
+    },
+    // Production settings for reverse proxy (nginx) with SSL
+    transports: ['websocket', 'polling'],
+    allowEIO3: true,
+    // Trust proxy for correct IP detection behind nginx
+    pingTimeout: 60000,
+    pingInterval: 25000
   });
 
   io.on('connection', (socket: Socket) => {
     console.log('✅ New user connected:', socket.id);
     
-    // Get user's IP address
-    const clientIP = (socket.handshake.headers['x-forwarded-for'] as string) || 
-                     socket.handshake.address || 
-                     'unknown';
+    // Get user's IP address - handle x-forwarded-for (can contain multiple IPs)
+    let clientIP = socket.handshake.headers['x-forwarded-for'] as string;
+    if (clientIP) {
+      // x-forwarded-for can contain multiple IPs: "client, proxy1, proxy2"
+      // Take the first one (original client IP)
+      clientIP = clientIP.split(',')[0].trim();
+    } else {
+      // Fallback to direct connection address
+      clientIP = socket.handshake.address || socket.conn.remoteAddress || 'unknown';
+      // Remove IPv6 prefix if present
+      clientIP = clientIP.replace('::ffff:', '');
+    }
     
     console.log('📍 Client IP:', clientIP);
     

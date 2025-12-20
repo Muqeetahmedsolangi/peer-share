@@ -11,6 +11,9 @@ const port = Number(process.env.PORT) || 4000;
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 const allowedOrigins = [frontendUrl];
 
+// Trust proxy for correct IP detection behind nginx/reverse proxy
+app.set('trust proxy', true);
+
 // Initialize Socket.IO
 initializeSocket(server);
 
