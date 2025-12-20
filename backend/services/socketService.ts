@@ -59,7 +59,7 @@ export function initializeSocket(server: HttpServer) {
   });
 
   io.on('connection', (socket: Socket) => {
-    console.log('✅ New user connected:', socket.id);
+    console.log('✅ New user connected:', socket.id)
     
     // Get user's IP address - handle x-forwarded-for (can contain multiple IPs)
     let clientIP = socket.handshake.headers['x-forwarded-for'] as string;
