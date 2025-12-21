@@ -1,5 +1,8 @@
 // backend/index.ts
-require('dotenv').config();
+// Load environment variables - prioritize .env.local for local development
+require('dotenv').config({ path: '.env.local' });
+require('dotenv').config(); // Fallback to .env if .env.local doesn't exist
+
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
@@ -9,7 +12,7 @@ const app = express();
 const server = http.createServer(app);
 const port = Number(process.env.PORT) || 4000;
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-const allowedOrigins = [frontendUrl];
+const allowedOrigins = [frontendUrl, 'http://localhost:3000', 'http://127.0.0.1:3000'];
 
 // Trust proxy for correct IP detection behind nginx/reverse proxy
 app.set('trust proxy', true);

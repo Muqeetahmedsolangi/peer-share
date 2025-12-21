@@ -2,9 +2,14 @@
 import { useEffect, useRef, useState } from 'react';
 import io, { Socket } from 'socket.io-client';
 
-// Backend URL - Use api.dropsos.com subdomain for backend
-// Can be overridden via NEXT_PUBLIC_BACKEND_URL environment variable in Vercel
-const SOCKET_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://api.dropsos.com';
+// Backend URL - Auto-detect local vs production
+// Local: http://localhost:4000
+// Production: https://api.dropsos.com (set NEXT_PUBLIC_BACKEND_URL in Vercel)
+const SOCKET_URL = 
+  process.env.NEXT_PUBLIC_BACKEND_URL || 
+  (typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+    ? 'http://localhost:4000' 
+    : 'https://api.dropsos.com');
 
 export function useSocket(userName: string, roomName: string = 'my-wifi-room') {
   const [socket, setSocket] = useState<Socket | null>(null);
