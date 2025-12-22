@@ -328,7 +328,6 @@ export default function RootLayout({
       seller: {
         "@type": "Organization",
         name: "Dropsos Team"
-        
       },
       itemCondition: "https://schema.org/NewCondition",
       category: "Software"
