@@ -303,6 +303,7 @@ export default function RootLayout({
         url: "https://dropsos.com/screenshot-dashboard.png",
         width: "1920",
         height: "1080",
+        
         caption: "Dropsos Dashboard - File Sharing Interface"
       }
     ],
