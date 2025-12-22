@@ -26,21 +26,46 @@ interface FileShare {
 
 // Extract network subnet from IP address
 function getNetworkSubnet(ip: string): string {
-  // Remove IPv6 prefix if present (::ffff:192.168.1.5 -> 192.168.1.5)
-  const cleanIP = ip.replace('::ffff:', '');
+  console.log('🔍 getNetworkSubnet input:', ip);
+  
+  // Handle IPv6 mapped IPv4 (::ffff:192.168.1.5)
+  let cleanIP = ip.replace(/^::ffff:/, '');
+  
+  // Remove brackets from IPv6 format [::1]
+  cleanIP = cleanIP.replace(/^\[|\]$/g, '');
+  
+  // Remove port if present
+  if (cleanIP.includes(':')) {
+    const parts = cleanIP.split(':');
+    cleanIP = parts[0] || cleanIP;
+  }
   
   // Split IP into parts
   const parts = cleanIP.split('.');
   
-  // Take first 3 octets to identify the network
+  // Take first 3 octets to identify the network (IPv4)
   // Example: 192.168.1.5 -> 192.168.1 (this is the subnet)
   // All devices on 192.168.1.x will share the same room
-  if (parts.length >= 3) {
-    return parts.slice(0, 3).join('.');
+  if (parts.length >= 3 && parts.every(part => /^\d+$/.test(part))) {
+    const subnet = parts.slice(0, 3).join('.');
+    console.log('✅ IPv4 subnet detected:', subnet);
+    return subnet;
   }
   
-  // Fallback for IPv6 or unusual formats
-  return cleanIP;
+  // For IPv6, use first 64 bits (first 4 groups) or first 3 groups for link-local
+  if (cleanIP.includes(':')) {
+    const ipv6Parts = cleanIP.split(':');
+    // Use first 3 groups for local network detection
+    if (ipv6Parts.length >= 3) {
+      const subnet = ipv6Parts.slice(0, 3).join(':');
+      console.log('✅ IPv6 subnet detected:', subnet);
+      return subnet;
+    }
+  }
+  
+  // Fallback - use the full IP as subnet (will create separate room)
+  console.log('⚠️ Could not extract subnet, using full IP:', cleanIP);
+  return cleanIP || 'unknown';
 }
 
 export function initializeSocket(server: HttpServer) {
@@ -63,34 +88,90 @@ export function initializeSocket(server: HttpServer) {
     
     // Get user's IP address - handle x-forwarded-for (can contain multiple IPs)
     let clientIP = socket.handshake.headers['x-forwarded-for'] as string;
+    
+    // Log all IP-related headers for debugging
+    console.log('🔍 IP Detection Debug:', {
+      'x-forwarded-for': socket.handshake.headers['x-forwarded-for'],
+      'x-real-ip': socket.handshake.headers['x-real-ip'],
+      'cf-connecting-ip': socket.handshake.headers['cf-connecting-ip'],
+      'socket.address': socket.handshake.address,
+      'socket.remoteAddress': socket.conn.remoteAddress,
+      'user-agent': socket.handshake.headers['user-agent']
+    });
+    
     if (clientIP) {
       // x-forwarded-for can contain multiple IPs: "client, proxy1, proxy2"
       // Take the first one (original client IP)
       clientIP = clientIP.split(',')[0]?.trim() || 'unknown';
     } else {
-      // Fallback to direct connection address
-      clientIP = socket.handshake.address || socket.conn.remoteAddress || 'unknown';
-      // Remove IPv6 prefix if present
+      // Try other headers that might contain the real IP
+      clientIP = (socket.handshake.headers['x-real-ip'] as string) || 
+                 (socket.handshake.headers['cf-connecting-ip'] as string) ||
+                 socket.handshake.address || 
+                 socket.conn.remoteAddress || 
+                 'unknown';
+    }
+    
+    // Clean up IPv6 mapped IPv4 addresses (::ffff:192.168.1.1 -> 192.168.1.1)
+    if (clientIP.includes('::ffff:')) {
       clientIP = clientIP.replace('::ffff:', '');
     }
     
-    console.log('📍 Client IP:', clientIP);
+    // Remove port if present (e.g., "192.168.1.1:52341" -> "192.168.1.1")
+    if (clientIP.includes(':')) {
+      const ipv6Match = clientIP.match(/^\[(.+)\]:/); // IPv6 format [::1]:port
+      if (ipv6Match && ipv6Match[1]) {
+        clientIP = ipv6Match[1];
+      } else {
+        const parts = clientIP.split(':');
+        clientIP = parts[0] || clientIP;
+      }
+    }
+    
+    console.log('📍 Client IP (cleaned):', clientIP);
+    
+    // Store the IP on the socket for later use
+    (socket as any).clientIP = clientIP;
     
     // Auto-join based on WiFi network (IP subnet)
     socket.on('join-network', async (data: { userName: string; roomName?: string }) => {
       const userName = data.userName || 'Anonymous';
 
+      // Get the stored IP or recalculate if not available
+      let detectedIP = (socket as any).clientIP || clientIP;
+      
+      // Re-detect IP if it wasn't stored properly
+      if (!detectedIP || detectedIP === 'unknown') {
+        detectedIP = socket.handshake.headers['x-forwarded-for'] as string;
+        if (detectedIP) {
+          detectedIP = detectedIP.split(',')[0]?.trim();
+        } else {
+          detectedIP = (socket.handshake.headers['x-real-ip'] as string) || 
+                      socket.handshake.address || 
+                      socket.conn.remoteAddress || 
+                      'unknown';
+        }
+        // Clean up
+        if (detectedIP.includes('::ffff:')) {
+          detectedIP = detectedIP.replace('::ffff:', '');
+        }
+        if (detectedIP.includes(':')) {
+          detectedIP = detectedIP.split(':')[0];
+        }
+      }
+
       // AUTOMATIC WIFI DETECTION
       // Extract the network subnet from client IP
-      const subnet = getNetworkSubnet(clientIP);
+      const subnet = getNetworkSubnet(detectedIP);
 
       // Create a room name based on the subnet
       // Example: subnet "192.168.1" -> room "wifi-192.168.1"
       const autoRoomName = `wifi-${subnet}`;
 
-      console.log(`👤 ${userName} joining from IP: ${clientIP}`);
+      console.log(`👤 ${userName} joining from IP: ${detectedIP}`);
       console.log(`🌐 Detected subnet: ${subnet}`);
       console.log(`🏠 Auto-assigned room: ${autoRoomName}`);
+      console.log(`📱 User-Agent:`, socket.handshake.headers['user-agent']);
 
       // Create room if it doesn't exist
       if (!rooms.has(autoRoomName)) {
@@ -107,7 +188,7 @@ export function initializeSocket(server: HttpServer) {
         id: uuidv4(),
         socketId: socket.id,
         roomId: autoRoomName,
-        clientIP: String(clientIP),
+        clientIP: String(detectedIP),
         name: userName
       };
       users.set(socket.id, userInfo);
@@ -123,10 +204,10 @@ export function initializeSocket(server: HttpServer) {
       // Get all users in same WiFi network
       const roomUsers = Array.from(rooms.get(autoRoomName) || [])
         .map(sid => users.get(sid))
-        .filter(Boolean);
+        .filter((u): u is UserInfo => u !== undefined);
       
       console.log(`📊 Room "${autoRoomName}" now has ${roomUsers.length} users:`, 
-        roomUsers.map(u => u?.name).join(', '));
+        roomUsers.map(u => u.name).join(', '));
       
       // Send updated user list to everyone in this WiFi network only
       io.to(autoRoomName).emit('users-update', {
@@ -265,5 +346,21 @@ export function initializeSocket(server: HttpServer) {
   console.log('🔌 Socket.IO initialized successfully!');
   console.log('🌐 Network isolation: ENABLED');
   console.log('📡 Users will be automatically grouped by WiFi subnet');
+  
+  // Debug: Log all rooms periodically
+  setInterval(() => {
+    console.log('\n📊 Current Rooms Status:');
+    rooms.forEach((socketIds, roomId) => {
+      const roomUsers = Array.from(socketIds)
+        .map(sid => users.get(sid))
+        .filter((u): u is UserInfo => u !== undefined);
+      console.log(`  Room: ${roomId} - ${roomUsers.length} users`);
+      roomUsers.forEach(user => {
+        console.log(`    - ${user.name} (IP: ${user.clientIP})`);
+      });
+    });
+    console.log('');
+  }, 30000); // Every 30 seconds
+  
   return io;
 }
