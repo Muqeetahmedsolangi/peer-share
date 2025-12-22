@@ -363,6 +363,7 @@ export default function RootLayout({
           bestRating: "5"
         },
         author: {
+          
           "@type": "Person",
           name: "Michael Rodriguez"
         },
