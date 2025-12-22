@@ -260,7 +260,7 @@ export const metadata: Metadata = {
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "black-translucent",
     "apple-mobile-web-app-title": "Dropsos",
-    "apple-touch-fullscreen": "yes",
+    "apple-touch-fullscreen": "yes" as unknown as any,
     "X-UA-Compatible": "IE=edge",
     "google-site-verification": "your-google-search-console-verification",
     "msvalidate.01": "your-bing-webmaster-verification",
