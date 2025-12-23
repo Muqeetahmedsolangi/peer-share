@@ -56,6 +56,7 @@ function getNetworkSubnet(ip: string): string {
   if (cleanIP.includes(':')) {
     const ipv6Parts = cleanIP.split(':');
     // Use first 3 groups for local network detection
+    
     if (ipv6Parts.length >= 3) {
       const subnet = ipv6Parts.slice(0, 3).join(':');
       console.log('✅ IPv6 subnet detected:', subnet);
