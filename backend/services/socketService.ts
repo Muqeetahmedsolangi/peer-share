@@ -2,10 +2,12 @@
 import { Server as HttpServer } from 'http';
 import { Server as SocketServer, Socket } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
+import { saveClip, getClip, deleteClip, checkClipExists } from './redisService';
 
 // Store rooms - AUTOMATICALLY GROUPED BY WIFI NETWORK
 const rooms = new Map<string, Set<string>>(); // roomId -> Set of socketIds
 const users = new Map<string, UserInfo>(); // socketId -> user info
+const roomClips = new Map<string, Set<string>>(); // roomId -> Set of clipIds (track clips per room)
 
 interface UserInfo {
   id: string;
@@ -235,6 +237,78 @@ export function initializeSocket(server: HttpServer) {
       socket.emit('existing-peers', {
         peers: existingPeers
       });
+      
+      // Send existing valid clips from this room to the new user
+      const existingClipIds = roomClips.get(autoRoomName) || new Set<string>();
+      if (existingClipIds.size > 0) {
+        console.log(`📋 Found ${existingClipIds.size} saved clips for room ${autoRoomName}, checking validity...`);
+        
+        // Check each clip to see if it still exists in Redis (hasn't expired)
+        const validClips: Array<{clipId: string; savedBy: string; savedById: string; timestamp: number; preview: string; fileName?: string; fileType?: string; isFile?: boolean}> = [];
+        const clipMetadata = (global as any).clipMetadata?.get(autoRoomName);
+        
+        // Check clips in parallel (without refreshing TTL to validate expiration)
+        const clipChecks = Array.from(existingClipIds).map(async (clipId) => {
+          try {
+            // Check if clip exists in Redis without refreshing TTL
+            const exists = await checkClipExists(clipId);
+            if (exists) {
+              // Clip exists, get full data (this will refresh TTL)
+              const result = await getClip(clipId, true);
+              if (result.success && result.data) {
+                // Get metadata if available
+                const metadata = clipMetadata?.get(clipId);
+                
+                // Decode preview from metadata or from Redis data
+                let preview = metadata?.preview || '';
+                if (!preview) {
+                  try {
+                    const decodedText = Buffer.from(result.data.clipText, 'base64').toString('utf8');
+                    preview = decodedText.length > 200 
+                      ? decodedText.substring(0, 200) + '...' 
+                      : decodedText;
+                  } catch (e) {
+                    preview = '[Binary content]';
+                  }
+                }
+                
+                const clipEntry: any = {
+                  clipId: clipId,
+                  savedBy: metadata?.savedBy || 'Network User',
+                  savedById: metadata?.savedById || '',
+                  timestamp: metadata?.timestamp || Date.now(),
+                  preview: preview
+                };
+                
+                if (result.data.fileName) clipEntry.fileName = result.data.fileName;
+                if (result.data.fileType) clipEntry.fileType = result.data.fileType;
+                if (result.data.isFile !== undefined) clipEntry.isFile = result.data.isFile;
+                
+                validClips.push(clipEntry);
+              }
+            } else {
+              // Clip expired in Redis, remove from tracking and delete metadata
+              console.log(`⚠️ Clip ${clipId} expired in Redis, removing from room list and metadata`);
+              roomClips.get(autoRoomName)?.delete(clipId);
+              clipMetadata?.delete(clipId);
+            }
+          } catch (error) {
+            // Clip expired or not found, skip it
+            console.log(`⚠️ Clip ${clipId} error checking, removing from room list`);
+            roomClips.get(autoRoomName)?.delete(clipId);
+            clipMetadata?.delete(clipId);
+          }
+        });
+        
+        await Promise.all(clipChecks);
+        
+        if (validClips.length > 0) {
+          console.log(`✅ Sending ${validClips.length} valid clips to new user ${userName}`);
+          socket.emit('existing-clips', {
+            clips: validClips
+          });
+        }
+      }
     });
     
     // Handle WebRTC signaling for P2P connection
@@ -304,6 +378,198 @@ export function initializeSocket(server: HttpServer) {
       console.log(`✅ Message broadcasted to WiFi network: ${user.roomId}`);
     });
     
+     // Handle save clip to Redis
+     socket.on('save-clip', async (data: { clipId?: string; clipText: string; fileName?: string; fileType?: string }) => {
+      const user = users.get(socket.id);
+      if (!user) {
+        socket.emit('save-clip-response', {
+          success: false,
+          error: 'User not found. Please join the network first.'
+        });
+        return;
+      }
+
+      try {
+        // Generate clipId if not provided
+        const clipId = data.clipId || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+        const clipText = data.clipText;
+
+        if (!clipText) {
+          socket.emit('save-clip-response', {
+            success: false,
+            error: 'clipText is required'
+          });
+          return;
+        }
+
+        console.log(`💾 User ${user.name} saving clip: ${clipId}${data.fileName ? ` (file: ${data.fileName})` : ''}`);
+
+        const result = await saveClip(clipId, clipText, data.fileName, data.fileType);
+
+        if (result.success) {
+          socket.emit('save-clip-response', {
+            success: true,
+            clipId: clipId,
+            message: 'Clip saved successfully',
+            expiresIn: 1800 // 30 minutes
+          });
+          
+          // Get preview text
+          let previewText = '';
+          if (data.fileName) {
+            // For files, show file name as preview
+            previewText = `📁 ${data.fileName}`;
+          } else {
+            // For text, decode base64 to get preview (first 200 chars)
+            try {
+              const decodedText = Buffer.from(clipText, 'base64').toString('utf8');
+              previewText = decodedText.length > 200 
+                ? decodedText.substring(0, 200) + '...' 
+                : decodedText;
+            } catch (e) {
+              previewText = '[Binary content]';
+            }
+          }
+          
+          // Track this clip in the room (store metadata for later retrieval)
+          if (!roomClips.has(user.roomId)) {
+            roomClips.set(user.roomId, new Set());
+          }
+          roomClips.get(user.roomId)?.add(clipId);
+          
+          // Store clip metadata for new users (roomId -> clipId -> metadata)
+          if (!(global as any).clipMetadata) {
+            (global as any).clipMetadata = new Map();
+          }
+          if (!(global as any).clipMetadata.has(user.roomId)) {
+            (global as any).clipMetadata.set(user.roomId, new Map());
+          }
+          (global as any).clipMetadata.get(user.roomId).set(clipId, {
+            savedBy: user.name,
+            savedById: user.id,
+            timestamp: Date.now(),
+            preview: previewText,
+            fileName: data.fileName,
+            fileType: data.fileType,
+            isFile: !!data.fileName
+          });
+          
+          // Broadcast clip ID and preview to all users in the same WiFi network
+          io.to(user.roomId).emit('clip-saved', {
+            clipId: clipId,
+            savedBy: user.name,
+            savedById: user.id,
+            timestamp: Date.now(),
+            preview: previewText,
+            fileName: data.fileName,
+            fileType: data.fileType,
+            isFile: !!data.fileName
+          });
+          
+          console.log(`✅ Clip ${clipId} saved by ${user.name} and broadcasted to room: ${user.roomId}`);
+        } else {
+          socket.emit('save-clip-response', {
+            success: false,
+            error: result.error || 'Failed to save clip'
+          });
+        }
+      } catch (error: any) {
+        console.error('Error saving clip:', error);
+        socket.emit('save-clip-response', {
+          success: false,
+          error: error.message || 'Internal server error'
+        });
+      }
+    });
+
+    // Handle get clip from Redis
+    socket.on('get-clip', async (data: { clipId: string }) => {
+      const user = users.get(socket.id);
+      if (!user) {
+        socket.emit('get-clip-response', {
+          success: false,
+          error: 'User not found. Please join the network first.'
+        });
+        return;
+      }
+
+      try {
+        const { clipId } = data;
+
+        if (!clipId) {
+          socket.emit('get-clip-response', {
+            success: false,
+            error: 'clipId is required'
+          });
+          return;
+        }
+
+        console.log(`📖 User ${user.name} requesting clip: ${clipId}`);
+
+        const result = await getClip(clipId);
+
+        if (result.success && result.data) {
+          socket.emit('get-clip-response', {
+            success: true,
+            data: result.data,
+            expiresIn: 1800 // 30 minutes (TTL refreshed)
+          });
+          console.log(`✅ Clip ${clipId} retrieved by ${user.name}`);
+        } else {
+          socket.emit('get-clip-response', {
+            success: false,
+            error: result.error || 'Clip not found or expired'
+          });
+        }
+      } catch (error: any) {
+        console.error('Error getting clip:', error);
+        socket.emit('get-clip-response', {
+          success: false,
+          error: error.message || 'Internal server error'
+        });
+      }
+    });
+
+    // Handle delete clip from Redis
+    socket.on('delete-clip', async (data: { clipId: string }) => {
+      const user = users.get(socket.id);
+      if (!user) {
+        socket.emit('delete-clip-response', {
+          success: false,
+          error: 'User not found. Please join the network first.'
+        });
+        return;
+      }
+
+      try {
+        const { clipId } = data;
+
+        if (!clipId) {
+          socket.emit('delete-clip-response', {
+            success: false,
+            error: 'clipId is required'
+          });
+          return;
+        }
+
+        console.log(`🗑️ User ${user.name} deleting clip: ${clipId}`);
+
+        const result = await deleteClip(clipId);
+
+        socket.emit('delete-clip-response', {
+          success: result.success,
+          message: result.success ? 'Clip deleted successfully' : undefined,
+          error: result.error
+        });
+      } catch (error: any) {
+        console.error('Error deleting clip:', error);
+        socket.emit('delete-clip-response', {
+          success: false,
+          error: error.message || 'Internal server error'
+        });
+      }
+    });
+    
     // Handle disconnection
     socket.on('disconnect', () => {
       console.log('❌ User disconnected:', socket.id);
@@ -362,6 +628,39 @@ export function initializeSocket(server: HttpServer) {
     });
     console.log('');
   }, 30000); // Every 30 seconds
+
+  // Periodic cleanup: Remove expired clips from metadata (every 5 minutes)
+  setInterval(async () => {
+    console.log('🧹 Starting periodic cleanup of expired clips...');
+    const clipMetadata = (global as any).clipMetadata;
+    
+    if (!clipMetadata) return;
+
+    let totalRemoved = 0;
+    
+    for (const [roomId, roomClipMap] of clipMetadata.entries()) {
+      const clipIds = Array.from(roomClipMap.keys()) as string[];
+      
+      for (const clipId of clipIds) {
+        try {
+          const exists = await checkClipExists(clipId);
+          if (!exists) {
+            // Clip expired in Redis, remove from metadata and room tracking
+            console.log(`🗑️ Removing expired clip ${clipId} from room ${roomId}`);
+            roomClipMap.delete(clipId);
+            roomClips.get(roomId as string)?.delete(clipId);
+            totalRemoved++;
+          }
+        } catch (error) {
+          console.error(`Error checking clip ${clipId}:`, error);
+        }
+      }
+    }
+
+    if (totalRemoved > 0) {
+      console.log(`✅ Cleanup complete: Removed ${totalRemoved} expired clip(s) from metadata`);
+    }
+  }, 5 * 60 * 1000); // Every 5 minutes
   
   return io;
 }
