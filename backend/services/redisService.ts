@@ -43,23 +43,31 @@ function getRedisClient(): Redis | null {
 
     redis = new Redis(redisOptions);
 
+    const redisHost = process.env.REDIS_HOST || 'localhost';
+    const redisPort = process.env.REDIS_PORT || 6379;
+    console.log(`🔧 Initializing Redis connection to ${redisHost}:${redisPort}`);
+
     redis.on('error', (err) => {
       console.error('❌ Redis connection error:', err.message);
       redisConnected = false;
     });
 
     redis.on('connect', () => {
-      console.log('🔌 Redis connecting...');
+      console.log(`🔌 Redis connecting to ${redisHost}:${redisPort}...`);
     });
 
     redis.on('ready', () => {
-      console.log('✅ Redis connected and ready');
+      console.log(`✅ Redis connected and ready at ${redisHost}:${redisPort}`);
       redisConnected = true;
     });
 
     redis.on('close', () => {
       console.log('⚠️ Redis connection closed');
       redisConnected = false;
+    });
+
+    redis.on('reconnecting', (delay: number) => {
+      console.log(`🔄 Redis reconnecting in ${delay}ms...`);
     });
 
     redisInitialized = true;
@@ -80,14 +88,21 @@ export async function checkRedisConnection(): Promise<boolean> {
   }
 
   try {
-    // Try to connect if not connected
-    if (!redisConnected) {
-      await client.connect();
+    // ioredis automatically connects on first command with lazyConnect: true
+    // Try to ping to check if connection is alive
+    const result = await client.ping();
+    if (result === 'PONG') {
+      redisConnected = true;
+      return true;
     }
-    await client.ping();
-    return true;
-  } catch (error) {
-    console.error('Redis ping failed:', error);
+    return false;
+  } catch (error: any) {
+    console.error('Redis connection check failed:', error.message);
+    console.error('   Details:', error.code || 'Unknown error');
+    redisConnected = false;
+    
+    // If connection failed, the error will be caught and we'll return false
+    // ioredis will automatically retry based on retryStrategy
     return false;
   }
 }
@@ -116,9 +131,11 @@ export async function saveClip(clipId: string, clipText: string, fileName?: stri
     if (!redisConnected) {
       const isConnected = await checkRedisConnection();
       if (!isConnected) {
+        const redisHost = process.env.REDIS_HOST || 'localhost';
+        const redisPort = process.env.REDIS_PORT || 6379;
         return {
           success: false,
-          error: 'Redis server is not available. Please make sure Redis is running (brew services start redis).',
+          error: `Redis server is not available at ${redisHost}:${redisPort}. Please ensure Redis is installed and running on your server.`,
         };
       }
     }
@@ -171,16 +188,25 @@ export async function saveClip(clipId: string, clipText: string, fileName?: stri
 export async function checkClipExists(clipId: string): Promise<boolean> {
   const client = getRedisClient();
   
-  if (!client || !redisConnected) {
+  if (!client) {
     return false;
   }
 
   try {
+    // Ensure connection before checking
+    if (!redisConnected) {
+      const isConnected = await checkRedisConnection();
+      if (!isConnected) {
+        return false;
+      }
+    }
+
     const key = `clip:${clipId}`;
     const exists = await client.exists(key);
     return exists === 1;
   } catch (error: any) {
-    console.error('Error checking clip existence:', error);
+    console.error('Error checking clip existence:', error.message);
+    redisConnected = false;
     return false;
   }
 }
@@ -201,9 +227,11 @@ export async function getClip(clipId: string, refreshTTL: boolean = true): Promi
     if (!redisConnected) {
       const isConnected = await checkRedisConnection();
       if (!isConnected) {
+        const redisHost = process.env.REDIS_HOST || 'localhost';
+        const redisPort = process.env.REDIS_PORT || 6379;
         return {
           success: false,
-          error: 'Redis server is not available. Please make sure Redis is running (brew services start redis).',
+          error: `Redis server is not available at ${redisHost}:${redisPort}. Please ensure Redis is installed and running on your server.`,
         };
       }
     }
@@ -256,9 +284,11 @@ export async function deleteClip(clipId: string): Promise<{ success: boolean; er
     if (!redisConnected) {
       const isConnected = await checkRedisConnection();
       if (!isConnected) {
+        const redisHost = process.env.REDIS_HOST || 'localhost';
+        const redisPort = process.env.REDIS_PORT || 6379;
         return {
           success: false,
-          error: 'Redis server is not available. Please make sure Redis is running (brew services start redis).',
+          error: `Redis server is not available at ${redisHost}:${redisPort}. Please ensure Redis is installed and running on your server.`,
         };
       }
     }

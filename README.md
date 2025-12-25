@@ -326,6 +326,78 @@ The application uses the following environment variables:
 - `DB_USER` - Database username
 - `DB_PASSWORD` - Database password
 - `DATABASE_URL` - Complete database connection string
+- `REDIS_HOST` - Redis server host (default: localhost)
+- `REDIS_PORT` - Redis server port (default: 6379)
+- `REDIS_PASSWORD` - Redis password (optional, only if Redis requires authentication)
+- `FRONTEND_URL` - Frontend URL for CORS (default: http://localhost:3000)
+
+## Redis Setup (Required for Clip Saving)
+
+Redis is required for saving clips with expiration (30-minute TTL). 
+
+### Installing Redis on Ubuntu/Debian (AWS VPS):
+
+```bash
+# Update package list
+sudo apt update
+
+# Install Redis
+sudo apt install redis-server -y
+
+# Start Redis service
+sudo systemctl start redis-server
+
+# Enable Redis to start on boot
+sudo systemctl enable redis-server
+
+# Check Redis status
+sudo systemctl status redis-server
+
+# Test Redis connection
+redis-cli ping
+# Should return: PONG
+```
+
+### Configuring Redis (if needed):
+
+If your Redis is on a different host or port, set these environment variables:
+
+```bash
+export REDIS_HOST=your-redis-host
+export REDIS_PORT=6379
+export REDIS_PASSWORD=your-redis-password  # Only if Redis requires authentication
+```
+
+### Troubleshooting Redis Connection:
+
+1. **Check if Redis is running:**
+   ```bash
+   sudo systemctl status redis-server
+   redis-cli ping
+   ```
+
+2. **Check Redis logs:**
+   ```bash
+   sudo tail -f /var/log/redis/redis-server.log
+   ```
+
+3. **Check if Redis is listening on the correct port:**
+   ```bash
+   sudo netstat -tlnp | grep 6379
+   # or
+   sudo ss -tlnp | grep 6379
+   ```
+
+4. **If using remote Redis, ensure firewall allows connection:**
+   ```bash
+   sudo ufw allow 6379/tcp
+   ```
+
+5. **For production, consider binding Redis to specific IPs for security:**
+   Edit `/etc/redis/redis.conf`:
+   ```
+   bind 127.0.0.1 your-server-ip
+   ```
 
 ## Project Structure
 

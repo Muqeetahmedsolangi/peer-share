@@ -4,7 +4,7 @@ const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const { initializeSocket } = require('./services/socketService');
-const { saveClip, getClip, deleteClip } = require('./services/redisService');
+const { saveClip, getClip, deleteClip, checkRedisConnection } = require('./services/redisService');
 
 const app = express();
 const server = http.createServer(app);
@@ -50,9 +50,20 @@ app.get('/health', (req: any, res: any) => {
 });
 
 // Start server
-server.listen(port, () => {
+server.listen(port, async () => {
   console.log('🚀 PeerShare Server started!');
   console.log(`📍 Server URL: http://localhost:${port}`);
   console.log(`🔍 Health Check: http://localhost:${port}/health`);
   console.log(`🔌 WebSocket enabled on same port`);
+  
+  // Check Redis connection on startup
+  console.log('\n🔍 Checking Redis connection...');
+  const redisConnected = await checkRedisConnection();
+  if (redisConnected) {
+    console.log('✅ Redis connection verified - clip saving is enabled\n');
+  } else {
+    console.log('⚠️  Redis connection failed - clip saving features will be disabled');
+    console.log('   Make sure Redis is installed and running on your server');
+    console.log('   Set REDIS_HOST and REDIS_PORT environment variables if needed\n');
+  }
 });
