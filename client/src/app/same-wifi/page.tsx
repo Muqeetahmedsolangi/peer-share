@@ -120,83 +120,176 @@ export default function SameWifiPage() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [receivedMessages]);
 
+    // Handle app visibility changes (when user goes to file picker and comes back)
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                // App came back to foreground (user returned from file picker)
+                console.log('📱 App returned to foreground, checking connection...');
+                
+                // Check if socket is still connected
+                if (socket) {
+                    if (!socket.connected) {
+                        console.log('⚠️ Socket disconnected while app was in background, will reconnect...');
+                        // Socket.IO should auto-reconnect, but we can manually trigger if needed
+                        if (!socket.active) {
+                            socket.connect();
+                        }
+                    } else {
+                        console.log('✅ Socket still connected');
+                    }
+                }
+            } else {
+                // App went to background (user opened file picker)
+                console.log('📱 App went to background (file picker opened)');
+            }
+        };
+
+        // Listen for visibility changes (works when file picker opens on mobile)
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        
+        // Also listen for window focus/blur (backup for desktop)
+        const handleWindowFocus = () => {
+            console.log('🪟 Window focused, checking connection...');
+            if (socket && !socket.connected) {
+                console.log('⚠️ Socket disconnected, reconnecting...');
+                if (!socket.active) {
+                    socket.connect();
+                }
+            }
+        };
+
+        const handleWindowBlur = () => {
+            console.log('🪟 Window blurred (file picker may have opened)');
+        };
+
+        window.addEventListener('focus', handleWindowFocus);
+        window.addEventListener('blur', handleWindowBlur);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('focus', handleWindowFocus);
+            window.removeEventListener('blur', handleWindowBlur);
+        };
+    }, [socket]);
+
     // Initialize WebRTC and listen for text messages
     useEffect(() => {
-        if (socket && isConnected) {
-            const service = new WebRTCService(socket, (file) => {
-                console.log('File received:', file);
-                setReceivedFiles(prev => [...prev, file]);
-                showNotification(`📁 ${file.name}`, 'success');
-            });
-            setWebrtcService(service);
+        if (socket) {
+            // Monitor connection status
+            const handleDisconnect = () => {
+                console.log('⚠️ Socket disconnected');
+                showNotification('⚠️ Connection lost. Reconnecting...', 'info');
+            };
 
-            // Listen for text messages
-            socket.on('text-message', (data: any) => {
-                const newMessage: TextMessage = {
-                    id: Math.random().toString(36),
-                    content: data.content,
-                    senderName: data.senderName,
-                    timestamp: Date.now(),
-                    type: data.isCode ? 'code' : 'text',
-                    isImage: data.isImage || false,
-                    isFile: data.isFile || false,
-                    fileName: data.fileName,
-                    fileData: data.fileData
-                };
-                setReceivedMessages(prev => [...prev, newMessage]);
-                showNotification(`💬 ${data.senderName}`, 'success');
-            });
+            const handleReconnect = () => {
+                console.log('✅ Socket reconnected');
+                showNotification('✅ Reconnected to server', 'success');
+            };
 
-            // Listen for clips saved by other users in the same WiFi network
-            socket.on('clip-saved', (data: { clipId: string; savedBy: string; savedById: string; timestamp: number; preview?: string; fileName?: string; fileType?: string; isFile?: boolean }) => {
-                setSavedClipIds(prev => {
-                    const exists = prev.some(c => c.clipId === data.clipId);
-                    if (!exists) {
-                        const previewText = data.preview ? (data.preview.length > 50 ? data.preview.substring(0, 50) + '...' : data.preview) : '';
-                        showNotification(`💾 ${data.savedBy} saved: ${previewText || 'a clip'}`, 'info');
-                        return [{
-                            clipId: data.clipId,
-                            savedBy: data.savedBy,
-                            savedById: data.savedById,
-                            timestamp: data.timestamp,
-                            preview: data.preview,
-                            fileName: data.fileName,
-                            fileType: data.fileType,
-                            isFile: data.isFile
-                        }, ...prev];
-                    }
-                    return prev;
+            const handleConnectError = (error: any) => {
+                console.error('Socket connection error:', error);
+                showNotification('❌ Connection error. Retrying...', 'info');
+            };
+
+            // Add connection monitoring
+            socket.on('disconnect', handleDisconnect);
+            socket.on('reconnect', handleReconnect);
+            socket.on('connect_error', handleConnectError);
+
+            if (isConnected) {
+                const service = new WebRTCService(socket, (file) => {
+                    console.log('File received:', file);
+                    setReceivedFiles(prev => [...prev, file]);
+                    showNotification(`📁 ${file.name}`, 'success');
                 });
-            });
+                setWebrtcService(service);
 
-            // Listen for existing clips when joining a network
-            socket.on('existing-clips', (data: { clips: ExistingClipData[] }) => {
-                if (data.clips && data.clips.length > 0) {
-                    setSavedClipIds(prev => {
-                        const newClips = data.clips.filter(clip => !prev.some(c => c.clipId === clip.clipId));
-                        if (newClips.length > 0) {
-                            showNotification(`📋 Found ${newClips.length} saved clip(s) from network`, 'info');
-                            return [...newClips.map(clip => ({
-                                clipId: clip.clipId,
-                                savedBy: clip.savedBy,
-                                savedById: clip.savedById,
-                                timestamp: clip.timestamp,
-                                preview: clip.preview,
-                                fileName: clip.fileName,
-                                fileType: clip.fileType,
-                                isFile: clip.isFile
-                            })), ...prev];
+                // Listen for text messages
+                socket.on('text-message', (data: any) => {
+                    try {
+                        const newMessage: TextMessage = {
+                            id: Math.random().toString(36),
+                            content: data.content,
+                            senderName: data.senderName,
+                            timestamp: Date.now(),
+                            type: data.isCode ? 'code' : 'text',
+                            isImage: data.isImage || false,
+                            isFile: data.isFile || false,
+                            fileName: data.fileName,
+                            fileData: data.fileData
+                        };
+                        setReceivedMessages(prev => [...prev, newMessage]);
+                        showNotification(`💬 ${data.senderName}`, 'success');
+                    } catch (error) {
+                        console.error('Error handling text message:', error);
+                    }
+                });
+
+                // Listen for clips saved by other users in the same WiFi network
+                socket.on('clip-saved', (data: { clipId: string; savedBy: string; savedById: string; timestamp: number; preview?: string; fileName?: string; fileType?: string; isFile?: boolean }) => {
+                    try {
+                        setSavedClipIds(prev => {
+                            const exists = prev.some(c => c.clipId === data.clipId);
+                            if (!exists) {
+                                const previewText = data.preview ? (data.preview.length > 50 ? data.preview.substring(0, 50) + '...' : data.preview) : '';
+                                showNotification(`💾 ${data.savedBy} saved: ${previewText || 'a clip'}`, 'info');
+                                return [{
+                                    clipId: data.clipId,
+                                    savedBy: data.savedBy,
+                                    savedById: data.savedById,
+                                    timestamp: data.timestamp,
+                                    preview: data.preview,
+                                    fileName: data.fileName,
+                                    fileType: data.fileType,
+                                    isFile: data.isFile
+                                }, ...prev];
+                            }
+                            return prev;
+                        });
+                    } catch (error) {
+                        console.error('Error handling clip-saved:', error);
+                    }
+                });
+
+                // Listen for existing clips when joining a network
+                socket.on('existing-clips', (data: { clips: ExistingClipData[] }) => {
+                    try {
+                        if (data.clips && data.clips.length > 0) {
+                            setSavedClipIds(prev => {
+                                const newClips = data.clips.filter(clip => !prev.some(c => c.clipId === clip.clipId));
+                                if (newClips.length > 0) {
+                                    showNotification(`📋 Found ${newClips.length} saved clip(s) from network`, 'info');
+                                    return [...newClips.map(clip => ({
+                                        clipId: clip.clipId,
+                                        savedBy: clip.savedBy,
+                                        savedById: clip.savedById,
+                                        timestamp: clip.timestamp,
+                                        preview: clip.preview,
+                                        fileName: clip.fileName,
+                                        fileType: clip.fileType,
+                                        isFile: clip.isFile
+                                    })), ...prev];
+                                }
+                                return prev;
+                            });
                         }
-                        return prev;
-                    });
-                }
-            });
+                    } catch (error) {
+                        console.error('Error handling existing-clips:', error);
+                    }
+                });
+            }
         }
 
         return () => {
-            socket?.off('text-message');
-            socket?.off('clip-saved');
-            socket?.off('existing-clips');
+            if (socket) {
+                socket.off('text-message');
+                socket.off('clip-saved');
+                socket.off('existing-clips');
+                socket.off('disconnect');
+                socket.off('reconnect');
+                socket.off('connect_error');
+            }
         };
     }, [socket, isConnected]);
 
@@ -209,18 +302,156 @@ export default function SameWifiPage() {
         setTimeout(() => notification.remove(), 2500);
     };
 
+    // Helper function to wait for socket connection with retry logic
+    const waitForConnection = async (maxWaitTime: number = 5000): Promise<boolean> => {
+        if (!socket) {
+            console.log('⚠️ No socket instance available');
+            return false;
+        }
+
+        // If already connected, return immediately
+        if (socket.connected) {
+            return true;
+        }
+
+        // Try to reconnect if not active
+        if (!socket.active) {
+            console.log('🔄 Socket not active, attempting to connect...');
+            socket.connect();
+        }
+
+        // Wait for connection with polling and event listener
+        const startTime = Date.now();
+        return new Promise((resolve) => {
+            let resolved = false;
+
+            // Listen for connect event (more reliable than polling)
+            const onConnect = () => {
+                if (!resolved) {
+                    resolved = true;
+                    console.log('✅ Socket connected (via event)');
+                    socket.off('connect', onConnect);
+                    socket.off('connect_error', onError);
+                    resolve(true);
+                }
+            };
+
+            const onError = () => {
+                // Don't resolve on error, let timeout handle it
+                console.log('⚠️ Connection error while waiting');
+            };
+
+            socket.on('connect', onConnect);
+            socket.on('connect_error', onError);
+
+            // Also poll as backup
+            const checkConnection = () => {
+                if (resolved) return;
+
+                if (socket.connected) {
+                    if (!resolved) {
+                        resolved = true;
+                        console.log('✅ Socket connected (via polling)');
+                        socket.off('connect', onConnect);
+                        socket.off('connect_error', onError);
+                        resolve(true);
+                    }
+                    return;
+                }
+
+                const elapsed = Date.now() - startTime;
+                if (elapsed >= maxWaitTime) {
+                    if (!resolved) {
+                        resolved = true;
+                        console.log('⏱️ Connection wait timeout');
+                        socket.off('connect', onConnect);
+                        socket.off('connect_error', onError);
+                        resolve(false);
+                    }
+                    return;
+                }
+
+                // Check again after a short delay
+                setTimeout(checkConnection, 200);
+            };
+
+            checkConnection();
+        });
+    };
+
     // Handle file selection
-    const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
+    const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        try {
+            const file = event.target.files?.[0];
+            if (!file) {
+                return;
+            }
+
+            // Wait for connection after returning from file picker
+            if (socket && (!socket.connected || !isConnected)) {
+                console.log('⚠️ Socket disconnected after file picker, waiting for reconnection...');
+                showNotification('🔄 Reconnecting...', 'info');
+                
+                const connected = await waitForConnection(5000);
+                if (!connected) {
+                    showNotification('❌ Could not reconnect. Please try again.', 'info');
+                    // Reset file input
+                    if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                    }
+                    return;
+                }
+                console.log('✅ Reconnected, processing file selection');
+            }
+
             // Check file size (10MB limit)
             if (file.size > 10 * 1024 * 1024) {
                 showNotification('❌ File size exceeds 10MB limit!', 'info');
+                // Reset file input
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
                 return;
             }
+
             setSelectedFile(file);
             showNotification(`📁 ${file.name} selected`, 'success');
+        } catch (error) {
+            console.error('Error selecting file:', error);
+            showNotification('❌ Error selecting file', 'info');
+            // Reset file input on error
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         }
+    };
+
+    // Handle file input click - check connection before opening picker
+    const handleFileInputClick = async () => {
+        if (!socket) {
+            showNotification('❌ Not connected to server', 'info');
+            return;
+        }
+
+        // Check connection before opening file picker
+        if (!socket.connected || !isConnected) {
+            console.log('⚠️ Socket not connected before opening file picker, attempting to reconnect...');
+            showNotification('🔄 Checking connection...', 'info');
+            
+            // Try to reconnect quickly before opening picker
+            if (!socket.active) {
+                socket.connect();
+            }
+            
+            // Give it a short moment to reconnect, but don't block too long
+            const connected = await waitForConnection(2000);
+            if (!connected) {
+                console.log('⚠️ Not connected, but opening file picker anyway (will reconnect after selection)');
+            }
+        }
+
+        // Open file picker
+        fileInputRef.current?.click();
     };
 
     // Handle file drag and drop
@@ -241,16 +472,21 @@ export default function SameWifiPage() {
         e.stopPropagation();
         setIsDragging(false);
 
-        const files = e.dataTransfer.files;
-        if (files && files.length > 0) {
-            const file = files[0];
-            // Check file size (10MB limit)
-            if (file.size > 10 * 1024 * 1024) {
-                showNotification('❌ File size exceeds 10MB limit!', 'info');
-                return;
+        try {
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) {
+                const file = files[0];
+                // Check file size (10MB limit)
+                if (file.size > 10 * 1024 * 1024) {
+                    showNotification('❌ File size exceeds 10MB limit!', 'info');
+                    return;
+                }
+                setSelectedFile(file);
+                showNotification(`📁 ${file.name} selected`, 'success');
             }
-            setSelectedFile(file);
-            showNotification(`📁 ${file.name} selected`, 'success');
+        } catch (error) {
+            console.error('Error handling file drop:', error);
+            showNotification('❌ Error selecting file', 'info');
         }
     };
 
@@ -279,83 +515,151 @@ export default function SameWifiPage() {
 
     // Send file/image to chat (all users)
     const sendFileToChat = async () => {
-        if (!selectedFile || !socket) return;
+        if (!selectedFile) {
+            showNotification('❌ No file selected', 'info');
+            return;
+        }
+
+        if (!socket) {
+            showNotification('❌ Not connected to server', 'info');
+            return;
+        }
+
+        // Wait for connection if not connected
+        if (!socket.connected || !isConnected) {
+            console.log('⚠️ Socket not connected before sending file, waiting for reconnection...');
+            showNotification('🔄 Reconnecting...', 'info');
+            
+            const connected = await waitForConnection(5000);
+            if (!connected) {
+                showNotification('❌ Could not reconnect. Please try again.', 'info');
+                return;
+            }
+            console.log('✅ Reconnected, sending file');
+        }
 
         try {
             // Convert file to base64 data URL for images, or send file info
             if (selectedFile.type.startsWith('image/')) {
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    const dataUrl = e.target?.result as string;
-                    
-                    // Send as message with image data
-                    socket.emit('text-message', {
-                        content: dataUrl,
-                        senderName: userName || 'Anonymous',
-                        isCode: false,
-                        isImage: true,
-                        fileName: selectedFile.name,
-                        roomId: roomId
-                    });
-
-                    // Add to sent files
-                    setSentFiles(prev => {
-                        const exists = prev.some(f => f.name === selectedFile.name && f.size === selectedFile.size);
-                        if (!exists) {
-                            return [...prev, selectedFile];
-                        }
-                        return prev;
-                    });
-
-                    // Add to messages
-                    const newMessage: TextMessage = {
-                        id: Math.random().toString(36),
-                        content: dataUrl,
-                        senderName: 'You',
-                        timestamp: Date.now(),
-                        type: 'text',
-                        isImage: true,
-                        fileName: selectedFile.name
-                    };
-                    setReceivedMessages(prev => [...prev, newMessage]);
-                    setSelectedFile(null);
-                    showNotification('📤 Image shared in chat!', 'success');
+                
+                reader.onerror = (error) => {
+                    console.error('FileReader error:', error);
+                    showNotification('❌ Error reading file', 'info');
                 };
+
+                reader.onload = (e) => {
+                    try {
+                        if (!socket || !isConnected) {
+                            showNotification('❌ Connection lost', 'info');
+                            return;
+                        }
+
+                        const dataUrl = e.target?.result as string;
+                        
+                        // Send as message with image data
+                        socket.emit('text-message', {
+                            content: dataUrl,
+                            senderName: userName || 'Anonymous',
+                            isCode: false,
+                            isImage: true,
+                            fileName: selectedFile.name,
+                            roomId: roomId
+                        });
+
+                        // Add to sent files
+                        setSentFiles(prev => {
+                            const exists = prev.some(f => f.name === selectedFile.name && f.size === selectedFile.size);
+                            if (!exists) {
+                                return [...prev, selectedFile];
+                            }
+                            return prev;
+                        });
+
+                        // Add to messages
+                        const newMessage: TextMessage = {
+                            id: Math.random().toString(36),
+                            content: dataUrl,
+                            senderName: 'You',
+                            timestamp: Date.now(),
+                            type: 'text',
+                            isImage: true,
+                            fileName: selectedFile.name
+                        };
+                        setReceivedMessages(prev => [...prev, newMessage]);
+                        setSelectedFile(null);
+                        
+                        // Reset file input
+                        if (fileInputRef.current) {
+                            fileInputRef.current.value = '';
+                        }
+                        
+                        showNotification('📤 Image shared in chat!', 'success');
+                    } catch (error) {
+                        console.error('Error sending image:', error);
+                        showNotification('❌ Failed to send image', 'info');
+                    }
+                };
+                
                 reader.readAsDataURL(selectedFile);
             } else {
                 // For non-image files, convert to base64 and send
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    const base64Data = e.target?.result as string;
-                    
-                    socket.emit('text-message', {
-                        content: `📁 ${selectedFile.name} (${(selectedFile.size / 1024 / 1024).toFixed(2)} MB)`,
-                        senderName: userName || 'Anonymous',
-                        isCode: false,
-                        isFile: true,
-                        fileName: selectedFile.name,
-                        fileData: base64Data,
-                        fileType: selectedFile.type,
-                        roomId: roomId
-                    });
-
-                    const newMessage: TextMessage = {
-                        id: Math.random().toString(36),
-                        content: `📁 ${selectedFile.name} (${(selectedFile.size / 1024 / 1024).toFixed(2)} MB)`,
-                        senderName: 'You',
-                        timestamp: Date.now(),
-                        type: 'text',
-                        isFile: true,
-                        fileName: selectedFile.name,
-                        fileData: base64Data
-                    };
-                    setReceivedMessages(prev => [...prev, newMessage]);
-                    setSelectedFile(null);
-                    showNotification('📤 File shared in chat!', 'success');
+                
+                reader.onerror = (error) => {
+                    console.error('FileReader error:', error);
+                    showNotification('❌ Error reading file', 'info');
                 };
+
+                reader.onload = (e) => {
+                    try {
+                        if (!socket || !isConnected) {
+                            showNotification('❌ Connection lost', 'info');
+                            return;
+                        }
+
+                        const base64Data = e.target?.result as string;
+                        
+                        socket.emit('text-message', {
+                            content: `📁 ${selectedFile.name} (${(selectedFile.size / 1024 / 1024).toFixed(2)} MB)`,
+                            senderName: userName || 'Anonymous',
+                            isCode: false,
+                            isFile: true,
+                            fileName: selectedFile.name,
+                            fileData: base64Data,
+                            fileType: selectedFile.type,
+                            roomId: roomId
+                        });
+
+                        const newMessage: TextMessage = {
+                            id: Math.random().toString(36),
+                            content: `📁 ${selectedFile.name} (${(selectedFile.size / 1024 / 1024).toFixed(2)} MB)`,
+                            senderName: 'You',
+                            timestamp: Date.now(),
+                            type: 'text',
+                            isFile: true,
+                            fileName: selectedFile.name,
+                            fileData: base64Data
+                        };
+                        setReceivedMessages(prev => [...prev, newMessage]);
+                        setSelectedFile(null);
+                        
+                        // Reset file input
+                        if (fileInputRef.current) {
+                            fileInputRef.current.value = '';
+                        }
+                        
+                        showNotification('📤 File shared in chat!', 'success');
+                    } catch (error) {
+                        console.error('Error sending file:', error);
+                        showNotification('❌ Failed to send file', 'info');
+                    }
+                };
+                
                 reader.readAsDataURL(selectedFile);
             }
         } catch (error) {
+            console.error('Error in sendFileToChat:', error);
             showNotification('❌ Failed to share file', 'info');
         }
     };
@@ -903,7 +1207,7 @@ export default function SameWifiPage() {
                                                                 <code className="break-words break-all">{msg.content}</code>
                                                             </pre>
                                                         </div>
-                                                    ) : msg.isImage && msg.content.startsWith('data:image') ? (
+                                                    ) : (msg.isImage || msg.content.startsWith('data:image')) ? (
                                                         <div className="space-y-2 w-full">
                                                             <img 
                                                                 src={msg.content} 
@@ -1340,7 +1644,7 @@ export default function SameWifiPage() {
                                     onDragOver={handleDragOver}
                                     onDragLeave={handleDragLeave}
                                     onDrop={handleDrop}
-                                    onClick={() => fileInputRef.current?.click()}
+                                    onClick={handleFileInputClick}
                                     className={`relative border-2 border-dashed rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300 ${
                                         selectedFile ? 'flex-[0.8]' : 'flex-1'
                                     } ${
@@ -1481,7 +1785,7 @@ export default function SameWifiPage() {
                                                                             <code className="break-words break-all">{msg.content}</code>
                                                                         </pre>
                                                                     </div>
-                                                                ) : msg.isImage && msg.content.startsWith('data:image') ? (
+                                                                ) : (msg.isImage || msg.content.startsWith('data:image')) ? (
                                                                     <div className="space-y-2 w-full">
                                                                         <img 
                                                                             src={msg.content} 

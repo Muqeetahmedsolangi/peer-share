@@ -21,7 +21,11 @@ export function useSocket(userName: string, roomName: string = 'my-wifi-room') {
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionDelay: 1000,
-      reconnectionAttempts: 5
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: Infinity, // Keep trying to reconnect indefinitely
+      timeout: 20000,
+      forceNew: false,
+      autoConnect: true
     });
     
     socketInstance.on('connect', () => {
@@ -58,13 +62,41 @@ export function useSocket(userName: string, roomName: string = 'my-wifi-room') {
       console.log('📋 Existing peers:', data.peers.length);
     });
     
-    socketInstance.on('disconnect', () => {
-      console.log('❌ Disconnected from server');
+    socketInstance.on('disconnect', (reason) => {
+      console.log('❌ Disconnected from server. Reason:', reason);
       setIsConnected(false);
+      
+      // If disconnect is due to transport close (like going to background), reconnect
+      if (reason === 'transport close' || reason === 'ping timeout') {
+        console.log('🔄 Attempting to reconnect...');
+      }
     });
     
     socketInstance.on('connect_error', (error) => {
       console.error('❌ Connection error:', error);
+      setIsConnected(false);
+    });
+
+    socketInstance.on('reconnect_attempt', (attemptNumber) => {
+      console.log(`🔄 Reconnection attempt ${attemptNumber}...`);
+    });
+
+    socketInstance.on('reconnect', (attemptNumber) => {
+      console.log(`✅ Reconnected after ${attemptNumber} attempts`);
+      setIsConnected(true);
+      
+      // Rejoin the network after reconnection
+      if (userName) {
+        socketInstance.emit('join-network', { 
+          userName: userName,
+          roomName: roomName
+        });
+        console.log(`📡 Rejoining room "${roomName}" as "${userName}"`);
+      }
+    });
+
+    socketInstance.on('reconnect_failed', () => {
+      console.error('❌ Reconnection failed after all attempts');
     });
     
     setSocket(socketInstance);

@@ -363,7 +363,7 @@ export function initializeSocket(server: HttpServer) {
         return;
       }
       
-      const messageType = data.isCode ? 'Code' : 'Text';
+      const messageType = data.isCode ? 'Code' : data.isImage ? 'Image' : 'Text';
       console.log(`💬 ${messageType} message from ${user.name} in room: ${user.roomId}`);
       
       // Broadcast ONLY to users in the same WiFi network
@@ -372,6 +372,9 @@ export function initializeSocket(server: HttpServer) {
         senderName: user.name,
         senderId: socket.id,
         isCode: data.isCode || false,
+        isImage: data.isImage || false,
+        fileName: data.fileName,
+        fileData: data.fileData,
         timestamp: Date.now()
       });
       
