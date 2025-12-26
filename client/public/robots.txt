@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://dropsos.com/sitemap.xml
+
+# Disallow admin and private areas
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/
+
+# Allow important pages
+Allow: /
+Allow: /blog
+Allow: /about
+Allow: /security
+Allow: /privacy
+Allow: /terms
+Allow: /contact
+Allow: /pricing
+Allow: /create-room
+Allow: /same-wifi
+

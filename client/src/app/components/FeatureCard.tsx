@@ -21,34 +21,11 @@ export default function FeatureCard({ activeFeature, onFeatureChange }: FeatureC
       router.push('/create-room');
     } else if (featureId === 1) { // Same WiFi feature
       router.push('/same-wifi');
-    } else if (featureId === 2) { // Security feature
-      router.push('/security');
     }
   };
 
   // Professional Feature data with clean design
   const features = [
-    {
-      id: 0,
-      title: "Create Room",
-      subtitle: "Secure Private Sharing",
-      description: "Deploy secure file rooms with enterprise-grade authentication and access controls for teams and businesses.",
-      techStack: ["WebRTC", "GraphQL", "Socket.IO"],
-      colorScheme: {
-        primary: "bg-blue-600",
-        secondary: "bg-blue-600/90 hover:bg-blue-500",
-        glow: "shadow-blue-500/25",
-        border: "border-blue-500/30",
-        tech: "bg-blue-500/20 text-blue-300 border-blue-500/30",
-        accent: "text-blue-400"
-      },
-      icon: (
-        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-      ),
-      colSpan: "md:col-span-1"
-    },
     {
       id: 1,
       title: "Same WiFi",
@@ -71,30 +48,30 @@ export default function FeatureCard({ activeFeature, onFeatureChange }: FeatureC
       colSpan: "md:col-span-1"
     },
     {
-      id: 2,
-      title: "Military Security",
-      subtitle: "AES-256 Encrypted",
-      description: "Military-grade end-to-end encryption with perfect forward secrecy and quantum-resistant algorithms.",
-      techStack: ["AES-256", "DTLS", "SRTP"],
+      id: 0,
+      title: "Create Room",
+      subtitle: "Secure Private Sharing",
+      description: "Deploy secure file rooms with enterprise-grade authentication and access controls for teams and businesses.",
+      techStack: ["WebRTC", "GraphQL", "Socket.IO"],
       colorScheme: {
-        primary: "bg-emerald-600",
-        secondary: "bg-emerald-600/90 hover:bg-emerald-500",
-        glow: "shadow-emerald-500/25",
-        border: "border-emerald-500/30",
-        tech: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
-        accent: "text-emerald-400"
+        primary: "bg-blue-600",
+        secondary: "bg-blue-600/90 hover:bg-blue-500",
+        glow: "shadow-blue-500/25",
+        border: "border-blue-500/30",
+        tech: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+        accent: "text-blue-400"
       },
       icon: (
         <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
       ),
-      colSpan: "md:col-span-2 lg:col-span-1"
+      colSpan: "md:col-span-1"
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       {features.map((feature, index) => {
         const isActive = activeFeature === feature.id;
 

@@ -191,23 +191,22 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/favicon-16x16.png", type: "image/png", sizes: "16x16" },
-      { url: "/favicon-32x32.png", type: "image/png", sizes: "32x32" },
-      { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
-      { url: "/icon-512.png", type: "image/png", sizes: "512x512" },
-      { url: "/logo.png", type: "image/png", sizes: "512x512" },
+      { url: "/myfavicon.png", sizes: "any" },
+      { url: "/myfavicon.png", type: "image/png", sizes: "225x225" },
+      { url: "/myfavicon.png", type: "image/png", sizes: "32x32" },
+      { url: "/myfavicon.png", type: "image/png", sizes: "192x192" },
+      { url: "/myfavicon.png", type: "image/png", sizes: "512x512" },
     ],
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-      { url: "/logo.png", sizes: "512x512", type: "image/png" },
+      { url: "/myfavicon.png", sizes: "180x180", type: "image/png" },
+      { url: "/myfavicon.png", sizes: "225x225", type: "image/png" },
     ],
-    shortcut: "/favicon.ico",
+    shortcut: "/myfavicon.png",
     other: [
       {
         rel: "mask-icon",
-        url: "/safari-pinned-tab.svg",
-        color: "#ff6b35",
+        url: "/myfavicon.png",
+        color: "#1a42a8",
       },
     ],
   },
@@ -432,8 +431,8 @@ export default function RootLayout({
       }
     ],
     sameAs: [
-      "https://github.com/muqeetahmed",
-      "https://linkedin.com/in/muqeetahmed", 
+      "https://github.com/Muqeetahmedsolangi",
+      "https://github.com/Muqeetahmedsolangi", 
       "https://twitter.com/muqeetahmed",
       "https://facebook.com/dropsos",
       "https://instagram.com/dropsos",
@@ -517,7 +516,7 @@ export default function RootLayout({
       jobTitle: "Founder & CEO",
       url: "https://linkedin.com/in/muqeetahmed",
       sameAs: [
-        "https://github.com/muqeetahmed",
+        "https://github.com/Muqeetahmedsolangi",
         "https://twitter.com/muqeetahmed"
       ]
     },
@@ -589,7 +588,7 @@ export default function RootLayout({
       name: "Dropsos Holdings"
     },
     sameAs: [
-      "https://github.com/muqeetahmed",
+      "https://github.com/Muqeetahmedsolangi",
       "https://linkedin.com/company/dropsos",
       "https://twitter.com/dropsos",
       "https://facebook.com/dropsos",

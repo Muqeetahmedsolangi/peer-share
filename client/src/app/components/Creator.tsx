@@ -57,7 +57,7 @@ export default function Creator() {
             {/* Social Links - Compact */}
             <div className="flex justify-center sm:justify-start space-x-3">
               <a 
-                href="https://github.com/muqeetahmed" 
+                href="https://github.com/Muqeetahmedsolangi" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="group w-8 h-8 sm:w-9 sm:h-9 bg-slate-700/50 rounded-lg flex items-center justify-center hover:bg-slate-600/50 transition-all duration-300 hover:scale-110"
