@@ -18,8 +18,8 @@ function getRedisClient(): Redis | null {
   try {
     // Build Redis options conditionally
     const redisOptions: any = {
-      host: process.env.REDIS_HOST || 'localhost',
-      port: Number(process.env.REDIS_PORT) || 6379,
+  host: process.env.REDIS_HOST || 'localhost',
+  port: Number(process.env.REDIS_PORT) || 6379,
       retryStrategy: (times: number) => {
         // Stop retrying after 3 attempts
         if (times > 3) {
@@ -27,11 +27,11 @@ function getRedisClient(): Redis | null {
           return null; // Stop retrying
         }
         const delay = Math.min(times * 100, 1000);
-        return delay;
-      },
+    return delay;
+  },
       maxRetriesPerRequest: null, // Allow unlimited retries for individual requests
       connectTimeout: 5000, // 5 seconds timeout
-      enableReadyCheck: true,
+  enableReadyCheck: true,
       lazyConnect: true, // Don't connect immediately - connect when needed
       showFriendlyErrorStack: true,
     };
@@ -47,24 +47,24 @@ function getRedisClient(): Redis | null {
     const redisPort = process.env.REDIS_PORT || 6379;
     console.log(`🔧 Initializing Redis connection to ${redisHost}:${redisPort}`);
 
-    redis.on('error', (err) => {
-      console.error('❌ Redis connection error:', err.message);
-      redisConnected = false;
-    });
+redis.on('error', (err) => {
+  console.error('❌ Redis connection error:', err.message);
+  redisConnected = false;
+});
 
-    redis.on('connect', () => {
+redis.on('connect', () => {
       console.log(`🔌 Redis connecting to ${redisHost}:${redisPort}...`);
-    });
+});
 
-    redis.on('ready', () => {
+redis.on('ready', () => {
       console.log(`✅ Redis connected and ready at ${redisHost}:${redisPort}`);
-      redisConnected = true;
-    });
+  redisConnected = true;
+});
 
-    redis.on('close', () => {
-      console.log('⚠️ Redis connection closed');
-      redisConnected = false;
-    });
+redis.on('close', () => {
+  console.log('⚠️ Redis connection closed');
+  redisConnected = false;
+});
 
     redis.on('reconnecting', (delay: number) => {
       console.log(`🔄 Redis reconnecting in ${delay}ms...`);
@@ -93,7 +93,7 @@ export async function checkRedisConnection(): Promise<boolean> {
     const result = await client.ping();
     if (result === 'PONG') {
       redisConnected = true;
-      return true;
+    return true;
     }
     return false;
   } catch (error: any) {
@@ -251,7 +251,7 @@ export async function getClip(clipId: string, refreshTTL: boolean = true): Promi
     // Refresh TTL on access (reset to 30 minutes) only if requested
     if (refreshTTL) {
       await client.expire(key, TTL_SECONDS);
-      console.log(`📖 Retrieved clip ${clipId}, TTL refreshed`);
+    console.log(`📖 Retrieved clip ${clipId}, TTL refreshed`);
     }
 
     return {

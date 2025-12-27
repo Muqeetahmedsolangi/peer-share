@@ -91,8 +91,12 @@ export default function BlogPostClient({ post }: BlogPostClientProps) {
               {/* Enhanced Author Info */}
               <div className="flex items-center justify-between mb-10 pb-8 border-b border-white/10">
                 <div className="flex items-center space-x-4">
-                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
-                    <span className="text-white font-bold text-xl">{post.authorAvatar}</span>
+                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg overflow-hidden">
+                    <img 
+                      src="/muqeetahmed.jpeg" 
+                      alt={post.author} 
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <div>
                     <h3 className="text-white font-bold text-lg">{post.author}</h3>

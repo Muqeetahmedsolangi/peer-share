@@ -67,8 +67,12 @@ export default function BlogListClient({ posts }: BlogListClientProps) {
 
             {/* Author Info Card */}
             <div className="inline-flex items-center space-x-4 bg-slate-800/40 backdrop-blur-xl border border-white/10 rounded-2xl px-6 py-4 mb-8">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-lg">MA</span>
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center overflow-hidden">
+                <img 
+                  src="/muqeetahmed.jpeg" 
+                  alt="Muqeet Ahmed" 
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="text-left">
                 <h3 className="text-white font-semibold">Muqeet Ahmed</h3>
@@ -168,8 +172,12 @@ export default function BlogListClient({ posts }: BlogListClientProps) {
             {/* Author Profile Card */}
             <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-3xl p-8">
               <div className="text-center">
-                <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <span className="text-white font-bold text-2xl">MA</span>
+                <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6 overflow-hidden">
+                  <img 
+                    src="/muqeetahmed.jpeg" 
+                    alt="Muqeet Ahmed" 
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <h3 className="text-2xl font-bold text-white mb-2">Muqeet Ahmed</h3>
                 <p className="text-blue-400 font-semibold mb-4">Full Stack Developer & DevOps Engineer</p>

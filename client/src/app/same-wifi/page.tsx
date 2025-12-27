@@ -198,29 +198,29 @@ export default function SameWifiPage() {
             socket.on('connect_error', handleConnectError);
 
             if (isConnected) {
-                const service = new WebRTCService(socket, (file) => {
-                    console.log('File received:', file);
-                    setReceivedFiles(prev => [...prev, file]);
-                    showNotification(`📁 ${file.name}`, 'success');
-                });
-                setWebrtcService(service);
+            const service = new WebRTCService(socket, (file) => {
+                console.log('File received:', file);
+                setReceivedFiles(prev => [...prev, file]);
+                showNotification(`📁 ${file.name}`, 'success');
+            });
+            setWebrtcService(service);
 
-                // Listen for text messages
-                socket.on('text-message', (data: any) => {
+            // Listen for text messages
+            socket.on('text-message', (data: any) => {
                     try {
-                        const newMessage: TextMessage = {
-                            id: Math.random().toString(36),
-                            content: data.content,
-                            senderName: data.senderName,
-                            timestamp: Date.now(),
+                const newMessage: TextMessage = {
+                    id: Math.random().toString(36),
+                    content: data.content,
+                    senderName: data.senderName,
+                    timestamp: Date.now(),
                             type: data.isCode ? 'code' : 'text',
                             isImage: data.isImage || false,
                             isFile: data.isFile || false,
                             fileName: data.fileName,
                             fileData: data.fileData
-                        };
-                        setReceivedMessages(prev => [...prev, newMessage]);
-                        showNotification(`💬 ${data.senderName}`, 'success');
+                };
+                setReceivedMessages(prev => [...prev, newMessage]);
+                showNotification(`💬 ${data.senderName}`, 'success');
                     } catch (error) {
                         console.error('Error handling text message:', error);
                     }
@@ -382,7 +382,7 @@ export default function SameWifiPage() {
     // Handle file selection
     const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
         try {
-            const file = event.target.files?.[0];
+        const file = event.target.files?.[0];
             if (!file) {
                 return;
             }
@@ -720,10 +720,10 @@ export default function SameWifiPage() {
     const canPreview = (file: File) => {
         const type = file.type.toLowerCase();
         return type.startsWith('image/') ||
-            type.startsWith('video/') ||
-            type.startsWith('audio/') ||
-            type.includes('pdf') ||
-            type.startsWith('text/');
+               type.startsWith('video/') ||
+               type.startsWith('audio/') ||
+               type.includes('pdf') ||
+               type.startsWith('text/');
     };
 
     // Open preview modal
@@ -1181,16 +1181,16 @@ export default function SameWifiPage() {
                                     const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                                     
                                     return (
-                                        <div
-                                            key={msg.id}
+                                <div
+                                    key={msg.id}
                                             className={`flex ${isYou ? 'justify-end' : 'justify-start'} group`}
-                                        >
+                                >
                                             <div className={`flex flex-col ${isYou ? 'items-end' : 'items-start'} max-w-[75%] sm:max-w-[65%]`}>
                                                 {/* Sender name (only for others) */}
                                                 {!isYou && (
                                                     <span className="text-xs text-gray-400 mb-1 px-1 font-medium">
                                                         {msg.senderName}
-                                                    </span>
+                                            </span>
                                                 )}
                                                 
                                                 {/* Message bubble */}
@@ -1202,7 +1202,7 @@ export default function SameWifiPage() {
                                                         <div className="space-y-2 w-full">
                                                             <div className="flex items-center mb-1">
                                                                 <span className="text-xs font-semibold text-purple-200 bg-purple-900/30 px-2 py-0.5 rounded">CODE</span>
-                                                            </div>
+                                        </div>
                                                             <pre className="bg-black/20 p-2 rounded text-xs sm:text-sm text-green-100 overflow-x-auto font-mono whitespace-pre-wrap break-words break-all overflow-wrap-anywhere max-w-full">
                                                                 <code className="break-words break-all">{msg.content}</code>
                                                             </pre>
@@ -1239,15 +1239,15 @@ export default function SameWifiPage() {
                                                                 <span className="text-base block">💾</span>
                                                             </button>
                                                         ) : null}
-                                                        <button
-                                                            onClick={() => copyToClipboard(msg.content)}
+                                            <button
+                                                onClick={() => copyToClipboard(msg.content)}
                                                             className="relative p-2 bg-gradient-to-r from-blue-500/30 via-purple-500/30 to-cyan-500/30 rounded-lg flex-shrink-0 transition-all duration-300 hover:scale-110 shadow-lg shadow-blue-500/30 animate-pulse hover:animate-none hover:shadow-blue-500/50"
                                                             title="Copy"
-                                                        >
+                                            >
                                                             <span className="text-base block">📋</span>
-                                                        </button>
-                                                    </div>
-                                                </div>
+                                            </button>
+                                        </div>
+                                    </div>
                                             </div>
                                         </div>
                                     );
@@ -1330,7 +1330,7 @@ export default function SameWifiPage() {
                                 <p className="text-base font-medium mb-2">No saved clips yet</p>
                                 <p className="text-sm text-gray-600">Save content to create clips</p>
                             </div>
-                        ) : (
+                                    ) : (
                             <div className="space-y-3">
                                 {validClips.map((clip, index) => {
                                     // Format timestamp
@@ -1361,8 +1361,8 @@ export default function SameWifiPage() {
                                                         )}
                                                         {timeAgo && (
                                                             <span className="text-xs text-gray-500">• {timeAgo}</span>
-                                                        )}
-                                                    </div>
+                                    )}
+                                </div>
                                                     {clip.preview && (
                                                         <div className="bg-slate-900/60 px-4 py-3 rounded-lg border border-white/10 shadow-inner">
                                                             <p className="text-gray-100 text-sm sm:text-base whitespace-pre-wrap break-words leading-relaxed" title={clip.preview}>
@@ -1435,7 +1435,7 @@ export default function SameWifiPage() {
                 <div className="relative z-10 min-h-screen flex items-center justify-center p-4 sm:p-6">
                     <div className="w-full max-w-md">
                         <div className={`text-center mb-6 sm:mb-8 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                            }`}>
+                        }`}>
                             <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-2xl flex items-center justify-center">
                                 <svg className="w-8 h-8 sm:w-10 sm:h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
@@ -1452,7 +1452,7 @@ export default function SameWifiPage() {
                         </div>
 
                         <div className={`bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-8 transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                            }`}>
+                        }`}>
                             <input
                                 type="text"
                                 placeholder="Enter your name (optional)"
@@ -1491,7 +1491,7 @@ export default function SameWifiPage() {
 
             {/* Header - Mobile Optimized */}
             <div className={`relative z-10 pt-20 sm:pt-24 md:pt-28 lg:pt-32 pb-4 sm:pb-6 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
-                }`}>
+            }`}>
                 <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Back Button */}
                     <div className="flex items-center justify-between mb-4 sm:mb-6">
@@ -1523,7 +1523,7 @@ export default function SameWifiPage() {
 
                     {/* Main Title - Mobile */}
                     {/* <div className={`text-center mb-4 sm:mb-6 transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                        }`}>
+                    }`}>
                         <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-2 sm:mb-3 tracking-tight">
                             <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-teal-400 bg-clip-text text-transparent">
                                 WiFi Network Sharing
@@ -1542,7 +1542,7 @@ export default function SameWifiPage() {
                     {/* Users List - Beautiful Horizontal Line */}
                     {roomUsers.length > 0 && (
                         <div className={`mb-4 transition-all duration-1000 delay-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                            }`}>
+                    }`}>
                             <div className="flex items-center gap-4 sm:gap-5 flex-wrap px-3 py-2 bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-full border border-white/5">
                                 <span className="text-xs sm:text-sm text-gray-400 font-medium">Users</span>
                                 <div className="flex items-center gap-3 sm:gap-4">
@@ -1553,12 +1553,12 @@ export default function SameWifiPage() {
                                         >
                                             <div className="w-2 h-2 rounded-full bg-green-400 shadow-lg shadow-green-400/50 animate-pulse"></div>
                                             <span className="text-sm sm:text-base text-white font-medium">{user.name}</span>
-                                        </div>
+                                                </div>
                                     ))}
+                                            </div>
+                                        </div>
                                 </div>
-                            </div>
-                        </div>
-                    )}
+                            )}
 
                     {/* Split Layout: 55% Input, 45% Messages */}
                     <div className="flex flex-col lg:flex-row gap-4">
@@ -1571,49 +1571,49 @@ export default function SameWifiPage() {
                                     {/* Tabs */}
                                     <div className="flex items-center justify-between mb-4 flex-shrink-0">
                                         <div className="flex gap-2 bg-slate-900/50 p-1 rounded-lg border border-white/10">
-                                <button
+                            <button
                                     onClick={() => setActiveTab('text')}
                                     className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
                                         activeTab === 'text'
                                             ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/50'
                                             : 'text-gray-400 hover:text-white'
                                     }`}
-                                >
+                            >
                                     💬 Share Text
-                                </button>
-                                <button
+                            </button>
+                                            <button
                                     onClick={() => setActiveTab('files')}
                                     className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
                                         activeTab === 'files'
                                             ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-lg shadow-purple-500/50'
                                             : 'text-gray-400 hover:text-white'
                                     }`}
-                                >
+                                            >
                                     📁 Share Files
-                                        </button>
-                                        </div>
+                                            </button>
+                                    </div>
                                         <div className="flex gap-2">
                                             {savedClipIds.length > 0 && (
-                                                <button
+                                <button
                                                     onClick={() => setShowClipModal(true)}
                                                     className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg text-sm font-medium shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 transition-all duration-300"
-                                                >
+                                    >
                                                     💾 {savedClipIds.length}
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
                                     {/* Tab Content */}
                                     {activeTab === 'text' ? (
                                         <div className="relative flex-1 min-h-0">
-                                            <textarea
-                                                value={textInput}
-                                                onChange={(e) => setTextInput(e.target.value)}
-                                                onKeyPress={(e) => {
-                                                    if (e.key === 'Enter' && e.ctrlKey) {
-                                                        sendTextMessage();
-                                                    }
-                                                }}
+                            <textarea
+                                value={textInput}
+                                onChange={(e) => setTextInput(e.target.value)}
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter' && e.ctrlKey) {
+                                        sendTextMessage();
+                                    }
+                                }}
                                                 placeholder="Type your message or paste code here..."
                                                 className="w-full h-full px-4 py-3 pr-28 bg-slate-900/50 border-2 border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 resize-none text-sm sm:text-base transition-all duration-300 font-mono"
                                             />
@@ -1627,14 +1627,14 @@ export default function SameWifiPage() {
                                                     <span>💾</span>
                                                     <span>Save</span>
                                                 </button>
-                                                <button
-                                                    onClick={sendTextMessage}
-                                                    disabled={!textInput.trim()}
+                            <button
+                                onClick={sendTextMessage}
+                                disabled={!textInput.trim()}
                                                     className="px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white rounded-lg text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md flex items-center gap-1.5"
-                                                >
+                            >
                                                     <span>💬</span>
                                                     <span>Send</span>
-                                                </button>
+                            </button>
                                             </div>
                                         </div>
                                     ) : (
@@ -1672,8 +1672,8 @@ export default function SameWifiPage() {
                                                 Maximum file size: 10MB
                                             </p>
                                         </div>
-                                    </div>
-                                </div>
+                        </div>
+                    </div>
 
                                 {/* Selected File Display - 20% when file selected */}
                                 {selectedFile && (
@@ -1684,23 +1684,23 @@ export default function SameWifiPage() {
                                                 <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-cyan-500/20 to-purple-500/20 rounded-lg flex items-center justify-center border border-white/10">
                                                     <span className="text-xl">{getFileIcon(selectedFile)}</span>
                                                 </div>
-                                                <div className="flex-1 min-w-0">
+                                            <div className="flex-1 min-w-0">
                                                     <p className="text-white font-semibold truncate text-xs mb-0.5">{selectedFile.name}</p>
                                                     <p className="text-xs text-gray-400">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
-                                                </div>
                                             </div>
+                                        </div>
                                             
                                             {/* Preview, Save, and Send buttons in one line */}
                                             <div className="flex gap-2 mt-auto">
                                                 {canPreview(selectedFile) && (
-                                                    <button
+                                                <button
                                                         onClick={() => openPreview(selectedFile)}
                                                         className="flex-1 px-2 py-1.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-500 hover:to-purple-600 transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-purple-500/50 text-xs font-medium"
-                                                    >
-                                                        👁️ Preview
-                                                    </button>
-                                                )}
-                                                <button
+                                                >
+                                                    👁️ Preview
+                                                </button>
+                                            )}
+                                            <button
                                                     onClick={saveFileToRedis}
                                                     disabled={!socket}
                                                     className="flex-1 px-2 py-1.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 bg-size-200 bg-pos-0 hover:bg-pos-100 text-white font-semibold rounded-lg hover:shadow-xl hover:shadow-purple-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 active:scale-[0.98] text-xs shadow-lg"
@@ -1708,7 +1708,7 @@ export default function SameWifiPage() {
                                                         backgroundSize: '200% 200%',
                                                         transition: 'background-position 0.3s ease'
                                                     }}
-                                                >
+                                            >
                                                     💾 Save
                                                 </button>
                                                 <button
@@ -1717,13 +1717,13 @@ export default function SameWifiPage() {
                                                     className="flex-1 px-2 py-1.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-400 hover:to-green-500 transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-green-500/50 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium"
                                                 >
                                                     💬 Send
-                                                </button>
-                                            </div>
+                                            </button>
                                         </div>
                                     </div>
+                            </div>
                                 )}
-                                        </div>
-                                    )}
+                        </div>
+                    )}
                                 </div>
                             </div>
                         </div>
@@ -1737,7 +1737,7 @@ export default function SameWifiPage() {
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
                                             <span className="text-white text-lg">💬</span>
-                                        </div>
+                                            </div>
                                         <div>
                                             <h3 className="text-white font-semibold text-base sm:text-lg">Messages</h3>
                                             <p className="text-xs text-gray-400">{receivedMessages.length} message{receivedMessages.length !== 1 ? 's' : ''}</p>
@@ -1806,33 +1806,33 @@ export default function SameWifiPage() {
                                                                         {timeStr}
                                                                     </span>
                                                                     {(msg.isFile && msg.fileData) || (msg.isImage && msg.content.startsWith('data:image')) ? (
-                                                                        <button
+                                                <button
                                                                             onClick={() => downloadFileFromDataUrl(
                                                                                 msg.isImage ? msg.content : msg.fileData!, 
                                                                                 msg.fileName || (msg.isImage ? 'image.png' : 'download')
                                                                             )}
                                                                             className="relative p-2 bg-gradient-to-r from-blue-500/30 via-cyan-500/30 to-blue-500/30 rounded-lg flex-shrink-0 transition-all duration-300 hover:scale-110 shadow-lg shadow-blue-500/30 animate-pulse hover:animate-none hover:shadow-blue-500/50"
                                                                             title="Save"
-                                                                        >
+                                                >
                                                                             <span className="text-base block">💾</span>
-                                                                        </button>
+                                                </button>
                                                                     ) : null}
-                                                                    <button
+                                            <button
                                                                         onClick={() => copyToClipboard(msg.content)}
                                                                         className="relative p-2 bg-gradient-to-r from-blue-500/30 via-purple-500/30 to-cyan-500/30 rounded-lg flex-shrink-0 transition-all duration-300 hover:scale-110 shadow-lg shadow-blue-500/30 animate-pulse hover:animate-none hover:shadow-blue-500/50"
                                                                         title="Copy"
-                                                                    >
+                                            >
                                                                         <span className="text-base block">📋</span>
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                                            </button>
+                                        </div>
+                                    </div>
+                            </div>
                                                     </div>
                                                 );
                                             })}
                                             <div ref={messagesEndRef} />
-                                        </div>
-                                    )}
+                        </div>
+                    )}
                                 </div>
                             </div>
                         </div>

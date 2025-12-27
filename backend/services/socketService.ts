@@ -110,9 +110,9 @@ export function initializeSocket(server: HttpServer) {
       // Try other headers that might contain the real IP
       clientIP = (socket.handshake.headers['x-real-ip'] as string) || 
                  (socket.handshake.headers['cf-connecting-ip'] as string) ||
-                 socket.handshake.address || 
+                     socket.handshake.address || 
                  socket.conn.remoteAddress || 
-                 'unknown';
+                     'unknown';
     }
     
     // Clean up IPv6 mapped IPv4 addresses (::ffff:192.168.1.1 -> 192.168.1.1)

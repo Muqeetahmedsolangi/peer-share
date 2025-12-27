@@ -31,8 +31,12 @@ export default function Creator() {
           {/* Profile Image - Smaller */}
           <div className="relative group">
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 p-0.5 shadow-lg group-hover:shadow-xl group-hover:shadow-blue-500/25 transition-all duration-300">
-              <div className="w-full h-full rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
-                <span className="text-xl sm:text-2xl font-bold text-white">MA</span>
+              <div className="w-full h-full rounded-full overflow-hidden bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
+                <img 
+                  src="/muqeetahmed.jpeg" 
+                  alt="Muqeet Ahmed" 
+                  className="w-full h-full object-cover"
+                />
               </div>
             </div>
             {/* Animated Ring */}

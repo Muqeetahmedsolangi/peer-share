@@ -247,6 +247,25 @@ export default function ContactUs() {
                 </div>
               </div>
 
+              {/* Developer Section */}
+              <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-8">
+                <h3 className="text-xl font-bold text-white mb-6 text-center">Meet the Developer</h3>
+                <div className="text-center">
+                  <div className="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 overflow-hidden">
+                    <img 
+                      src="/muqeetahmed.jpeg" 
+                      alt="Muqeet Ahmed" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <h4 className="text-white font-bold text-lg mb-2">Muqeet Ahmed</h4>
+                  <p className="text-blue-400 font-semibold mb-2">Full Stack Developer & DevOps Engineer</p>
+                  <p className="text-gray-300 text-sm mb-6">
+                    Expert in modern web technologies, cloud infrastructure, and secure file sharing solutions.
+                  </p>
+                </div>
+              </div>
+
               {/* Social Links */}
               <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-8">
                 <h3 className="text-xl font-bold text-white mb-6">Follow Us</h3>
