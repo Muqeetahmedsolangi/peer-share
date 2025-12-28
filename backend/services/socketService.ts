@@ -75,7 +75,14 @@ function getNetworkSubnet(ip: string): string {
 export function initializeSocket(server: HttpServer) {
   const io = new SocketServer(server, {
     cors: {
-      origin: "*",
+      origin: [
+        "https://www.dropsos.com",
+        "http://www.dropsos.com", 
+        "https://api.dropsos.com",
+        "http://api.dropsos.com",
+        "http://localhost:3000",
+        "https://localhost:3000"
+      ],
       credentials: true,
       methods: ["GET", "POST"]
     },
