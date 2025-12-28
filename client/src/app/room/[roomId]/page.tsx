@@ -14,18 +14,30 @@ interface User {
 }
 
 interface Message {
+  messageId?: string;
   id: string;
+  message?: string;
   text: string;
+  senderName?: string;
   sender: string;
+  senderId?: string;
+  senderSocketId?: string;
   timestamp: Date;
-  type: 'text' | 'file' | 'system';
+  type: 'text' | 'file' | 'system' | 'image' | 'video';
   fileData?: {
     name: string;
     size: number;
     type: string;
     icon: string;
     color: string;
+    preview?: string; // Base64 or blob URL for preview
+    downloadUrl?: string;
   };
+}
+
+interface TypingUser {
+  userName: string;
+  userId: string;
 }
 
 interface FileType {
@@ -60,6 +72,7 @@ export default function RoomPage() {
   const [roomInfo, setRoomInfo] = useState<any>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [copySuccess, setCopySuccess] = useState('');
+  const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -187,6 +200,103 @@ export default function RoomPage() {
         setMessages(prev => [...prev, leaveMessage]);
       });
 
+      // Chat message received from other users
+      socketInstance.on('room-chat-message', (data) => {
+        console.log('💬 Chat message received:', data);
+        // Only add if it's not from ourselves
+        if (data.senderSocketId !== socketInstance.id) {
+          const message: Message = {
+            id: data.messageId || Date.now().toString(),
+            messageId: data.messageId,
+            text: data.message,
+            message: data.message,
+            sender: data.senderName,
+            senderName: data.senderName,
+            senderId: data.senderId,
+            senderSocketId: data.senderSocketId,
+            timestamp: new Date(data.timestamp),
+            type: 'text'
+          };
+          setMessages(prev => [...prev, message]);
+        }
+      });
+
+      // File offered by other users
+      socketInstance.on('room-file-offered', (data) => {
+        console.log('📁 File offered:', data);
+        
+        // Determine message type and create preview message for all file types
+        let messageType: Message['type'] = 'file';
+        let messageText = `${data.senderName} shared a file`;
+        let fileIcon = '📄';
+        let fileColor = 'text-gray-400';
+
+        if (isImageFile(data.fileType)) {
+          messageType = 'image';
+          messageText = `${data.senderName} shared an image`;
+          fileIcon = '🖼️';
+          fileColor = 'text-green-400';
+        } else if (isVideoFile(data.fileType)) {
+          messageType = 'video';
+          messageText = `${data.senderName} shared a video`;
+          fileIcon = '🎥';
+          fileColor = 'text-red-400';
+        }
+
+        const message: Message = {
+          id: Date.now().toString(),
+          text: messageText,
+          sender: data.senderName,
+          senderName: data.senderName,
+          senderSocketId: data.senderSocketId,
+          timestamp: new Date(data.timestamp),
+          type: messageType,
+          fileData: {
+            name: data.fileName,
+            size: data.fileSize,
+            type: data.fileType,
+            icon: fileIcon,
+            color: fileColor,
+            preview: data.preview
+          }
+        };
+        setMessages(prev => [...prev, message]);
+      });
+
+      // Typing indicators
+      socketInstance.on('room-user-typing', (data) => {
+        if (data.isTyping) {
+          setTypingUsers(prev => {
+            const exists = prev.find(u => u.userId === data.userId);
+            if (!exists) {
+              return [...prev, { userName: data.userName, userId: data.userId }];
+            }
+            return prev;
+          });
+        } else {
+          setTypingUsers(prev => prev.filter(u => u.userId !== data.userId));
+        }
+      });
+
+      // WebRTC file transfer handlers
+      socketInstance.on('file-transfer-offer', (data) => {
+        console.log('📥 File transfer offer from:', data.senderName);
+        // Handle incoming file transfer offer
+        handleFileTransferOffer(data);
+      });
+
+      socketInstance.on('file-transfer-answer', (data) => {
+        console.log('📤 File transfer answer received');
+        // Handle file transfer answer
+        handleFileTransferAnswer(data);
+      });
+
+      socketInstance.on('file-transfer-ice', (data) => {
+        console.log('🧊 File transfer ICE candidate');
+        // Handle ICE candidate for file transfer
+        handleFileTransferICE(data);
+      });
+
       socketInstance.on('disconnect', () => {
         console.log('❌ Disconnected from server');
         setIsConnected(false);
@@ -272,6 +382,7 @@ export default function RoomPage() {
 
   const handleSendMessage = () => {
     if (newMessage.trim() && socket && isConnected) {
+      // Add message to local state immediately
       const message: Message = {
         id: Date.now().toString(),
         text: newMessage,
@@ -281,11 +392,17 @@ export default function RoomPage() {
       };
       setMessages(prev => [...prev, message]);
       
-      // TODO: Emit to socket for real-time messaging
-      // socket.emit('room-message', { roomId, text: newMessage, sender: userName });
+      // Send via socket to other users in room
+      socket.emit('room-chat-message', { 
+        message: newMessage.trim(), 
+        roomId: roomId 
+      });
       
       setNewMessage('');
       setIsTyping(false);
+      
+      // Stop typing indicator
+      socket.emit('room-typing', { roomId, isTyping: false });
     }
   };
 
@@ -428,10 +545,16 @@ export default function RoomPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewMessage(e.target.value);
-    if (e.target.value.trim() && !isTyping) {
-      setIsTyping(true);
-    } else if (!e.target.value.trim()) {
-      setIsTyping(false);
+    
+    // Handle typing indicators
+    if (socket && isConnected) {
+      if (e.target.value.trim() && !isTyping) {
+        setIsTyping(true);
+        socket.emit('room-typing', { roomId, isTyping: true });
+      } else if (!e.target.value.trim() && isTyping) {
+        setIsTyping(false);
+        socket.emit('room-typing', { roomId, isTyping: false });
+      }
     }
   };
 
@@ -445,29 +568,399 @@ export default function RoomPage() {
     setSelectedFiles([...selectedFiles, ...files]);
   };
 
-  const handleFileShare = (file: File) => {
+  const handleFileShare = async (file: File) => {
+    if (!socket || !isConnected) return;
+    
     const fileType = getFileType(file);
-    const message: Message = {
-      id: Date.now().toString(),
-      text: `Shared file: ${file.name}`,
-      sender: 'You',
-      timestamp: new Date(),
-      type: 'file',
-      fileData: {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        icon: fileType.icon,
-        color: fileType.color
+    
+    try {
+      let messageType: Message['type'] = 'file';
+      let preview: string | undefined;
+      
+      // Create preview for images and videos
+      if (isImageFile(file.type)) {
+        messageType = 'image';
+        preview = await createFilePreview(file);
+      } else if (isVideoFile(file.type)) {
+        messageType = 'video';
+        preview = await createFilePreview(file);
       }
-    };
-    setMessages([...messages, message]);
+      
+      // Add local message with preview
+      const message: Message = {
+        id: Date.now().toString(),
+        text: isImageFile(file.type) ? 'Shared an image' : isVideoFile(file.type) ? 'Shared a video' : `Shared file: ${file.name}`,
+        sender: 'You',
+        timestamp: new Date(),
+        type: messageType,
+        fileData: {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          icon: fileType.icon,
+          color: fileType.color,
+          preview: preview
+        }
+      };
+      setMessages(prev => [...prev, message]);
+      
+      // Announce file availability to room with preview for images/videos
+      const fileOfferData: any = {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        roomId: roomId
+      };
+      
+      // Include preview for media files
+      if (preview && (isImageFile(file.type) || isVideoFile(file.type))) {
+        fileOfferData.preview = preview;
+      }
+      
+      socket.emit('room-file-offer', fileOfferData);
+      
+      // Store file for potential P2P transfer
+      (window as any).pendingFiles = (window as any).pendingFiles || {};
+      (window as any).pendingFiles[file.name] = file;
+      
+    } catch (error) {
+      console.error('Error creating file preview:', error);
+      
+      // Fallback to regular file sharing if preview fails
+      const message: Message = {
+        id: Date.now().toString(),
+        text: `Shared file: ${file.name}`,
+        sender: 'You',
+        timestamp: new Date(),
+        type: 'file',
+        fileData: {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          icon: fileType.icon,
+          color: fileType.color
+        }
+      };
+      setMessages(prev => [...prev, message]);
+      
+      socket.emit('room-file-offer', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        roomId: roomId
+      });
+      
+      (window as any).pendingFiles = (window as any).pendingFiles || {};
+      (window as any).pendingFiles[file.name] = file;
+    }
+    
     setSelectedFiles(selectedFiles.filter(f => f !== file));
   };
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
+
+  // Helper functions for media detection
+  const isImageFile = (fileType: string): boolean => {
+    return fileType.startsWith('image/');
+  };
+
+  const isVideoFile = (fileType: string): boolean => {
+    return fileType.startsWith('video/');
+  };
+
+  const createFilePreview = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        resolve(result);
+      };
+      
+      reader.onerror = () => {
+        reject(new Error('Failed to read file'));
+      };
+      
+      // For images and videos, read as data URL for preview
+      if (isImageFile(file.type) || isVideoFile(file.type)) {
+        reader.readAsDataURL(file);
+      } else {
+        reader.readAsArrayBuffer(file);
+      }
+    });
+  };
+
+  // WebRTC file transfer functions
+  const handleFileTransferOffer = async (data: any) => {
+    try {
+      console.log('📤 Handling file transfer offer for:', data.fileName, 'from:', data.senderName);
+      
+      // Check if we have the file
+      const file = (window as any).pendingFiles?.[data.fileName];
+      if (!file) {
+        console.error('❌ File not found for sending:', data.fileName);
+        console.log('Available files:', Object.keys((window as any).pendingFiles || {}));
+        return;
+      }
+      
+      console.log('✅ File found, setting up WebRTC connection...');
+      
+      const peerConnection = new RTCPeerConnection({
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+      });
+
+      // Handle ICE candidates
+      peerConnection.onicecandidate = (event) => {
+        if (event.candidate && socket) {
+          socket.emit('file-transfer-ice', {
+            candidate: event.candidate,
+            targetSocketId: data.senderSocketId
+          });
+        }
+      };
+
+      // Create data channel for sending file
+      const channel = peerConnection.createDataChannel('fileTransfer');
+      
+      // When channel opens, send the requested file
+      channel.onopen = async () => {
+        console.log('📤 Sending file:', data.fileName);
+        
+        // Get the file from pending files
+        const file = (window as any).pendingFiles?.[data.fileName];
+        if (!file) {
+          console.error('File not found for sending:', data.fileName);
+          return;
+        }
+
+        try {
+          // Send file info first
+          const fileInfo = {
+            type: 'file-info',
+            fileName: file.name,
+            fileSize: file.size,
+            fileType: file.type
+          };
+          channel.send(JSON.stringify(fileInfo));
+
+          // Read and send file in chunks
+          const chunkSize = 16384; // 16KB chunks
+          const arrayBuffer = await file.arrayBuffer();
+          const totalChunks = Math.ceil(arrayBuffer.byteLength / chunkSize);
+          
+          console.log(`📦 Sending ${totalChunks} chunks for ${file.name}`);
+          
+          for (let i = 0; i < totalChunks; i++) {
+            const start = i * chunkSize;
+            const end = Math.min(start + chunkSize, arrayBuffer.byteLength);
+            const chunk = arrayBuffer.slice(start, end);
+            
+            // Wait for channel buffer if needed
+            while (channel.bufferedAmount > 65536) {
+              await new Promise(resolve => setTimeout(resolve, 10));
+            }
+            
+            channel.send(chunk);
+          }
+
+          // Send completion message
+          const completeInfo = {
+            type: 'file-complete',
+            fileName: file.name,
+            fileType: file.type,
+            fileSize: file.size
+          };
+          channel.send(JSON.stringify(completeInfo));
+          
+          console.log('✅ File sent successfully:', file.name);
+          
+        } catch (error) {
+          console.error('Error sending file:', error);
+        }
+      };
+
+      // Set remote description
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+      
+      // Create answer
+      const answer = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answer);
+
+      // Send answer
+      if (socket) {
+        socket.emit('file-transfer-answer', {
+          answer: answer,
+          targetSocketId: data.senderSocketId
+        });
+      }
+
+      // Store connection for ICE candidates
+      (window as any).fileConnections = (window as any).fileConnections || {};
+      (window as any).fileConnections[data.senderSocketId] = peerConnection;
+
+    } catch (error) {
+      console.error('Error handling file transfer offer:', error);
+    }
+  };
+
+  const handleFileTransferAnswer = async (data: any) => {
+    try {
+      const peerConnection = (window as any).fileConnections?.[data.senderSocketId];
+      if (peerConnection) {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+      }
+    } catch (error) {
+      console.error('Error handling file transfer answer:', error);
+    }
+  };
+
+  const handleFileTransferICE = async (data: any) => {
+    try {
+      const peerConnection = (window as any).fileConnections?.[data.senderSocketId];
+      if (peerConnection) {
+        await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+      }
+    } catch (error) {
+      console.error('Error handling file transfer ICE:', error);
+    }
+  };
+
+  const downloadFileFromPeer = async (fileInfo: { 
+    fileShareId: string;
+    fileName: string;
+    fileSize: number;
+    fileType: string;
+    senderName: string;
+    senderId: string;
+    senderSocketId: string;
+    timestamp: number;
+  }) => {
+    if (!socket) return;
+
+    console.log('🔄 Starting download request for:', fileInfo.fileName);
+    console.log('🔍 File info:', fileInfo);
+
+    // Check if this is our own file (we can download directly)
+    if (fileInfo.senderName === 'You' || fileInfo.senderSocketId === socket.id) {
+      console.log('📁 Downloading own file directly...');
+      const file = (window as any).pendingFiles?.[fileInfo.fileName];
+      if (file) {
+        const url = URL.createObjectURL(file);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileInfo.fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        console.log('✅ Own file downloaded successfully!');
+        return;
+      } else {
+        console.error('❌ Own file not found in pending files');
+      }
+    }
+
+    try {
+      const peerConnection = new RTCPeerConnection({
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+      });
+
+      // Handle ICE candidates  
+      peerConnection.onicecandidate = (event) => {
+        if (event.candidate && socket) {
+          socket.emit('file-transfer-ice', {
+            candidate: event.candidate,
+            targetSocketId: fileInfo.senderSocketId
+          });
+        }
+      };
+
+      // Handle incoming data channel from sender
+      peerConnection.ondatachannel = (event) => {
+        console.log('📡 Data channel received from sender');
+        const channel = event.channel;
+        const chunks: ArrayBuffer[] = [];
+        let fileName = fileInfo.fileName;
+        let fileType = fileInfo.fileType;
+        
+        channel.onopen = () => {
+          console.log('📡 Data channel opened, ready to receive file');
+        };
+        
+        channel.onmessage = (event) => {
+          if (typeof event.data === 'string') {
+            const data = JSON.parse(event.data);
+            console.log('📨 Received message:', data.type);
+            
+            if (data.type === 'file-info') {
+              fileName = data.fileName;
+              fileType = data.fileType;
+              console.log('📥 Receiving file:', fileName, 'Type:', fileType);
+            } else if (data.type === 'file-complete') {
+              console.log('✅ File transfer completed:', fileName, 'Chunks received:', chunks.length);
+              
+              // Create blob and download
+              const blob = new Blob(chunks, { type: fileType });
+              const url = URL.createObjectURL(blob);
+              
+              console.log('💾 Creating download for:', fileName, 'Size:', blob.size, 'bytes');
+              
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = fileName;
+              document.body.appendChild(a); // Add to DOM for better compatibility
+              a.click();
+              document.body.removeChild(a); // Clean up
+              
+              URL.revokeObjectURL(url);
+              console.log('🎉 Download triggered successfully!');
+            }
+          } else {
+            // File chunk
+            chunks.push(event.data);
+            console.log(`📦 Received chunk ${chunks.length}, size:`, event.data.byteLength);
+          }
+        };
+        
+        channel.onerror = (error) => {
+          console.error('❌ Data channel error:', error);
+        };
+      };
+      
+      // Create offer as receiver
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
+
+      // Add connection state logging
+      peerConnection.onconnectionstatechange = () => {
+        console.log('🔗 Connection state:', peerConnection.connectionState);
+      };
+      
+      peerConnection.oniceconnectionstatechange = () => {
+        console.log('🧊 ICE connection state:', peerConnection.iceConnectionState);
+      };
+
+      // Send offer to file sender
+      console.log('📤 Sending file transfer offer to:', fileInfo.senderSocketId);
+      socket.emit('file-transfer-offer', {
+        offer: offer,
+        fileName: fileInfo.fileName,
+        targetSocketId: fileInfo.senderSocketId
+      });
+
+      // Store connection for handling answer/ICE
+      (window as any).fileConnections = (window as any).fileConnections || {};
+      (window as any).fileConnections[fileInfo.senderSocketId] = peerConnection;
+      
+      console.log('⏰ Waiting for file sender to respond...');
+
+    } catch (error) {
+      console.error('Error starting file download:', error);
+    }
+  };
+
 
   // Show join form if not joined yet
   if (!isJoined) {
@@ -709,15 +1202,169 @@ export default function RoomPage() {
                           )}
                         </div>
                       )}
-                      <div className="text-sm sm:text-base break-words leading-relaxed">{message.text}</div>
-                      {message.fileData && (
-                        <div className="mt-2 p-2 bg-slate-600/50 rounded-lg hover:bg-slate-600/70 transition-colors duration-300">
-                          <div className="flex items-center space-x-2">
-                            <span className={`text-lg ${message.fileData.color} animate-pulse`}>{message.fileData.icon}</span>
+                      {/* Text message */}
+                      {message.type === 'text' && (
+                        <div className="text-sm sm:text-base break-words leading-relaxed">{message.text}</div>
+                      )}
+                      
+                      {/* System message */}
+                      {message.type === 'system' && (
+                        <div className="text-sm sm:text-base break-words leading-relaxed">{message.text}</div>
+                      )}
+
+                      {/* Image preview - WhatsApp style */}
+                      {message.type === 'image' && message.fileData && (
+                        <div className="mt-1">
+                          <div className="relative rounded-lg overflow-hidden max-w-xs sm:max-w-sm bg-slate-800 group">
+                            {message.fileData.preview ? (
+                              <img 
+                                src={message.fileData.preview} 
+                                alt={message.fileData.name}
+                                className="w-full h-auto max-h-64 object-cover cursor-pointer transition-transform duration-200 group-hover:scale-105"
+                                onClick={() => {
+                                  // Open full size image
+                                  const fullSizeWindow = window.open();
+                                  if (fullSizeWindow) {
+                                    fullSizeWindow.document.write(`
+                                      <html>
+                                        <head><title>${message.fileData.name}</title></head>
+                                        <body style="margin:0; background:#000; display:flex; justify-content:center; align-items:center; height:100vh;">
+                                          <img src="${message.fileData.preview}" style="max-width:100%; max-height:100%; object-fit:contain;" alt="${message.fileData.name}"/>
+                                        </body>
+                                      </html>
+                                    `);
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <div className="w-full h-32 flex items-center justify-center bg-slate-700">
+                                <span className="text-4xl">🖼️</span>
+                              </div>
+                            )}
+                            
+                            {/* Download button overlay - positioned in top right for better access */}
+                            <div className="absolute top-2 right-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevent opening full image
+                                  console.log('🔽 Image download button clicked:', message.fileData?.name);
+                                  downloadFileFromPeer({ 
+                                    fileShareId: message.id,
+                                    fileName: message.fileData!.name,
+                                    fileSize: message.fileData!.size,
+                                    fileType: message.fileData!.type,
+                                    senderName: message.sender,
+                                    senderId: message.senderId || '',
+                                    senderSocketId: message.senderSocketId || '',
+                                    timestamp: message.timestamp.getTime()
+                                  });
+                                }}
+                                className="p-2.5 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-all duration-200 text-gray-800 shadow-lg border border-gray-200 hover:shadow-xl"
+                                title="Download image"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                              </button>
+                            </div>
+                            
+                            {/* Image info overlay - bottom left */}
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                              <div className="text-white">
+                                <div className="text-xs font-medium truncate pr-12">{message.fileData.name}</div>
+                                <div className="text-xs opacity-75">{formatFileSize(message.fileData.size)}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Video preview - WhatsApp style */}
+                      {message.type === 'video' && message.fileData && (
+                        <div className="mt-1">
+                          <div className="relative rounded-lg overflow-hidden max-w-xs sm:max-w-sm bg-slate-800 group">
+                            {message.fileData.preview ? (
+                              <video 
+                                src={message.fileData.preview}
+                                className="w-full h-auto max-h-64 object-cover"
+                                controls
+                                preload="metadata"
+                                poster={message.fileData.preview}
+                              >
+                                Your browser does not support video playback.
+                              </video>
+                            ) : (
+                              <div className="w-full h-32 flex items-center justify-center bg-slate-700">
+                                <div className="text-center">
+                                  <span className="text-4xl block mb-2">🎥</span>
+                                  <span className="text-xs text-gray-300">Video</span>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Download button overlay - positioned in top right for better access */}
+                            <div className="absolute top-2 right-2">
+                              <button
+                                onClick={() => {
+                                  console.log('🔽 Video download button clicked:', message.fileData?.name);
+                                  downloadFileFromPeer({ 
+                                    fileShareId: message.id,
+                                    fileName: message.fileData!.name,
+                                    fileSize: message.fileData!.size,
+                                    fileType: message.fileData!.type,
+                                    senderName: message.sender,
+                                    senderId: message.senderId || '',
+                                    senderSocketId: message.senderSocketId || '',
+                                    timestamp: message.timestamp.getTime()
+                                  });
+                                }}
+                                className="p-2.5 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-all duration-200 text-gray-800 shadow-lg border border-gray-200 hover:shadow-xl"
+                                title="Download video"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                              </button>
+                            </div>
+                            
+                            {/* Video info overlay - bottom left */}
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                              <div className="text-white">
+                                <div className="text-xs font-medium truncate pr-12">{message.fileData.name}</div>
+                                <div className="text-xs opacity-75">{formatFileSize(message.fileData.size)}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Regular file */}
+                      {message.type === 'file' && message.fileData && (
+                        <div className="mt-2 p-3 bg-slate-600/50 rounded-lg hover:bg-slate-600/70 transition-colors duration-300">
+                          <div className="flex items-center space-x-3">
+                            <span className={`text-2xl ${message.fileData.color}`}>{message.fileData.icon}</span>
                             <div className="flex-1 min-w-0">
-                              <div className="text-xs font-medium text-white truncate">{message.fileData.name}</div>
+                              <div className="text-sm font-medium text-white truncate">{message.fileData.name}</div>
                               <div className="text-xs text-gray-400">{formatFileSize(message.fileData.size)}</div>
                             </div>
+                            <button
+                              onClick={() => {
+                                console.log('🔽 File download button clicked:', message.fileData?.name);
+                                downloadFileFromPeer({ 
+                                  fileShareId: message.id,
+                                  fileName: message.fileData!.name,
+                                  fileSize: message.fileData!.size,
+                                  fileType: message.fileData!.type,
+                                  senderName: message.sender,
+                                  senderId: message.senderId || '',
+                                  senderSocketId: message.senderSocketId || '',
+                                  timestamp: message.timestamp.getTime()
+                                });
+                              }}
+                              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded-lg transition-colors duration-200 font-medium"
+                            >
+                              Download
+                            </button>
                           </div>
                         </div>
                       )}
@@ -750,6 +1397,28 @@ export default function RoomPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Typing Indicators */}
+                {typingUsers.length > 0 && (
+                  <div className="flex justify-start">
+                    <div className="max-w-xs px-4 py-2 bg-slate-700/60 text-gray-300 rounded-lg border border-slate-600/50">
+                      <div className="flex items-center space-x-2">
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        </div>
+                        <span className="text-xs">
+                          {typingUsers.length === 1 
+                            ? `${typingUsers[0].userName} is typing...`
+                            : `${typingUsers.length} users are typing...`
+                          }
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 
                 <div ref={messagesEndRef} />
               </div>

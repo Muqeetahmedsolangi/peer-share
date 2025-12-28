@@ -642,6 +642,121 @@ export function initializeSocket(server: HttpServer) {
         });
       }
     });
+
+    // Room-based chat messaging
+    socket.on('room-chat-message', (data: { message: string; roomId: string }) => {
+      const user = users.get(socket.id);
+      if (!user) {
+        socket.emit('error', { message: 'User not found' });
+        return;
+      }
+
+      // Validate user is in the room they're trying to send message to
+      const roomInfo = getRoomInfo(data.roomId);
+      if (!roomInfo || !isUserInRoom(data.roomId, socket.id)) {
+        socket.emit('error', { message: 'You are not in this room' });
+        return;
+      }
+
+      console.log(`💬 Chat message from ${user.name} in room ${data.roomId}: ${data.message.substring(0, 50)}...`);
+
+      // Broadcast message to all users in the room (including sender for confirmation)
+      io.to(data.roomId).emit('room-chat-message', {
+        messageId: uuidv4(),
+        message: data.message,
+        senderName: user.name,
+        senderId: user.id,
+        senderSocketId: socket.id,
+        timestamp: Date.now()
+      });
+    });
+
+    // Room-based file sharing announcement (P2P via WebRTC)
+    socket.on('room-file-offer', (data: { fileName: string; fileSize: number; fileType: string; roomId: string; preview?: string }) => {
+      const user = users.get(socket.id);
+      if (!user) {
+        socket.emit('error', { message: 'User not found' });
+        return;
+      }
+
+      // Validate user is in the room
+      const roomInfo = getRoomInfo(data.roomId);
+      if (!roomInfo || !isUserInRoom(data.roomId, socket.id)) {
+        socket.emit('error', { message: 'You are not in this room' });
+        return;
+      }
+
+      const isMedia = data.fileType.startsWith('image/') || data.fileType.startsWith('video/');
+      console.log(`📁 ${isMedia ? 'Media' : 'File'} offer from ${user.name} in room ${data.roomId}: ${data.fileName} (${data.fileSize} bytes)`);
+
+      // Broadcast file offer to all users in room except sender
+      const offerData: any = {
+        fileName: data.fileName,
+        fileSize: data.fileSize,
+        fileType: data.fileType,
+        senderName: user.name,
+        senderSocketId: socket.id,
+        timestamp: Date.now()
+      };
+
+      // Include preview for images and videos
+      if (data.preview && isMedia) {
+        offerData.preview = data.preview;
+      }
+
+      socket.to(data.roomId).emit('room-file-offered', offerData);
+    });
+
+    // Handle WebRTC file transfer signaling
+    socket.on('file-transfer-offer', (data: { offer: any; fileName: string; targetSocketId: string }) => {
+      console.log(`📥 File transfer offer from ${socket.id} to ${data.targetSocketId} for ${data.fileName}`);
+      
+      // Forward WebRTC offer to target user for file transfer
+      io.to(data.targetSocketId).emit('file-transfer-offer', {
+        offer: data.offer,
+        fileName: data.fileName,
+        senderSocketId: socket.id,
+        senderName: users.get(socket.id)?.name || 'Unknown'
+      });
+    });
+
+    // Handle WebRTC file transfer answer
+    socket.on('file-transfer-answer', (data: { answer: any; targetSocketId: string }) => {
+      console.log(`📤 File transfer answer from ${socket.id} to ${data.targetSocketId}`);
+      
+      // Forward WebRTC answer to sender
+      io.to(data.targetSocketId).emit('file-transfer-answer', {
+        answer: data.answer,
+        senderSocketId: socket.id
+      });
+    });
+
+    // Handle WebRTC ICE candidates for file transfer
+    socket.on('file-transfer-ice', (data: { candidate: any; targetSocketId: string }) => {
+      console.log(`🧊 File transfer ICE candidate from ${socket.id} to ${data.targetSocketId}`);
+      
+      // Forward ICE candidate to target
+      io.to(data.targetSocketId).emit('file-transfer-ice', {
+        candidate: data.candidate,
+        senderSocketId: socket.id
+      });
+    });
+
+    // Handle typing indicators for chat
+    socket.on('room-typing', (data: { roomId: string; isTyping: boolean }) => {
+      const user = users.get(socket.id);
+      if (!user) return;
+
+      // Validate user is in the room
+      if (!isUserInRoom(data.roomId, socket.id)) return;
+
+      // Broadcast typing status to others in room
+      socket.to(data.roomId).emit('room-user-typing', {
+        userName: user.name,
+        userId: user.id,
+        isTyping: data.isTyping
+      });
+    });
     
     // Handle disconnection
     socket.on('disconnect', () => {
