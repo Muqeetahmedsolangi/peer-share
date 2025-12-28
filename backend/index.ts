@@ -11,7 +11,11 @@ const app = express();
 const server = http.createServer(app);
 const port = Number(process.env.PORT) || 4000;
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-const allowedOrigins = [frontendUrl];
+const allowedOrigins = [
+  frontendUrl,
+  'https://api.dropsos.com',
+  'http://api.dropsos.com'
+];
 
 // Trust proxy for correct IP detection behind nginx/reverse proxy
 app.set('trust proxy', true);
