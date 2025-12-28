@@ -64,7 +64,6 @@ export default function RoomPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -73,9 +72,10 @@ export default function RoomPage() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [copySuccess, setCopySuccess] = useState('');
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
+  const [showMobileUsers, setShowMobileUsers] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -519,12 +519,6 @@ export default function RoomPage() {
     return `${baseUrl}/join-room?roomId=${roomId}`;
   };
 
-  const getDirectRoomLink = () => {
-    const baseUrl = window.location.origin;
-    const encodedName = encodeURIComponent('Your Name');
-    const encodedPassword = encodeURIComponent('[PASSWORD]');
-    return `${baseUrl}/room/${roomId}?name=${encodedName}&password=${encodedPassword}`;
-  };
 
   const shareViaWebShare = async () => {
     if (navigator.share) {
@@ -563,9 +557,27 @@ export default function RoomPage() {
     setShowEmojiPicker(false);
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+  // New handler for chat input - automatically shares files
+  const handleChatFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    setSelectedFiles([...selectedFiles, ...files]);
+    
+    if (files.length === 0) return;
+    
+    setIsUploadingFiles(true);
+    
+    try {
+      // Automatically share each selected file
+      for (const file of files) {
+        await handleFileShare(file);
+      }
+    } catch (error) {
+      console.error('Error sharing files:', error);
+    } finally {
+      setIsUploadingFiles(false);
+      // Clear the input so same file can be selected again
+      e.target.value = '';
+    }
   };
 
   const handleFileShare = async (file: File) => {
@@ -653,8 +665,6 @@ export default function RoomPage() {
       (window as any).pendingFiles = (window as any).pendingFiles || {};
       (window as any).pendingFiles[file.name] = file;
     }
-    
-    setSelectedFiles(selectedFiles.filter(f => f !== file));
   };
 
   const formatTime = (date: Date) => {
@@ -1100,85 +1110,189 @@ export default function RoomPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-      {/* Background Effects */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
-      </div>
+      {/* VIEWPORT FIX - COMPLETE SOLUTION */}
+      <style jsx global>{`
+        html, body, #__next {
+          margin: 0;
+          padding: 0;
+          height: 100vh;
+          height: 100dvh;
+          overflow: hidden;
+          position: fixed;
+          width: 100%;
+        }
+        .room-wrapper {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          display: flex;
+          flex-direction: column;
+          background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%);
+        }
+        .header-safe-area {
+          padding-top: max(env(safe-area-inset-top, 44px), 70px);
+        }
+        @media (min-width: 768px) {
+          .header-safe-area {
+            padding-top: max(env(safe-area-inset-top, 20px), 80px);
+          }
+        }
+      `}</style>
+      <div className="room-wrapper">
+        {/* Background Effects */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
+        </div>
 
-      {/* Header - Enhanced with Animations */}
-      <div className={`relative z-10 pt-16 xs:pt-18 sm:pt-20 md:pt-24 lg:pt-28 xl:pt-32 pb-2 xs:pb-3 sm:pb-4 border-b border-white/10 transition-all duration-1000 ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
-      }`}>
-        <div className="w-full max-w-7xl mx-auto px-2 xs:px-3 sm:px-4 md:px-6 lg:px-8">
-          <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 xs:gap-4">
-            <div className="flex items-center space-x-2 xs:space-x-3 sm:space-x-4">
+        {/* HEADER WITH SAFE AREA PADDING */}
+        <div className={`header-safe-area relative z-20 pb-3 md:pb-4 border-b border-white/10 transition-all duration-1000 ${
+          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
+        }`}>
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
+          
+          {/* Desktop Header Layout */}
+          <div className="hidden md:flex items-center justify-between">
+            {/* Left Side - Back Button & Room Info */}
+            <div className="flex items-center space-x-4">
               <button
                 onClick={() => router.back()}
-                className="group flex items-center text-gray-400 hover:text-white transition-all duration-300 hover:bg-white/5 px-2 py-1 rounded-lg"
+                className="group flex items-center text-gray-400 hover:text-white transition-all duration-300 hover:bg-white/5 px-3 py-2 rounded-lg"
               >
-                <svg className="w-4 h-4 xs:w-5 xs:h-5 mr-1 xs:mr-2 group-hover:-translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-                <span className="text-xs xs:text-sm font-medium">Back</span>
+                <span className="text-sm font-medium">Back</span>
               </button>
               
-            <div className="flex items-center space-x-2 xs:space-x-3">
-              <div className={`w-2 h-2 xs:w-3 xs:h-3 rounded-full ${isConnected ? 'bg-green-400 animate-pulse' : 'bg-red-400'} shadow-lg ${isConnected ? 'shadow-green-400/50' : 'shadow-red-400/50'}`}></div>
-              <h1 className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-white bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                Room #{roomId}
-              </h1>
-              
-              {/* Connected Users Pill - Only on Small Screens */}
-              <div className="lg:hidden flex items-center space-x-1 px-2 py-1 bg-green-500/20 border border-green-400/30 rounded-full backdrop-blur-sm hover:bg-green-500/30 transition-all duration-300">
-                <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-xs text-green-300 font-medium">
-                  {users.length} online
-                </span>
+              <div className="flex items-center space-x-3">
+                <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-400 animate-pulse' : 'bg-red-400'} shadow-lg ${isConnected ? 'shadow-green-400/50' : 'shadow-red-400/50'}`}></div>
+                <div>
+                  <h1 className="text-2xl font-bold text-white bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                    Room #{roomId}
+                  </h1>
+                  <p className="text-sm text-gray-400">
+                    {roomInfo?.name || `Secure P2P Room`}
+                  </p>
+                </div>
               </div>
-            </div>
             </div>
 
-            <div className="flex items-center space-x-2 xs:space-x-3 sm:space-x-4">
-              <div className="hidden lg:block text-xs xs:text-sm text-gray-400 bg-slate-800/50 px-3 py-1 rounded-full border border-white/10">
-                {users.length} online
+            {/* Right Side - Desktop Actions */}
+            <div className="flex items-center space-x-4">
+              {/* Desktop Users Display */}
+              <div className="flex items-center space-x-2 px-4 py-2 bg-green-500/20 border border-green-400/30 rounded-lg backdrop-blur-sm">
+                <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span className="text-green-300 font-medium">
+                  {users.length} {users.length === 1 ? 'user' : 'users'} online
+                </span>
               </div>
               
-              {/* Share Room Button */}
+              {/* Desktop Share Button */}
               <button 
                 onClick={shareRoom}
-                className="px-2 xs:px-3 sm:px-4 py-1 xs:py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs xs:text-sm rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 flex items-center space-x-1"
-                title="Share room with others"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 flex items-center space-x-2"
+                title="Share room"
               >
-                <svg className="w-3 h-3 xs:w-4 xs:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
                 </svg>
-                <span className="hidden sm:inline">Share</span>
+                <span>Share Room</span>
               </button>
               
+              {/* Desktop Leave Button */}
               <button 
                 onClick={() => router.back()}
-                className="px-2 xs:px-3 sm:px-4 py-1 xs:py-2 bg-red-600 hover:bg-red-700 text-white text-xs xs:text-sm rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-red-500/25"
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-red-500/25 flex items-center space-x-2"
+                title="Leave room"
               >
-                Leave Room
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14v6m-3-3h6M6 10h2a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v2a2 2 0 002 2zm10 0h2a2 2 0 002-2V6a2 2 0 00-2-2h-2a2 2 0 00-2 2v2a2 2 0 002 2zM6 20h2a2 2 0 002-2v-2a2 2 0 00-2-2H6a2 2 0 00-2 2v2a2 2 0 002 2z" />
+                </svg>
+                <span>Leave Room</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile Header Layout */}
+          <div className="flex md:hidden items-center justify-between">
+            {/* Left Side - Back Button & Room Info */}
+            <div className="flex items-center space-x-3 flex-1 min-w-0">
+              <button
+                onClick={() => router.back()}
+                className="group flex items-center text-gray-400 hover:text-white transition-all duration-300 hover:bg-white/5 p-2 rounded-full"
+              >
+                <svg className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              
+              <div className="flex items-center space-x-2 flex-1 min-w-0">
+                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400 animate-pulse' : 'bg-red-400'} shadow-lg ${isConnected ? 'shadow-green-400/50' : 'shadow-red-400/50'}`}></div>
+                <h1 className="text-lg font-bold text-white bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent truncate">
+                  Room #{roomId}
+                </h1>
+              </div>
+            </div>
+
+            {/* Right Side - Actions */}
+            <div className="flex items-center space-x-2">
+              {/* Mobile Users Count - Clickable */}
+              <button
+                onClick={() => setShowMobileUsers(true)}
+                className="flex items-center space-x-2 px-3 py-1.5 bg-green-500/20 border border-green-400/30 rounded-full backdrop-blur-sm hover:bg-green-500/30 transition-all duration-300 active:scale-95"
+              >
+                <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-xs text-green-300 font-medium">
+                  {users.length}
+                </span>
+                <svg className="w-3 h-3 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </button>
+              
+              {/* Mobile Share Button */}
+              <button 
+                onClick={shareRoom}
+                className="p-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25"
+                title="Share room"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                </svg>
+              </button>
+              
+              {/* Mobile Leave Button */}
+              <button 
+                onClick={() => router.back()}
+                className="p-2.5 bg-red-600 hover:bg-red-700 text-white rounded-full transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-red-500/25"
+                title="Leave room"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content - Optimized Height */}
-      <div className="relative z-10 h-[calc(100vh-120px)] xs:h-[calc(100vh-130px)] sm:h-[calc(100vh-140px)] md:h-[calc(100vh-150px)] lg:h-[calc(100vh-160px)]">
-        <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 h-full">
-          <div className="flex flex-col lg:flex-row h-full gap-3 sm:gap-4 py-3 sm:py-4">
+        {/* SIMPLE CONTENT AREA */}
+        <div className="relative z-10 h-full overflow-hidden">
+          <div className="w-full max-w-7xl mx-auto h-full px-2 md:px-4 lg:px-6">
+            <div className="flex flex-col lg:flex-row h-full gap-3 md:gap-4 lg:gap-6 py-2 md:py-4">
             
-            {/* Chat Area - Optimized Size */}
-            <div className={`flex-1 flex flex-col bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-xl transition-all duration-1000 delay-300 ${
+            {/* Responsive Chat Area */}
+            <div className={`flex-1 flex flex-col bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-xl md:rounded-2xl transition-all duration-1000 delay-300 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}>
               
-              {/* Messages - Optimized Spacing */}
-              <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-5 lg:p-6 space-y-3 sm:space-y-4">
+              {/* Messages Area - Responsive */}
+              <div className="flex-1 overflow-y-auto p-3 md:p-4 lg:p-6 space-y-3 md:space-y-4 scroll-smooth">
                 {messages.map((message, index) => (
                   <div 
                     key={message.id} 
@@ -1187,12 +1301,12 @@ export default function RoomPage() {
                     }`}
                     style={{ animationDelay: `${index * 100}ms` }}
                   >
-                    <div className={`max-w-[280px] sm:max-w-sm md:max-w-md lg:max-w-lg px-3 sm:px-4 md:px-5 py-2 sm:py-3 rounded-lg transition-all duration-300 hover:scale-105 ${
+                    <div className={`max-w-[85%] md:max-w-[75%] lg:max-w-[65%] px-4 md:px-5 py-3 md:py-4 rounded-2xl transition-all duration-300 ${
                       message.type === 'system' 
-                        ? 'bg-blue-500/20 text-blue-300 text-center mx-auto border border-blue-400/30'
+                        ? 'bg-blue-500/20 text-blue-300 text-center mx-auto border border-blue-400/30 rounded-xl text-sm md:text-base'
                         : message.sender === 'You'
-                        ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25'
-                        : 'bg-slate-700/80 text-gray-200 hover:bg-slate-700 border border-slate-600/50'
+                        ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25 rounded-tl-2xl rounded-tr-sm rounded-bl-2xl rounded-br-2xl hover:shadow-xl hover:shadow-blue-500/30 transform hover:scale-[1.02]'
+                        : 'bg-slate-700/90 text-gray-200 border border-slate-600/50 rounded-tl-sm rounded-tr-2xl rounded-bl-2xl rounded-br-2xl hover:bg-slate-700 transform hover:scale-[1.02]'
                     }`}>
                       {message.type !== 'system' && (
                         <div className="text-xs font-semibold mb-1 opacity-80 flex items-center space-x-1">
@@ -1423,21 +1537,21 @@ export default function RoomPage() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Message Input - Optimized */}
-              <div className="p-3 sm:p-4 md:p-5 lg:p-6 border-t border-white/10">
-                <div className="flex flex-col space-y-2">
-                  {/* Emoji Picker */}
+              {/* Responsive Message Input */}
+              <div className="p-3 md:p-4 lg:p-6 border-t border-white/10 bg-slate-800/30 backdrop-blur-sm">
+                <div className="flex flex-col space-y-3 md:space-y-4">
+                  {/* Responsive Emoji Picker */}
                   {showEmojiPicker && (
                     <div 
                       ref={emojiPickerRef}
-                      className="bg-slate-800/90 backdrop-blur-sm border border-white/20 rounded-lg p-3 max-h-32 overflow-y-auto"
+                      className="bg-slate-800/95 backdrop-blur-sm border border-white/20 rounded-xl p-4 max-h-40 md:max-h-48 lg:max-h-56 overflow-y-auto shadow-2xl"
                     >
-                      <div className="grid grid-cols-8 xs:grid-cols-10 sm:grid-cols-12 gap-1">
+                      <div className="grid grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-2">
                         {commonEmojis.slice(0, 40).map((emoji, index) => (
                           <button
                             key={index}
                             onClick={() => handleEmojiClick(emoji)}
-                            className="text-lg hover:bg-white/10 rounded p-1 transition-colors"
+                            className="text-xl hover:bg-white/20 rounded-lg p-2 md:p-3 transition-all duration-200 active:scale-95 hover:scale-110"
                           >
                             {emoji}
                           </button>
@@ -1446,35 +1560,81 @@ export default function RoomPage() {
                     </div>
                   )}
                   
-                  <div className="flex space-x-1 xs:space-x-2">
-                    <input
-                      type="text"
-                      value={newMessage}
-                      onChange={handleInputChange}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                      placeholder="Type a message..."
-                      className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-slate-800/50 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base transition-all duration-300 hover:bg-slate-800/70 focus:bg-slate-800/70"
-                    />
+                  {/* Beautiful Responsive Input Row */}
+                  <div className="flex items-center space-x-3">
+                    {/* Input Container with File Button Inside */}
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        value={newMessage}
+                        onChange={handleInputChange}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                        placeholder="Type a message..."
+                        className="w-full pl-5 pr-12 py-4 bg-slate-800/90 border-2 border-blue-500/30 rounded-full text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-base transition-all duration-300 focus:bg-slate-800/95 focus:shadow-lg focus:shadow-blue-500/20"
+                      />
+                      
+                      {/* File Button Inside Input - Right Corner */}
+                      <input
+                        type="file"
+                        onChange={handleChatFileSelect}
+                        multiple
+                        disabled={isUploadingFiles}
+                        className="hidden"
+                        id="chat-file-upload"
+                      />
+                      <label
+                        htmlFor="chat-file-upload"
+                        className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full transition-all duration-300 cursor-pointer flex items-center justify-center ${
+                          isUploadingFiles
+                            ? 'bg-orange-500/20 text-orange-400'
+                            : 'hover:bg-slate-600/50 text-gray-400 hover:text-white'
+                        } ${isUploadingFiles ? 'cursor-not-allowed' : ''}`}
+                        title={isUploadingFiles ? "Uploading files..." : "Attach file"}
+                      >
+                        {isUploadingFiles ? (
+                          <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        ) : (
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                          </svg>
+                        )}
+                      </label>
+                    </div>
+                    
+                    {/* Small Emoji Button */}
                     <button
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                      className="px-3 sm:px-4 py-2 sm:py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors text-sm sm:text-base"
+                      className="p-3 bg-slate-700/80 hover:bg-amber-500 text-white rounded-full transition-all duration-300 active:scale-95 border border-white/10 hover:border-amber-400/30 shadow-md hover:shadow-lg hover:shadow-amber-500/25"
+                      title="Add emoji"
                     >
-                      😀
+                      <span className="text-base">😊</span>
                     </button>
+                    
+                    {/* Attractive Send Button */}
                     <button
                       onClick={handleSendMessage}
                       disabled={!newMessage.trim()}
-                      className="px-4 sm:px-5 py-2 sm:py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm sm:text-base"
+                      className={`p-3 rounded-full transition-all duration-300 active:scale-95 ${
+                        !newMessage.trim() 
+                          ? 'bg-slate-600/70 border border-slate-500/50 text-slate-400 cursor-not-allowed' 
+                          : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border border-blue-500/30 text-white shadow-lg hover:shadow-xl hover:shadow-blue-500/40 transform hover:scale-110 hover:-rotate-12'
+                      }`}
+                      title="Send message"
                     >
-                      Send
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                      </svg>
                     </button>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Sidebar - Optimized Size */}
-            <div className={`w-full lg:w-72 flex-shrink-0 space-y-3 sm:space-y-4 transition-all duration-1000 delay-500 ${
+            {/* Desktop Sidebar - Hidden on Mobile */}
+            <div className={`hidden lg:flex lg:w-72 flex-shrink-0 flex-col space-y-4 transition-all duration-1000 delay-500 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}>
               
@@ -1522,63 +1682,6 @@ export default function RoomPage() {
                 </div>
               </div>
 
-              {/* File Sharing - Optimized */}
-              <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-xl p-3 sm:p-4">
-                <h3 className="text-sm sm:text-base font-semibold text-white mb-3 flex items-center">
-                  <svg className="w-4 h-4 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                  <span>File Sharing</span>
-                </h3>
-                
-                <div className="space-y-3">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    onChange={handleFileSelect}
-                    multiple
-                    className="hidden"
-                    id="file-upload"
-                  />
-                  <label
-                    htmlFor="file-upload"
-                    className="block w-full p-3 border-2 border-dashed border-white/20 rounded-lg text-center cursor-pointer hover:border-blue-400/50 transition-colors"
-                  >
-                    <svg className="w-6 h-6 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    <div className="text-sm text-gray-400">Click to upload files</div>
-                  </label>
-
-                  {selectedFiles.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="text-sm font-medium text-white">Selected Files:</div>
-                      {selectedFiles.map((file, index) => {
-                        const fileType = getFileType(file);
-                        return (
-                          <div key={index} className="flex items-center justify-between p-2 bg-slate-700/50 rounded-lg">
-                            <div className="flex items-center space-x-2 flex-1 min-w-0">
-                              <span className={`text-base ${fileType.color}`}>{fileType.icon}</span>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-sm text-white truncate">{file.name}</div>
-                                <div className="text-xs text-gray-400">
-                                  {formatFileSize(file.size)}
-                                </div>
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => handleFileShare(file)}
-                              className="ml-2 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors"
-                            >
-                              Share
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </div>
 
               {/* Security Info - Optimized */}
               <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-xl p-3 sm:p-4">
@@ -1600,10 +1703,84 @@ export default function RoomPage() {
         </div>
       </div>
 
+      {/* Mobile Users Modal */}
+      {showMobileUsers && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-end lg:hidden">
+          <div 
+            className="fixed inset-0" 
+            onClick={() => setShowMobileUsers(false)}
+          ></div>
+          <div className="w-full bg-gradient-to-br from-slate-800 to-slate-900 border-t border-white/10 rounded-t-3xl p-6 shadow-2xl transform translate-y-0 transition-all duration-300 ease-out max-h-[80vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">Connected Users</h3>
+                  <p className="text-sm text-gray-400">{users.length} online</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowMobileUsers(false)}
+                className="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Users List */}
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {users.length > 0 ? (
+                users.map((user, index) => (
+                  <div 
+                    key={user.socketId || `user-${index}`} 
+                    className="flex items-center space-x-4 p-4 rounded-2xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-400/20 backdrop-blur-sm"
+                  >
+                    <div className="w-4 h-4 rounded-full bg-green-400 animate-pulse shadow-lg shadow-green-400/50"></div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-base font-semibold text-white truncate">{user.name}</div>
+                      <div className="text-sm text-green-300 flex items-center space-x-2">
+                        <span>Online</span>
+                        <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+                      </div>
+                    </div>
+                    <div className="text-green-400">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <div className="text-gray-400 text-lg font-medium">
+                    {isConnected ? 'No other users connected' : 'Connecting...'}
+                  </div>
+                  <div className="text-gray-500 text-sm mt-1">
+                    Share the room link to invite others
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Share Room Modal */}
       {showShareModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="share-modal bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-2xl p-6 sm:p-8 w-full max-w-md mx-4 shadow-2xl">
+          <div className="share-modal bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-2xl p-6 sm:p-8 w-full max-w-md mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
@@ -1716,6 +1893,7 @@ export default function RoomPage() {
           </div>
         </div>
       )}
+      </div> {/* Close room-container */}
     </div>
   );
 }
