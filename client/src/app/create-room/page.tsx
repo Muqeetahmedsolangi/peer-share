@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Backend URL - Use api.dropsos.com subdomain for backend
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://api.dropsos.com';
+// Backend URL - Use localhost for development
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
 export default function CreateRoomPage() {
   const router = useRouter();

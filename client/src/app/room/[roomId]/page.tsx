@@ -5,7 +5,7 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import io, { Socket } from 'socket.io-client';
 
 // Backend URL
-const SOCKET_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://api.dropsos.com';
+const SOCKET_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
 interface User {
   socketId: string;
