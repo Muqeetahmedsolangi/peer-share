@@ -3,6 +3,7 @@ import { Server as HttpServer } from 'http';
 import { Server as SocketServer, Socket } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 import { saveClip, getClip, deleteClip, checkClipExists } from './redisService';
+import { joinRoom as joinRoomService, leaveRoom, getRoomInfo, isUserInRoom } from './roomService';
 
 // Store rooms - AUTOMATICALLY GROUPED BY WIFI NETWORK
 const rooms = new Map<string, Set<string>>(); // roomId -> Set of socketIds
@@ -136,7 +137,76 @@ export function initializeSocket(server: HttpServer) {
     // Store the IP on the socket for later use
     (socket as any).clientIP = clientIP;
     
-    // Auto-join based on WiFi network (IP subnet)
+    // Join a specific room with password
+    socket.on('join-room', async (data: { roomId: string; password: string; userName: string }) => {
+      const { roomId, password, userName } = data;
+      
+      if (!roomId || !password || !userName) {
+        socket.emit('room-join-response', {
+          success: false,
+          error: 'Room ID, password, and name are required'
+        });
+        return;
+      }
+
+      console.log(`🚪 ${userName} attempting to join room: ${roomId}`);
+
+      const result = joinRoomService(roomId, password, userName, socket.id);
+      
+      if (result.success && result.room) {
+        // Join the socket.io room
+        await socket.join(roomId);
+        
+        // Store user info
+        const userInfo: UserInfo = {
+          id: uuidv4(),
+          socketId: socket.id,
+          roomId: roomId,
+          clientIP: (socket as any).clientIP || 'unknown',
+          name: userName
+        };
+        users.set(socket.id, userInfo);
+        
+        // Send success response
+        socket.emit('room-join-response', {
+          success: true,
+          room: result.room
+        });
+        
+        // Get current room info
+        const roomInfo = getRoomInfo(roomId);
+        if (roomInfo) {
+          const roomUsers = Array.from(roomInfo.memberInfo.values()).map(member => ({
+            socketId: member.socketId,
+            name: member.name,
+            joinedAt: member.joinedAt
+          }));
+          
+          console.log(`📊 Room "${roomId}" now has ${roomUsers.length} users:`, 
+            roomUsers.map(u => u.name).join(', '));
+          
+          // Send updated user list to everyone in this room
+          io.to(roomId).emit('room-users-update', {
+            users: roomUsers,
+            totalCount: roomUsers.length
+          });
+          
+          // Notify others that new user joined
+          socket.to(roomId).emit('user-joined-room', {
+            userId: userInfo.id,
+            userName: userInfo.name,
+            socketId: socket.id
+          });
+        }
+      } else {
+        socket.emit('room-join-response', {
+          success: false,
+          error: result.error || 'Failed to join room'
+        });
+      }
+    });
+    
+    // Auto-join based on WiFi network (IP subnet) - existing functionality
     socket.on('join-network', async (data: { userName: string; roomName?: string }) => {
       const userName = data.userName || 'Anonymous';
 
@@ -579,36 +649,65 @@ export function initializeSocket(server: HttpServer) {
       
       const user = users.get(socket.id);
       if (user) {
-        // Remove from room
-        rooms.get(user.roomId)?.delete(socket.id);
-        
-        // Notify others in same WiFi network
-        socket.to(user.roomId).emit('user-left', {
-          userId: user.id,
-          userName: user.name,
-          socketId: socket.id
-        });
-        
-        // Update user list for WiFi network
-        const roomUsers = Array.from(rooms.get(user.roomId) || [])
-          .map(sid => users.get(sid))
-          .filter(Boolean);
-        
-        console.log(`📊 Room "${user.roomId}" now has ${roomUsers.length} users`);
-        
-        io.to(user.roomId).emit('users-update', {
-          users: roomUsers,
-          totalCount: roomUsers.length
-        });
+        // Check if this is a custom room (not WiFi-based)
+        const roomInfo = getRoomInfo(user.roomId);
+        if (roomInfo) {
+          // This is a custom room - use room service
+          const result = leaveRoom(user.roomId, socket.id);
+          
+          // Notify others in room
+          socket.to(user.roomId).emit('user-left-room', {
+            userId: user.id,
+            userName: user.name,
+            socketId: socket.id
+          });
+          
+          // Update user list for custom room
+          const updatedRoomInfo = getRoomInfo(user.roomId);
+          if (updatedRoomInfo) {
+            const roomUsers = Array.from(updatedRoomInfo.memberInfo.values()).map(member => ({
+              socketId: member.socketId,
+              name: member.name,
+              joinedAt: member.joinedAt
+            }));
+            
+            io.to(user.roomId).emit('room-users-update', {
+              users: roomUsers,
+              totalCount: roomUsers.length
+            });
+          }
+        } else {
+          // This is a WiFi-based room - use existing logic
+          rooms.get(user.roomId)?.delete(socket.id);
+          
+          // Notify others in same WiFi network
+          socket.to(user.roomId).emit('user-left', {
+            userId: user.id,
+            userName: user.name,
+            socketId: socket.id
+          });
+          
+          // Update user list for WiFi network
+          const roomUsers = Array.from(rooms.get(user.roomId) || [])
+            .map(sid => users.get(sid))
+            .filter(Boolean);
+          
+          console.log(`📊 Room "${user.roomId}" now has ${roomUsers.length} users`);
+          
+          io.to(user.roomId).emit('users-update', {
+            users: roomUsers,
+            totalCount: roomUsers.length
+          });
+          
+          // Remove WiFi room if empty
+          if (rooms.get(user.roomId)?.size === 0) {
+            rooms.delete(user.roomId);
+            console.log(`🗑️ Removed empty WiFi room: ${user.roomId}`);
+          }
+        }
         
         // Clean up
         users.delete(socket.id);
-        
-        // Remove room if empty
-        if (rooms.get(user.roomId)?.size === 0) {
-          rooms.delete(user.roomId);
-          console.log(`🗑️ Removed empty room: ${user.roomId}`);
-        }
       }
     });
   });

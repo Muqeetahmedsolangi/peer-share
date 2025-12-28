@@ -1,13 +1,16 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import io, { Socket } from 'socket.io-client';
+
+// Backend URL
+const SOCKET_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://api.dropsos.com';
 
 interface User {
-  id: string;
+  socketId: string;
   name: string;
-  isOnline: boolean;
-  avatar?: string;
+  joinedAt: Date;
 }
 
 interface Message {
@@ -35,27 +38,28 @@ interface FileType {
 export default function RoomPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const roomId = params.roomId as string;
   
-  const [users] = useState<User[]>([
-    { id: '1', name: 'You', isOnline: true },
-    { id: '2', name: 'Alice Johnson', isOnline: true },
-    { id: '3', name: 'Bob Smith', isOnline: false },
-    { id: '4', name: 'Carol Davis', isOnline: true },
-  ]);
+  // Get parameters from URL or prompt user
+  const [userName, setUserName] = useState(searchParams.get('name') || '');
+  const [password, setPassword] = useState(searchParams.get('password') || '');
+  const [isJoined, setIsJoined] = useState(false);
+  const [joinError, setJoinError] = useState('');
+  const [isJoining, setIsJoining] = useState(false);
   
-  const [messages, setMessages] = useState<Message[]>([
-    { id: '1', text: 'Welcome to the room! 🎉', sender: 'System', timestamp: new Date(), type: 'system' },
-    { id: '2', text: 'Hey everyone! Ready to share some files? 📁', sender: 'Alice Johnson', timestamp: new Date(), type: 'text' },
-    { id: '3', text: 'Absolutely! This looks great. 👍', sender: 'Bob Smith', timestamp: new Date(), type: 'text' },
-  ]);
-  
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [isConnected] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [roomInfo, setRoomInfo] = useState<any>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [copySuccess, setCopySuccess] = useState('');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -110,10 +114,129 @@ export default function RoomPage() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  // Initialize main socket connection after successful validation
+  useEffect(() => {
+    if (isJoined && userName && password) {
+      const socketInstance = io(SOCKET_URL, {
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        reconnectionAttempts: 5,
+        timeout: 20000
+      });
+
+      socketInstance.on('connect', () => {
+        console.log('✅ Connected to server for room session!', socketInstance.id);
+        setIsConnected(true);
+        
+        // Join the room - we already validated credentials
+        socketInstance.emit('join-room', {
+          roomId: roomId,
+          password: password.trim(),
+          userName: userName.trim()
+        });
+      });
+
+      socketInstance.on('room-join-response', (data) => {
+        if (data.success) {
+          console.log('✅ Successfully joined room session:', data.room);
+          setRoomInfo(data.room);
+          setUsers(data.room.members || []);
+          setMessages([{
+            id: Date.now().toString(),
+            text: `Welcome to ${data.room.name}! 🎉`,
+            sender: 'System',
+            timestamp: new Date(),
+            type: 'system'
+          }]);
+        } else {
+          console.error('❌ Failed to join room session:', data.error);
+          // If join fails after validation, something is wrong - go back to join form
+          setIsJoined(false);
+          setJoinError(data.error || 'Session expired. Please try joining again.');
+        }
+      });
+
+      socketInstance.on('room-users-update', (data) => {
+        console.log('👥 Users updated:', data.users);
+        setUsers(data.users || []);
+      });
+
+      socketInstance.on('user-joined-room', (data) => {
+        console.log('🎉 New user joined:', data.userName);
+        const joinMessage: Message = {
+          id: Date.now().toString(),
+          text: `${data.userName} joined the room`,
+          sender: 'System',
+          timestamp: new Date(),
+          type: 'system'
+        };
+        setMessages(prev => [...prev, joinMessage]);
+      });
+
+      socketInstance.on('user-left-room', (data) => {
+        console.log('👋 User left:', data.userName);
+        const leaveMessage: Message = {
+          id: Date.now().toString(),
+          text: `${data.userName} left the room`,
+          sender: 'System',
+          timestamp: new Date(),
+          type: 'system'
+        };
+        setMessages(prev => [...prev, leaveMessage]);
+      });
+
+      socketInstance.on('disconnect', () => {
+        console.log('❌ Disconnected from server');
+        setIsConnected(false);
+      });
+
+      socketInstance.on('connect_error', (error) => {
+        console.error('❌ Connection error during session:', error);
+        setIsConnected(false);
+      });
+
+      setSocket(socketInstance);
+
+      return () => {
+        console.log('🧹 Cleaning up socket connection');
+        socketInstance.disconnect();
+      };
+    }
+  }, [isJoined, userName, password, roomId]);
+
   useEffect(() => {
     setIsVisible(true);
     scrollToBottom();
   }, [messages]);
+
+  // Load username from localStorage and check if we should auto-join
+  useEffect(() => {
+    const savedUsername = localStorage.getItem('peershare-username') || '';
+    if (!userName && savedUsername) {
+      setUserName(savedUsername);
+    }
+    
+    // If we have both username and password from URL params, auto-join
+    if (userName && password) {
+      setIsJoined(true);
+    }
+  }, [userName, password]);
+
+  // Close share modal when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showShareModal && !(event.target as Element).closest('.share-modal')) {
+        setShowShareModal(false);
+      }
+    };
+    
+    if (showShareModal) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showShareModal]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -148,7 +271,7 @@ export default function RoomPage() {
   };
 
   const handleSendMessage = () => {
-    if (newMessage.trim()) {
+    if (newMessage.trim() && socket && isConnected) {
       const message: Message = {
         id: Date.now().toString(),
         text: newMessage,
@@ -156,9 +279,150 @@ export default function RoomPage() {
         timestamp: new Date(),
         type: 'text'
       };
-      setMessages([...messages, message]);
+      setMessages(prev => [...prev, message]);
+      
+      // TODO: Emit to socket for real-time messaging
+      // socket.emit('room-message', { roomId, text: newMessage, sender: userName });
+      
       setNewMessage('');
       setIsTyping(false);
+    }
+  };
+
+  const handleJoinRoom = () => {
+    // Enhanced validation with specific error messages
+    if (!userName.trim()) {
+      setJoinError('Please enter your name. This will be shown to other users in the room.');
+      return;
+    }
+    
+    if (userName.trim().length < 2) {
+      setJoinError('Name must be at least 2 characters long.');
+      return;
+    }
+    
+    if (userName.trim().length > 50) {
+      setJoinError('Name must be less than 50 characters.');
+      return;
+    }
+    
+    if (!password.trim()) {
+      setJoinError('Please enter the room password.');
+      return;
+    }
+    
+    // Don't set isJoined=true yet - wait for server validation
+    setJoinError('');
+    setIsJoining(true);
+    
+    // Save to localStorage
+    localStorage.setItem('peershare-username', userName.trim());
+    
+    // Start the connection process - socket will validate credentials
+    initiateJoinProcess();
+  };
+
+  const initiateJoinProcess = () => {
+    const socketInstance = io(SOCKET_URL, {
+      transports: ['websocket', 'polling'],
+      reconnection: false, // Don't auto-reconnect for initial validation
+      timeout: 10000
+    });
+
+    socketInstance.on('connect', () => {
+      console.log('✅ Connected to server for validation');
+      
+      // Send join request with credentials for validation
+      socketInstance.emit('join-room', {
+        roomId: roomId,
+        password: password.trim(),
+        userName: userName.trim()
+      });
+    });
+
+    socketInstance.on('room-join-response', (data) => {
+      setIsJoining(false);
+      if (data.success) {
+        console.log('✅ Room validation successful');
+        setIsJoined(true); // Now we can join
+        socketInstance.disconnect(); // Clean up validation socket
+      } else {
+        console.error('❌ Room validation failed:', data.error);
+        setJoinError(data.error || 'Invalid room ID or password. Please check your credentials.');
+        socketInstance.disconnect();
+      }
+    });
+
+    socketInstance.on('connect_error', (error) => {
+      console.error('❌ Connection error:', error);
+      setIsJoining(false);
+      setJoinError('Cannot connect to server. Please try again.');
+    });
+
+    socketInstance.on('disconnect', (reason) => {
+      if (reason === 'io client disconnect') {
+        // Normal disconnect after validation
+        return;
+      }
+      console.error('❌ Disconnected during validation:', reason);
+      if (!isJoined) {
+        setIsJoining(false);
+        setJoinError('Connection lost. Please try again.');
+      }
+    });
+  };
+
+  const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-20 right-4 ${type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+  };
+
+  // Share room functionality
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopySuccess(`${label} copied to clipboard!`);
+      showNotification(`${label} copied to clipboard!`, 'success');
+      setTimeout(() => setCopySuccess(''), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      showNotification('Failed to copy to clipboard', 'error');
+    }
+  };
+
+  const shareRoom = () => {
+    setShowShareModal(true);
+  };
+
+  const getRoomLink = () => {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/join-room?roomId=${roomId}`;
+  };
+
+  const getDirectRoomLink = () => {
+    const baseUrl = window.location.origin;
+    const encodedName = encodeURIComponent('Your Name');
+    const encodedPassword = encodeURIComponent('[PASSWORD]');
+    return `${baseUrl}/room/${roomId}?name=${encodedName}&password=${encodedPassword}`;
+  };
+
+  const shareViaWebShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Join Room: ${roomInfo?.name || roomId}`,
+          text: `Join my secure room! Room ID: ${roomId}`,
+          url: getRoomLink()
+        });
+      } catch (err) {
+        console.error('Error sharing:', err);
+      }
+    } else {
+      // Fallback to copying link
+      copyToClipboard(getRoomLink(), 'Room link');
     }
   };
 
@@ -205,6 +469,142 @@ export default function RoomPage() {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Show join form if not joined yet
+  if (!isJoined) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-1/4 w-72 h-72 sm:w-96 sm:h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-1/4 w-72 h-72 sm:w-96 sm:h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
+        </div>
+        
+        <div className="relative z-10 min-h-screen flex items-center justify-center p-4 sm:p-6">
+          <div className="w-full max-w-md">
+            <div className="text-center mb-6 sm:mb-8">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center">
+                <svg className="w-8 h-8 sm:w-10 sm:h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black mb-3 sm:mb-4 tracking-tight">
+                <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
+                  Join Room
+                </span>
+              </h1>
+              <div className="px-2">
+                <p className="text-sm sm:text-base md:text-lg text-gray-300 font-light mb-2">
+                  Room ID: <span className="font-mono font-bold text-blue-400">{roomId}</span>
+                </p>
+                <p className="text-xs sm:text-sm text-gray-400">
+                  Please enter your name and the room password to join
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-8">
+              {joinError && (
+                <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3 mb-4">
+                  <p className="text-red-300 text-sm">{joinError}</p>
+                </div>
+              )}
+              
+              <div className="space-y-5">
+                {/* User Name Section - Enhanced */}
+                <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-4">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                    <label className="block text-sm font-semibold text-blue-300">
+                      Your Name (Required)
+                    </label>
+                  </div>
+                  <input
+                    type="text"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
+                    placeholder="Enter your display name for the room..."
+                    className="w-full px-4 py-3 bg-slate-800/70 border border-blue-500/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base transition-all duration-300"
+                    maxLength={50}
+                    autoFocus
+                  />
+                  <div className="flex justify-between items-center mt-2">
+                    <p className="text-xs text-blue-200 flex items-center space-x-1">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>This name will be shown to other users</span>
+                    </p>
+                    <span className={`text-xs ${userName.length > 40 ? 'text-yellow-400' : 'text-gray-400'}`}>
+                      {userName.length}/50
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Room Password Section */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center space-x-2">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span>Room Password</span>
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter room password..."
+                    className="w-full px-4 py-3 bg-slate-800/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base transition-all duration-300"
+                  />
+                </div>
+                
+                {/* Information Box */}
+                <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-xl p-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-5 h-5 bg-cyan-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="text-cyan-300 font-semibold mb-1 text-sm">What happens next?</h4>
+                      <ul className="text-xs text-cyan-200 space-y-1">
+                        <li>• Your name will appear to other users in the room</li>
+                        <li>• You'll see who else is connected in real-time</li>
+                        <li>• You can chat and share files securely</li>
+                        <li>• Your credentials are validated before joining</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                
+                <button
+                  onClick={handleJoinRoom}
+                  disabled={!userName.trim() || userName.trim().length < 2 || !password.trim() || isJoining}
+                  className="w-full py-3 sm:py-3.5 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-xl hover:from-blue-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 disabled:hover:scale-100 text-sm sm:text-base flex items-center justify-center"
+                >
+                  {isJoining ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Joining Room...
+                    </>
+                  ) : (
+                    'Join Room'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       {/* Background Effects */}
@@ -231,7 +631,7 @@ export default function RoomPage() {
               </button>
               
             <div className="flex items-center space-x-2 xs:space-x-3">
-              <div className={`w-2 h-2 xs:w-3 xs:h-3 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'} animate-pulse shadow-lg ${isConnected ? 'shadow-green-400/50' : 'shadow-red-400/50'}`}></div>
+              <div className={`w-2 h-2 xs:w-3 xs:h-3 rounded-full ${isConnected ? 'bg-green-400 animate-pulse' : 'bg-red-400'} shadow-lg ${isConnected ? 'shadow-green-400/50' : 'shadow-red-400/50'}`}></div>
               <h1 className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-white bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                 Room #{roomId}
               </h1>
@@ -240,7 +640,7 @@ export default function RoomPage() {
               <div className="lg:hidden flex items-center space-x-1 px-2 py-1 bg-green-500/20 border border-green-400/30 rounded-full backdrop-blur-sm hover:bg-green-500/30 transition-all duration-300">
                 <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
                 <span className="text-xs text-green-300 font-medium">
-                  {users.filter(u => u.isOnline).length} online
+                  {users.length} online
                 </span>
               </div>
             </div>
@@ -248,9 +648,25 @@ export default function RoomPage() {
 
             <div className="flex items-center space-x-2 xs:space-x-3 sm:space-x-4">
               <div className="hidden lg:block text-xs xs:text-sm text-gray-400 bg-slate-800/50 px-3 py-1 rounded-full border border-white/10">
-                {users.filter(u => u.isOnline).length} online
+                {users.length} online
               </div>
-              <button className="px-2 xs:px-3 sm:px-4 py-1 xs:py-2 bg-red-600 hover:bg-red-700 text-white text-xs xs:text-sm rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-red-500/25">
+              
+              {/* Share Room Button */}
+              <button 
+                onClick={shareRoom}
+                className="px-2 xs:px-3 sm:px-4 py-1 xs:py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs xs:text-sm rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 flex items-center space-x-1"
+                title="Share room with others"
+              >
+                <svg className="w-3 h-3 xs:w-4 xs:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                </svg>
+                <span className="hidden sm:inline">Share</span>
+              </button>
+              
+              <button 
+                onClick={() => router.back()}
+                className="px-2 xs:px-3 sm:px-4 py-1 xs:py-2 bg-red-600 hover:bg-red-700 text-white text-xs xs:text-sm rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-red-500/25"
+              >
                 Leave Room
               </button>
             </div>
@@ -366,7 +782,7 @@ export default function RoomPage() {
                       type="text"
                       value={newMessage}
                       onChange={handleInputChange}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                       placeholder="Type a message..."
                       className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-slate-800/50 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base transition-all duration-300 hover:bg-slate-800/70 focus:bg-slate-800/70"
                     />
@@ -403,35 +819,37 @@ export default function RoomPage() {
                   </div>
                   <span>Connected Users</span>
                   <div className="ml-auto text-xs text-green-400 font-medium">
-                    {users.filter(u => u.isOnline).length}
+                    {users.length}
                   </div>
                 </h3>
                 <div className="space-y-2">
-                  {users.map((user, index) => (
-                    <div 
-                      key={user.id} 
-                      className={`flex items-center space-x-3 p-2 rounded-lg hover:bg-white/5 transition-all duration-300 hover:scale-105 ${
-                        user.isOnline ? 'bg-green-500/5 border border-green-500/20' : ''
-                      }`}
-                      style={{ animationDelay: `${index * 100}ms` }}
-                    >
-                      <div className={`w-3 h-3 rounded-full ${user.isOnline ? 'bg-green-400 animate-pulse shadow-lg shadow-green-400/50' : 'bg-gray-400'} transition-all duration-300`}></div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-white truncate flex items-center space-x-1">
-                          <span>{user.name}</span>
-                          {user.isOnline && (
+                  {users.length > 0 ? (
+                    users.map((user, index) => (
+                      <div 
+                        key={user.socketId || `user-${index}`} 
+                        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-white/5 transition-all duration-300 hover:scale-105 bg-green-500/5 border border-green-500/20"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      >
+                        <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse shadow-lg shadow-green-400/50 transition-all duration-300"></div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-white truncate flex items-center space-x-1">
+                            <span>{user.name}</span>
                             <div className="w-1 h-1 bg-green-400 rounded-full animate-pulse"></div>
-                          )}
-                        </div>
-                        <div className="text-xs text-gray-400 flex items-center space-x-1">
-                          <span>{user.isOnline ? 'Online' : 'Offline'}</span>
-                          {user.isOnline && (
+                          </div>
+                          <div className="text-xs text-gray-400 flex items-center space-x-1">
+                            <span>Online</span>
                             <span className="text-green-400">●</span>
-                          )}
+                          </div>
                         </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4">
+                      <div className="text-gray-400 text-sm">
+                        {isConnected ? 'No other users connected' : 'Connecting...'}
+                      </div>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
 
@@ -512,6 +930,123 @@ export default function RoomPage() {
           </div>
         </div>
       </div>
+
+      {/* Share Room Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="share-modal bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-2xl p-6 sm:p-8 w-full max-w-md mx-4 shadow-2xl">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Share Room</h3>
+                  <p className="text-sm text-gray-400">{roomInfo?.name || `Room ${roomId}`}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Success Message */}
+            {copySuccess && (
+              <div className="mb-4 p-3 bg-green-500/20 border border-green-500/30 rounded-lg">
+                <p className="text-green-300 text-sm text-center">{copySuccess}</p>
+              </div>
+            )}
+
+            {/* Share Options */}
+            <div className="space-y-4">
+              {/* Room ID */}
+              <div className="bg-slate-700/50 rounded-xl p-4 border border-white/10">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-gray-300">Room ID</label>
+                  <button
+                    onClick={() => copyToClipboard(roomId, 'Room ID')}
+                    className="text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="font-mono text-lg text-white bg-slate-800/50 px-3 py-2 rounded-lg border border-white/10">
+                  {roomId}
+                </div>
+                <p className="text-xs text-gray-400 mt-2">Share this ID with others to join the room</p>
+              </div>
+
+              {/* Join Page Link */}
+              <div className="bg-slate-700/50 rounded-xl p-4 border border-white/10">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-gray-300">Join Page Link</label>
+                  <button
+                    onClick={() => copyToClipboard(getRoomLink(), 'Join link')}
+                    className="text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="text-sm text-white bg-slate-800/50 px-3 py-2 rounded-lg border border-white/10 break-all">
+                  {getRoomLink()}
+                </div>
+                <p className="text-xs text-gray-400 mt-2">Direct link to join page - requires room ID and password</p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={shareViaWebShare}
+                  className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                  <span>Share Link</span>
+                </button>
+                <button
+                  onClick={() => copyToClipboard(getRoomLink(), 'Room link')}
+                  className="flex-1 py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  <span>Copy Link</span>
+                </button>
+              </div>
+
+              {/* Security Notice */}
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
+                <div className="flex items-start space-x-3">
+                  <div className="w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.732 15.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-amber-300 font-semibold mb-1 text-sm">Security Notice</h4>
+                    <p className="text-xs text-amber-200">
+                      Users will still need the room password to join. Only share with trusted people.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,31 +3,79 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
+// Backend URL - Use api.dropsos.com subdomain for backend
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://api.dropsos.com';
+
 export default function CreateRoomPage() {
   const router = useRouter();
   const [roomName, setRoomName] = useState('');
   const [password, setPassword] = useState('');
+  const [creatorName, setCreatorName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     setIsVisible(true);
+    // Load creator name from localStorage
+    const savedName = localStorage.getItem('peershare-username') || '';
+    if (savedName) {
+      setCreatorName(savedName);
+    }
   }, []);
 
+  const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-20 right-4 ${type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+  };
+
   const handleCreateRoom = async () => {
-    if (!roomName.trim() || !password.trim()) {
-      alert('Please fill in all fields');
+    if (!roomName.trim() || !password.trim() || !creatorName.trim()) {
+      setError('Please fill in all fields');
       return;
     }
 
     setIsCreating(true);
+    setError('');
     
-    // Simulate room creation
-    setTimeout(() => {
-      const roomId = Math.random().toString(36).substr(2, 9);
-      router.push(`/room/${roomId}`);
-    }, 2000);
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/rooms/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          roomName: roomName.trim(),
+          password: password.trim(),
+          creatorName: creatorName.trim()
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Save creator name to localStorage
+        localStorage.setItem('peershare-username', creatorName.trim());
+        
+        showNotification(`Room created! ID: ${data.roomId}`, 'success');
+        
+        // Navigate to room with the returned room ID
+        setTimeout(() => {
+          router.push(`/room/${data.roomId}?name=${encodeURIComponent(creatorName.trim())}&password=${encodeURIComponent(password.trim())}`);
+        }, 1000);
+      } else {
+        setError(data.error || 'Failed to create room');
+        setIsCreating(false);
+      }
+    } catch (error) {
+      console.error('Error creating room:', error);
+      setError('Failed to connect to server. Please try again.');
+      setIsCreating(false);
+    }
   };
 
   return (
@@ -94,49 +142,73 @@ export default function CreateRoomPage() {
                 </div>
 
                 <div className="space-y-4 xs:space-y-6">
-                  {/* Input Fields Row - Side by Side */}
-                  <div className="flex flex-col sm:flex-row gap-3 xs:gap-4">
-                    <div className="flex-1">
+                  {/* Error Message */}
+                  {error && (
+                    <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3 xs:p-4">
+                      <p className="text-red-300 text-sm xs:text-base">{error}</p>
+                    </div>
+                  )}
+
+                  {/* Input Fields */}
+                  <div className="space-y-3 xs:space-y-4">
+                    {/* Creator Name */}
+                    <div>
                       <label className="block text-xs xs:text-sm font-medium text-gray-300 mb-1 xs:mb-2">
-                        Room Name
+                        Your Name
                       </label>
                       <input
                         type="text"
-                        value={roomName}
-                        onChange={(e) => setRoomName(e.target.value)}
-                        placeholder="Enter room name..."
+                        value={creatorName}
+                        onChange={(e) => setCreatorName(e.target.value)}
+                        placeholder="Enter your name..."
                         className="w-full px-3 xs:px-4 py-2 xs:py-3 bg-slate-800/50 border border-white/10 rounded-lg xs:rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm xs:text-base transition-all duration-300"
                       />
                     </div>
 
-                    <div className="flex-1">
-                      <label className="block text-xs xs:text-sm font-medium text-gray-300 mb-1 xs:mb-2">
-                        Room Password
-                      </label>
-                      <div className="relative">
+                    {/* Room Name and Password Row */}
+                    <div className="flex flex-col sm:flex-row gap-3 xs:gap-4">
+                      <div className="flex-1">
+                        <label className="block text-xs xs:text-sm font-medium text-gray-300 mb-1 xs:mb-2">
+                          Room Name
+                        </label>
                         <input
-                          type={showPassword ? "text" : "password"}
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          placeholder="Enter secure password..."
-                          className="w-full px-3 xs:px-4 py-2 xs:py-3 pr-10 xs:pr-12 bg-slate-800/50 border border-white/10 rounded-lg xs:rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm xs:text-base transition-all duration-300"
+                          type="text"
+                          value={roomName}
+                          onChange={(e) => setRoomName(e.target.value)}
+                          placeholder="Enter room name..."
+                          className="w-full px-3 xs:px-4 py-2 xs:py-3 bg-slate-800/50 border border-white/10 rounded-lg xs:rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm xs:text-base transition-all duration-300"
                         />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 xs:right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-                        >
-                          {showPassword ? (
-                            <svg className="w-4 h-4 xs:w-5 xs:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                            </svg>
-                          ) : (
-                            <svg className="w-4 h-4 xs:w-5 xs:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                          )}
-                        </button>
+                      </div>
+
+                      <div className="flex-1">
+                        <label className="block text-xs xs:text-sm font-medium text-gray-300 mb-1 xs:mb-2">
+                          Room Password
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Enter secure password..."
+                            className="w-full px-3 xs:px-4 py-2 xs:py-3 pr-10 xs:pr-12 bg-slate-800/50 border border-white/10 rounded-lg xs:rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm xs:text-base transition-all duration-300"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 xs:right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                          >
+                            {showPassword ? (
+                              <svg className="w-4 h-4 xs:w-5 xs:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                              </svg>
+                            ) : (
+                              <svg className="w-4 h-4 xs:w-5 xs:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -162,7 +234,7 @@ export default function CreateRoomPage() {
 
                   <button
                     onClick={handleCreateRoom}
-                    disabled={!roomName.trim() || !password.trim() || isCreating}
+                    disabled={!roomName.trim() || !password.trim() || !creatorName.trim() || isCreating}
                     className="w-full py-3 xs:py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-lg xs:rounded-xl hover:from-blue-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 disabled:hover:scale-100 flex items-center justify-center text-sm xs:text-base"
                   >
                     {isCreating ? (

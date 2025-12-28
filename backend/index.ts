@@ -5,6 +5,7 @@ const http = require('http');
 const cors = require('cors');
 const { initializeSocket } = require('./services/socketService');
 const { saveClip, getClip, deleteClip, checkRedisConnection } = require('./services/redisService');
+const roomController = require('./controllers/roomCOntroller');
 
 const app = express();
 const server = http.createServer(app);
@@ -48,6 +49,10 @@ app.get('/health', (req: any, res: any) => {
     version: '1.0.0'
   });
 });
+
+// Room routes
+app.post('/api/rooms/create', roomController.createRoom);
+app.post('/api/rooms/join', roomController.joinRoom);
 
 // Start server
 server.listen(port, async () => {

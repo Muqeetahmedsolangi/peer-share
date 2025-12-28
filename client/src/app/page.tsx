@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Hero from './components/Hero';
@@ -13,28 +13,47 @@ export default function Home() {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [roomCode, setRoomCode] = useState('');
   const [roomPassword, setRoomPassword] = useState('');
+  const [userName, setUserName] = useState('');
   const [isJoining, setIsJoining] = useState(false);
 
   const handleJoinRoom = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!roomCode.trim()) return;
+    if (!roomCode.trim() || !userName.trim()) return;
     
     setIsJoining(true);
     
+    // Save username to localStorage for future use
+    localStorage.setItem('peershare-username', userName.trim());
+    
     // Simulate API call
     setTimeout(() => {
-      // Navigate to room with code and password
-      router.push(`/room/${roomCode}?password=${encodeURIComponent(roomPassword)}`);
+      // Navigate to room with code, password, and name
+      const params = new URLSearchParams({
+        name: userName.trim(),
+        password: roomPassword
+      });
+      router.push(`/room/${roomCode}?${params.toString()}`);
       setIsJoining(false);
       setShowJoinModal(false);
       setRoomCode('');
       setRoomPassword('');
+      setUserName('');
     }, 1500);
   };
 
   const handleCreateRoom = () => {
     router.push('/create-room');
   };
+
+  // Load saved username when modal opens
+  useEffect(() => {
+    if (showJoinModal) {
+      const savedUsername = localStorage.getItem('peershare-username') || '';
+      if (savedUsername) {
+        setUserName(savedUsername);
+      }
+    }
+  }, [showJoinModal]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 relative scroll-smooth overflow-x-hidden pt-20 sm:pt-24 md:pt-28 lg:pt-32">
@@ -276,6 +295,30 @@ export default function Home() {
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center space-x-2">
+                  <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span>Your Name *</span>
+                </label>
+                <input
+                  type="text"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  placeholder="Enter your display name"
+                  required
+                  maxLength={50}
+                  className="w-full px-4 py-3 bg-slate-700/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+                <p className="text-xs text-green-200 mt-1 flex items-center space-x-1">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>This name will be visible to other users in the room</span>
+                </p>
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Room Password
                 </label>
@@ -298,7 +341,7 @@ export default function Home() {
                 </button>
                 <button
                   type="submit"
-                  disabled={isJoining || !roomCode.trim()}
+                  disabled={isJoining || !roomCode.trim() || !userName.trim()}
                   className="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white font-semibold rounded-xl hover:from-green-500 hover:to-teal-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 disabled:hover:scale-100"
                 >
                   {isJoining ? (
@@ -324,7 +367,7 @@ export default function Home() {
                 <div>
                   <h4 className="text-sm font-semibold text-blue-400 mb-1">How to join a room?</h4>
                   <p className="text-xs text-gray-300">
-                    Ask the room creator for the room code. Enter it above and the password if required.
+                    Ask the room creator for the room code. Enter your name, the room code, and password to join.
                   </p>
                 </div>
               </div>
