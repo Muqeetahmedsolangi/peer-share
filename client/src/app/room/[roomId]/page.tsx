@@ -851,7 +851,7 @@ export default function RoomPage() {
     }
   };
 
-  const downloadFileFromPeer = async (fileInfo: { 
+  const downloadFileFromPeer = async (fileInfo: {
     fileShareId: string;
     fileName: string;
     fileSize: number;
@@ -860,6 +860,7 @@ export default function RoomPage() {
     senderId: string;
     senderSocketId: string;
     timestamp: number;
+    preview?: string;
   }) => {
     if (!socket) return;
 
@@ -883,6 +884,31 @@ export default function RoomPage() {
         return;
       } else {
         console.error('❌ Own file not found in pending files');
+      }
+    }
+
+    // Check if we have a preview (for images/videos) - download directly from preview
+    if (fileInfo.preview) {
+      console.log('📁 Downloading from preview data...');
+      try {
+        // Convert base64 data URL to blob
+        const response = await fetch(fileInfo.preview);
+        const blob = await response.blob();
+
+        // Create download link
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileInfo.fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        console.log('✅ File downloaded from preview successfully!');
+        return;
+      } catch (error) {
+        console.error('❌ Failed to download from preview, falling back to P2P transfer:', error);
+        // If preview download fails, continue to WebRTC transfer below
       }
     }
 
@@ -1308,16 +1334,16 @@ export default function RoomPage() {
               {/* Messages Area - Responsive */}
               <div className="flex-1 overflow-y-auto p-3 md:p-4 lg:p-6 space-y-3 md:space-y-4 scroll-smooth">
                 {messages.map((message, index) => (
-                  <div 
-                    key={message.id} 
-                    className={`flex ${message.sender === 'You' ? 'justify-end' : 'justify-start'} transition-all duration-500 ${
+                  <div
+                    key={message.id}
+                    className={`flex ${message.type === 'system' ? 'justify-center' : message.sender === 'You' ? 'justify-end' : 'justify-start'} transition-all duration-500 ${
                       isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                     }`}
                     style={{ animationDelay: `${index * 100}ms` }}
                   >
-                    <div className={`max-w-[85%] md:max-w-[75%] lg:max-w-[65%] px-4 md:px-5 py-3 md:py-4 rounded-2xl transition-all duration-300 ${
-                      message.type === 'system' 
-                        ? 'bg-blue-500/20 text-blue-300 text-center mx-auto border border-blue-400/30 rounded-xl text-sm md:text-base'
+                    <div className={`${message.type === 'system' ? 'max-w-max' : 'max-w-[85%] md:max-w-[75%] lg:max-w-[65%]'} ${message.type === 'system' ? 'px-3 py-1.5' : 'px-4 md:px-5 py-3 md:py-4'} rounded-2xl transition-all duration-300 ${
+                      message.type === 'system'
+                        ? 'bg-slate-700/30 text-slate-400 text-center rounded-full text-xs border border-slate-600/20'
                         : message.sender === 'You'
                         ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25 rounded-tl-2xl rounded-tr-sm rounded-bl-2xl rounded-br-2xl hover:shadow-xl hover:shadow-blue-500/30 transform hover:scale-[1.02]'
                         : 'bg-slate-700/90 text-gray-200 border border-slate-600/50 rounded-tl-sm rounded-tr-2xl rounded-bl-2xl rounded-br-2xl hover:bg-slate-700 transform hover:scale-[1.02]'
@@ -1337,7 +1363,7 @@ export default function RoomPage() {
                       
                       {/* System message */}
                       {message.type === 'system' && (
-                        <div className="text-sm sm:text-base break-words leading-relaxed">{message.text}</div>
+                        <div className="text-xs break-words leading-snug">{message.text}</div>
                       )}
 
                       {/* Image preview - WhatsApp style */}
@@ -1376,7 +1402,7 @@ export default function RoomPage() {
                                 onClick={(e) => {
                                   e.stopPropagation(); // Prevent opening full image
                                   console.log('🔽 Image download button clicked:', message.fileData?.name);
-                                  downloadFileFromPeer({ 
+                                  downloadFileFromPeer({
                                     fileShareId: message.id,
                                     fileName: message.fileData!.name,
                                     fileSize: message.fileData!.size,
@@ -1384,7 +1410,8 @@ export default function RoomPage() {
                                     senderName: message.sender,
                                     senderId: message.senderId || '',
                                     senderSocketId: message.senderSocketId || '',
-                                    timestamp: message.timestamp.getTime()
+                                    timestamp: message.timestamp.getTime(),
+                                    preview: message.fileData?.preview
                                   });
                                 }}
                                 className="p-2.5 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-all duration-200 text-gray-800 shadow-lg border border-gray-200 hover:shadow-xl"
@@ -1435,7 +1462,7 @@ export default function RoomPage() {
                               <button
                                 onClick={() => {
                                   console.log('🔽 Video download button clicked:', message.fileData?.name);
-                                  downloadFileFromPeer({ 
+                                  downloadFileFromPeer({
                                     fileShareId: message.id,
                                     fileName: message.fileData!.name,
                                     fileSize: message.fileData!.size,
@@ -1443,7 +1470,8 @@ export default function RoomPage() {
                                     senderName: message.sender,
                                     senderId: message.senderId || '',
                                     senderSocketId: message.senderSocketId || '',
-                                    timestamp: message.timestamp.getTime()
+                                    timestamp: message.timestamp.getTime(),
+                                    preview: message.fileData?.preview
                                   });
                                 }}
                                 className="p-2.5 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-all duration-200 text-gray-800 shadow-lg border border-gray-200 hover:shadow-xl"
@@ -1478,7 +1506,7 @@ export default function RoomPage() {
                             <button
                               onClick={() => {
                                 console.log('🔽 File download button clicked:', message.fileData?.name);
-                                downloadFileFromPeer({ 
+                                downloadFileFromPeer({
                                   fileShareId: message.id,
                                   fileName: message.fileData!.name,
                                   fileSize: message.fileData!.size,
@@ -1486,7 +1514,8 @@ export default function RoomPage() {
                                   senderName: message.sender,
                                   senderId: message.senderId || '',
                                   senderSocketId: message.senderSocketId || '',
-                                  timestamp: message.timestamp.getTime()
+                                  timestamp: message.timestamp.getTime(),
+                                  preview: message.fileData?.preview
                                 });
                               }}
                               className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded-lg transition-colors duration-200 font-medium"
@@ -1791,113 +1820,113 @@ export default function RoomPage() {
         </div>
       )}
 
-      {/* Share Room Modal */}
+      {/* Share Room Modal - Mobile Responsive & Compact */}
       {showShareModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="share-modal bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-2xl p-6 sm:p-8 w-full max-w-md mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 xs:p-4">
+          <div className="share-modal bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-xl xs:rounded-2xl p-4 xs:p-5 sm:p-6 w-full max-w-[90vw] xs:max-w-sm sm:max-w-md mx-auto shadow-2xl max-h-[85vh] xs:max-h-[90vh] overflow-y-auto">
+            {/* Modal Header - Compact */}
+            <div className="flex items-center justify-between mb-4 xs:mb-5">
+              <div className="flex items-center space-x-2 xs:space-x-3 min-w-0 flex-1">
+                <div className="w-8 h-8 xs:w-10 xs:h-10 bg-blue-500 rounded-lg xs:rounded-xl flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 xs:w-5 xs:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
                   </svg>
                 </div>
-                <div>
-                  <h3 className="text-lg font-bold text-white">Share Room</h3>
-                  <p className="text-sm text-gray-400">{roomInfo?.name || `Room ${roomId}`}</p>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-base xs:text-lg font-bold text-white truncate">Share Room</h3>
+                  <p className="text-xs xs:text-sm text-gray-400 truncate">{roomInfo?.name || `Room ${roomId}`}</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowShareModal(false)}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-gray-400 hover:text-white transition-colors flex-shrink-0 ml-2"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 xs:w-6 xs:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
-            {/* Success Message */}
+            {/* Success Message - Compact */}
             {copySuccess && (
-              <div className="mb-4 p-3 bg-green-500/20 border border-green-500/30 rounded-lg">
-                <p className="text-green-300 text-sm text-center">{copySuccess}</p>
+              <div className="mb-3 xs:mb-4 p-2 xs:p-3 bg-green-500/20 border border-green-500/30 rounded-lg">
+                <p className="text-green-300 text-xs xs:text-sm text-center">{copySuccess}</p>
               </div>
             )}
 
-            {/* Share Options */}
-            <div className="space-y-4">
-              {/* Room ID */}
-              <div className="bg-slate-700/50 rounded-xl p-4 border border-white/10">
+            {/* Share Options - Compact */}
+            <div className="space-y-3 xs:space-y-4">
+              {/* Room ID - Compact */}
+              <div className="bg-slate-700/50 rounded-lg xs:rounded-xl p-3 xs:p-4 border border-white/10">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-gray-300">Room ID</label>
+                  <label className="text-xs xs:text-sm font-medium text-gray-300">Room ID</label>
                   <button
                     onClick={() => copyToClipboard(roomId, 'Room ID')}
-                    className="text-blue-400 hover:text-blue-300 transition-colors"
+                    className="text-blue-400 hover:text-blue-300 transition-colors p-1"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3.5 h-3.5 xs:w-4 xs:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                   </button>
                 </div>
-                <div className="font-mono text-lg text-white bg-slate-800/50 px-3 py-2 rounded-lg border border-white/10">
+                <div className="font-mono text-base xs:text-lg text-white bg-slate-800/50 px-2.5 xs:px-3 py-1.5 xs:py-2 rounded-lg border border-white/10">
                   {roomId}
                 </div>
-                <p className="text-xs text-gray-400 mt-2">Share this ID with others to join the room</p>
+                <p className="text-[10px] xs:text-xs text-gray-400 mt-1.5 xs:mt-2">Share this ID with others to join the room</p>
               </div>
 
-              {/* Join Page Link */}
-              <div className="bg-slate-700/50 rounded-xl p-4 border border-white/10">
+              {/* Join Page Link - Compact */}
+              <div className="bg-slate-700/50 rounded-lg xs:rounded-xl p-3 xs:p-4 border border-white/10">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-gray-300">Join Page Link</label>
+                  <label className="text-xs xs:text-sm font-medium text-gray-300">Join Page Link</label>
                   <button
                     onClick={() => copyToClipboard(getRoomLink(), 'Join link')}
-                    className="text-blue-400 hover:text-blue-300 transition-colors"
+                    className="text-blue-400 hover:text-blue-300 transition-colors p-1"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3.5 h-3.5 xs:w-4 xs:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                   </button>
                 </div>
-                <div className="text-sm text-white bg-slate-800/50 px-3 py-2 rounded-lg border border-white/10 break-all">
+                <div className="text-xs xs:text-sm text-white bg-slate-800/50 px-2.5 xs:px-3 py-1.5 xs:py-2 rounded-lg border border-white/10 break-all">
                   {getRoomLink()}
                 </div>
-                <p className="text-xs text-gray-400 mt-2">Direct link to join page - requires room ID and password</p>
+                <p className="text-[10px] xs:text-xs text-gray-400 mt-1.5 xs:mt-2">Direct link to join page - requires room ID and password</p>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3">
+              {/* Action Buttons - Compact */}
+              <div className="flex flex-col xs:flex-row gap-2 xs:gap-3">
                 <button
                   onClick={shareViaWebShare}
-                  className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2"
+                  className="flex-1 py-2.5 xs:py-3 px-3 xs:px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg xs:rounded-xl transition-all duration-300 transform active:scale-95 xs:hover:scale-105 flex items-center justify-center space-x-2"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 xs:w-5 xs:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                   </svg>
-                  <span>Share Link</span>
+                  <span className="text-sm xs:text-base">Share Link</span>
                 </button>
                 <button
                   onClick={() => copyToClipboard(getRoomLink(), 'Room link')}
-                  className="flex-1 py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2"
+                  className="flex-1 py-2.5 xs:py-3 px-3 xs:px-4 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-lg xs:rounded-xl transition-all duration-300 transform active:scale-95 xs:hover:scale-105 flex items-center justify-center space-x-2"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 xs:w-5 xs:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
-                  <span>Copy Link</span>
+                  <span className="text-sm xs:text-base">Copy Link</span>
                 </button>
               </div>
 
-              {/* Security Notice */}
-              <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
-                <div className="flex items-start space-x-3">
-                  <div className="w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {/* Security Notice - Compact */}
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg xs:rounded-xl p-3 xs:p-4">
+                <div className="flex items-start space-x-2 xs:space-x-3">
+                  <div className="w-4 h-4 xs:w-5 xs:h-5 bg-amber-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="w-2.5 h-2.5 xs:w-3 xs:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.732 15.5c-.77.833.192 2.5 1.732 2.5z" />
                     </svg>
                   </div>
-                  <div>
-                    <h4 className="text-amber-300 font-semibold mb-1 text-sm">Security Notice</h4>
-                    <p className="text-xs text-amber-200">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-amber-300 font-semibold mb-0.5 xs:mb-1 text-xs xs:text-sm">Security Notice</h4>
+                    <p className="text-[10px] xs:text-xs text-amber-200 leading-snug">
                       Users will still need the room password to join. Only share with trusted people.
                     </p>
                   </div>
