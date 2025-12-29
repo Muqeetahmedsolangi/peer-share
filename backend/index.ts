@@ -86,6 +86,7 @@ app.get('/health', (_req: any, res: any) => {
 
 // Room routes
 app.post('/api/rooms/create', roomController.createRoom);
+app.post('/api/rooms/validate', roomController.validateRoom);
 app.post('/api/rooms/join', roomController.joinRoom);
 
 // Start server

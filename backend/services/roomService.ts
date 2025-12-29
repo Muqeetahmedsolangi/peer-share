@@ -151,3 +151,27 @@ export function isUserInRoom(roomId: string, socketId: string): boolean {
   const room = rooms.get(roomId);
   return room ? room.members.has(socketId) : false;
 }
+
+// Validate room credentials (without joining)
+export function validateRoomCredentials(roomId: string, password: string): { success: boolean; roomName?: string; error?: string } {
+  try {
+    if (!roomId.trim() || !password.trim()) {
+      return { success: false, error: 'Room ID and password are required' };
+    }
+
+    const room = rooms.get(roomId.toUpperCase());
+
+    if (!room) {
+      return { success: false, error: 'Room not found' };
+    }
+
+    if (room.password !== password.trim()) {
+      return { success: false, error: 'Incorrect password' };
+    }
+
+    return { success: true, roomName: room.name };
+  } catch (error: any) {
+    console.error('Error validating room credentials:', error);
+    return { success: false, error: 'Failed to validate credentials' };
+  }
+}

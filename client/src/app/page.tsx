@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Hero from './components/Hero';
@@ -10,50 +10,10 @@ import Creator from './components/Creator';
 export default function Home() {
   const router = useRouter();
   const [activeFeature, setActiveFeature] = useState<number | null>(null);
-  const [showJoinModal, setShowJoinModal] = useState(false);
-  const [roomCode, setRoomCode] = useState('');
-  const [roomPassword, setRoomPassword] = useState('');
-  const [userName, setUserName] = useState('');
-  const [isJoining, setIsJoining] = useState(false);
-
-  const handleJoinRoom = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!roomCode.trim() || !userName.trim()) return;
-    
-    setIsJoining(true);
-    
-    // Save username to localStorage for future use
-    localStorage.setItem('peershare-username', userName.trim());
-    
-    // Simulate API call
-    setTimeout(() => {
-      // Navigate to room with code, password, and name
-      const params = new URLSearchParams({
-        name: userName.trim(),
-        password: roomPassword
-      });
-      router.push(`/room/${roomCode}?${params.toString()}`);
-      setIsJoining(false);
-      setShowJoinModal(false);
-      setRoomCode('');
-      setRoomPassword('');
-      setUserName('');
-    }, 1500);
-  };
 
   const handleCreateRoom = () => {
     router.push('/create-room');
   };
-
-  // Load saved username when modal opens
-  useEffect(() => {
-    if (showJoinModal) {
-      const savedUsername = localStorage.getItem('peershare-username') || '';
-      if (savedUsername) {
-        setUserName(savedUsername);
-      }
-    }
-  }, [showJoinModal]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 relative scroll-smooth overflow-x-hidden pt-20 sm:pt-24 md:pt-28 lg:pt-32">
@@ -114,8 +74,8 @@ export default function Home() {
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">Join Room</h3>
               <p className="text-sm text-gray-400 mb-4">Enter room code</p>
-              <button 
-                onClick={() => setShowJoinModal(true)}
+              <button
+                onClick={() => router.push('/join-room')}
                 className="w-full px-4 py-2 bg-gradient-to-r from-green-600 to-teal-600 text-white font-semibold rounded-lg hover:from-green-500 hover:to-teal-500 transition-all duration-300 transform hover:scale-105"
               >
                 Join Now
@@ -262,119 +222,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Join Room Modal */}
-      {showJoinModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-2xl border border-white/10 rounded-2xl p-8 w-full max-w-md mx-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-white">Join Room</h3>
-              <button
-                onClick={() => setShowJoinModal(false)}
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <form onSubmit={handleJoinRoom} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Room Code *
-                </label>
-                <input
-                  type="text"
-                  value={roomCode}
-                  onChange={(e) => setRoomCode(e.target.value)}
-                  placeholder="Enter room code"
-                  required
-                  className="w-full px-4 py-3 bg-slate-700/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center space-x-2">
-                  <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  <span>Your Name *</span>
-                </label>
-                <input
-                  type="text"
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
-                  placeholder="Enter your display name"
-                  required
-                  maxLength={50}
-                  className="w-full px-4 py-3 bg-slate-700/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-                <p className="text-xs text-green-200 mt-1 flex items-center space-x-1">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>This name will be visible to other users in the room</span>
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Room Password
-                </label>
-                <input
-                  type="password"
-                  value={roomPassword}
-                  onChange={(e) => setRoomPassword(e.target.value)}
-                  placeholder="Enter room password (if required)"
-                  className="w-full px-4 py-3 bg-slate-700/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-
-              <div className="flex space-x-4">
-                <button
-                  type="button"
-                  onClick={() => setShowJoinModal(false)}
-                  className="flex-1 px-6 py-3 border border-white/20 text-white font-semibold rounded-xl hover:bg-white/10 transition-all duration-300"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isJoining || !roomCode.trim() || !userName.trim()}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white font-semibold rounded-xl hover:from-green-500 hover:to-teal-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 disabled:hover:scale-100"
-                >
-                  {isJoining ? (
-                    <div className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Joining...
-                    </div>
-                  ) : (
-                    'Join Room'
-                  )}
-                </button>
-              </div>
-            </form>
-
-            <div className="mt-6 p-4 bg-blue-500/10 border border-blue-400/30 rounded-xl">
-              <div className="flex items-start space-x-3">
-                <svg className="w-5 h-5 text-blue-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <div>
-                  <h4 className="text-sm font-semibold text-blue-400 mb-1">How to join a room?</h4>
-                  <p className="text-xs text-gray-300">
-                    Ask the room creator for the room code. Enter your name, the room code, and password to join.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

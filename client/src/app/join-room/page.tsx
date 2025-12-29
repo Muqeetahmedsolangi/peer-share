@@ -1,36 +1,89 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+
+// Backend URL
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
 export default function JoinRoomPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [roomId, setRoomId] = useState('');
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [error, setError] = useState('');
+  const [isJoining, setIsJoining] = useState(false);
 
   useEffect(() => {
     setIsVisible(true);
+
+    // Pre-fill Room ID from URL if present
+    const roomIdFromUrl = searchParams.get('roomId');
+    if (roomIdFromUrl) {
+      setRoomId(roomIdFromUrl.toUpperCase());
+    }
+
     // Load username from localStorage
     const savedUsername = localStorage.getItem('peershare-username') || '';
     if (savedUsername) {
       setUserName(savedUsername);
     }
-  }, []);
+  }, [searchParams]);
 
-  const handleJoinRoom = () => {
+  const handleJoinRoom = async () => {
     if (!roomId.trim() || !userName.trim() || !password.trim()) {
-      alert('Please fill in all fields');
+      setError('Please fill in all fields');
       return;
     }
 
-    // Save username to localStorage
-    localStorage.setItem('peershare-username', userName.trim());
+    setIsJoining(true);
+    setError('');
 
-    // Navigate to room with parameters
-    router.push(`/room/${roomId.trim().toUpperCase()}?name=${encodeURIComponent(userName.trim())}&password=${encodeURIComponent(password.trim())}`);
+    try {
+      // Validate room credentials before redirecting
+      const response = await fetch(`${BACKEND_URL}/api/rooms/validate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          roomId: roomId.trim().toUpperCase(),
+          password: password.trim()
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Save username to localStorage
+        localStorage.setItem('peershare-username', userName.trim());
+
+        // Store password securely in sessionStorage (not in URL!)
+        const normalizedRoomId = roomId.trim().toUpperCase();
+        sessionStorage.setItem(`room-${normalizedRoomId}-password`, password.trim());
+
+        // Navigate to room with parameters (NO PASSWORD IN URL)
+        router.push(`/room/${normalizedRoomId}?name=${encodeURIComponent(userName.trim())}`);
+      } else {
+        // Show error on the same page (don't redirect)
+        setError(data.error || 'Failed to validate room credentials');
+        setIsJoining(false);
+      }
+    } catch (error) {
+      console.error('Error validating room:', error);
+      setError('Failed to connect to server. Please try again.');
+      setIsJoining(false);
+    }
+  };
+
+  // Handle Enter key press
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !isJoining) {
+      handleJoinRoom();
+    }
   };
 
   return (
@@ -91,6 +144,13 @@ export default function JoinRoomPage() {
                 </div>
 
                 <div className="space-y-4 xs:space-y-6">
+                  {/* Error Message */}
+                  {error && (
+                    <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3 xs:p-4">
+                      <p className="text-red-300 text-sm xs:text-base">{error}</p>
+                    </div>
+                  )}
+
                   {/* Your Name */}
                   <div>
                     <label className="block text-xs xs:text-sm font-medium text-gray-300 mb-1 xs:mb-2">
@@ -100,6 +160,7 @@ export default function JoinRoomPage() {
                       type="text"
                       value={userName}
                       onChange={(e) => setUserName(e.target.value)}
+                      onKeyDown={handleKeyDown}
                       placeholder="Enter your name..."
                       className="w-full px-3 xs:px-4 py-2 xs:py-3 bg-slate-800/50 border border-white/10 rounded-lg xs:rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-sm xs:text-base transition-all duration-300"
                     />
@@ -115,6 +176,7 @@ export default function JoinRoomPage() {
                         type="text"
                         value={roomId}
                         onChange={(e) => setRoomId(e.target.value.toUpperCase())}
+                        onKeyDown={handleKeyDown}
                         placeholder="Enter room ID..."
                         className="w-full px-3 xs:px-4 py-2 xs:py-3 bg-slate-800/50 border border-white/10 rounded-lg xs:rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-sm xs:text-base transition-all duration-300 font-mono"
                       />
@@ -129,6 +191,7 @@ export default function JoinRoomPage() {
                           type={showPassword ? "text" : "password"}
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
+                          onKeyDown={handleKeyDown}
                           placeholder="Enter room password..."
                           className="w-full px-3 xs:px-4 py-2 xs:py-3 pr-10 xs:pr-12 bg-slate-800/50 border border-white/10 rounded-lg xs:rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-sm xs:text-base transition-all duration-300"
                         />
@@ -173,10 +236,20 @@ export default function JoinRoomPage() {
 
                   <button
                     onClick={handleJoinRoom}
-                    disabled={!roomId.trim() || !userName.trim() || !password.trim()}
+                    disabled={!roomId.trim() || !userName.trim() || !password.trim() || isJoining}
                     className="w-full py-3 xs:py-4 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-semibold rounded-lg xs:rounded-xl hover:from-cyan-500 hover:to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 disabled:hover:scale-100 flex items-center justify-center text-sm xs:text-base"
                   >
-                    Join Room
+                    {isJoining ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 xs:mr-3 h-4 w-4 xs:h-5 xs:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Joining...
+                      </>
+                    ) : (
+                      'Join Room'
+                    )}
                   </button>
                 </div>
               </div>

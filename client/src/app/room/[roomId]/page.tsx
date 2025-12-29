@@ -52,10 +52,10 @@ export default function RoomPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const roomId = params.roomId as string;
-  
-  // Get parameters from URL or prompt user
+
+  // Get parameters from URL or sessionStorage (password stored securely, NOT in URL!)
   const [userName, setUserName] = useState(searchParams.get('name') || '');
-  const [password, setPassword] = useState(searchParams.get('password') || '');
+  const [password, setPassword] = useState('');
   const [isJoined, setIsJoined] = useState(false);
   const [joinError, setJoinError] = useState('');
   const [isJoining, setIsJoining] = useState(false);
@@ -126,6 +126,20 @@ export default function RoomPage() {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
+
+  // Retrieve password from sessionStorage on component mount
+  useEffect(() => {
+    if (roomId && typeof window !== 'undefined') {
+      const storedPassword = sessionStorage.getItem(`room-${roomId}-password`);
+      if (storedPassword) {
+        setPassword(storedPassword);
+        // Auto-join if we have both name and password
+        if (userName) {
+          setIsJoined(true);
+        }
+      }
+    }
+  }, [roomId, userName]);
 
   // Initialize main socket connection after successful validation
   useEffect(() => {
@@ -1341,7 +1355,7 @@ export default function RoomPage() {
                                   if (fullSizeWindow) {
                                     fullSizeWindow.document.write(`
                                       <html>
-                                        <head><title>${message.fileData.name}</title></head>
+                                        <head><title>${(message.fileData.name)}</title></head>
                                         <body style="margin:0; background:#000; display:flex; justify-content:center; align-items:center; height:100vh;">
                                           <img src="${message.fileData.preview}" style="max-width:100%; max-height:100%; object-fit:contain;" alt="${message.fileData.name}"/>
                                         </body>

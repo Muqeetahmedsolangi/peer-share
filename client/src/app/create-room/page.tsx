@@ -41,7 +41,7 @@ export default function CreateRoomPage() {
 
     setIsCreating(true);
     setError('');
-    
+
     try {
       const response = await fetch(`${BACKEND_URL}/api/rooms/create`, {
         method: 'POST',
@@ -60,12 +60,15 @@ export default function CreateRoomPage() {
       if (data.success) {
         // Save creator name to localStorage
         localStorage.setItem('peershare-username', creatorName.trim());
-        
+
+        // Store password securely in sessionStorage (not in URL!)
+        sessionStorage.setItem(`room-${data.roomId}-password`, password.trim());
+
         showNotification(`Room created! ID: ${data.roomId}`, 'success');
-        
-        // Navigate to room with the returned room ID
+
+        // Navigate to room with the returned room ID (NO PASSWORD IN URL)
         setTimeout(() => {
-          router.push(`/room/${data.roomId}?name=${encodeURIComponent(creatorName.trim())}&password=${encodeURIComponent(password.trim())}`);
+          router.push(`/room/${data.roomId}?name=${encodeURIComponent(creatorName.trim())}`);
         }, 1000);
       } else {
         setError(data.error || 'Failed to create room');
@@ -75,6 +78,13 @@ export default function CreateRoomPage() {
       console.error('Error creating room:', error);
       setError('Failed to connect to server. Please try again.');
       setIsCreating(false);
+    }
+  };
+
+  // Handle Enter key press
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !isCreating) {
+      handleCreateRoom();
     }
   };
 
@@ -160,6 +170,7 @@ export default function CreateRoomPage() {
                         type="text"
                         value={creatorName}
                         onChange={(e) => setCreatorName(e.target.value)}
+                        onKeyDown={handleKeyDown}
                         placeholder="Enter your name..."
                         className="w-full px-3 xs:px-4 py-2 xs:py-3 bg-slate-800/50 border border-white/10 rounded-lg xs:rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm xs:text-base transition-all duration-300"
                       />
@@ -175,6 +186,7 @@ export default function CreateRoomPage() {
                           type="text"
                           value={roomName}
                           onChange={(e) => setRoomName(e.target.value)}
+                          onKeyDown={handleKeyDown}
                           placeholder="Enter room name..."
                           className="w-full px-3 xs:px-4 py-2 xs:py-3 bg-slate-800/50 border border-white/10 rounded-lg xs:rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm xs:text-base transition-all duration-300"
                         />
@@ -189,6 +201,7 @@ export default function CreateRoomPage() {
                             type={showPassword ? "text" : "password"}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
+                            onKeyDown={handleKeyDown}
                             placeholder="Enter secure password..."
                             className="w-full px-3 xs:px-4 py-2 xs:py-3 pr-10 xs:pr-12 bg-slate-800/50 border border-white/10 rounded-lg xs:rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm xs:text-base transition-all duration-300"
                           />
