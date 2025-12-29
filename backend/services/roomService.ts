@@ -11,9 +11,13 @@ interface Room {
   createdAt: Date;
   members: Set<string>; // socket IDs
   memberInfo: Map<string, { socketId: string; name: string; joinedAt: Date }>; // socket ID -> user info
+  emptyTimer?: NodeJS.Timeout; // Timer to delete room after being empty for too long
 }
 
 const rooms = new Map<string, Room>();
+
+// Keep empty rooms alive for 5 minutes (300000ms) before deleting
+const EMPTY_ROOM_TIMEOUT = 5 * 60 * 1000;
 
 // Generate a simple 6-digit room code
 function generateRoomCode(): string {
@@ -75,6 +79,13 @@ export function joinRoom(roomId: string, password: string, userName: string, soc
       return { success: false, error: 'Incorrect password' };
     }
 
+    // Cancel empty room timer if it exists (user is rejoining)
+    if (room.emptyTimer) {
+      clearTimeout(room.emptyTimer);
+      delete room.emptyTimer;
+      console.log(`✅ Cancelled deletion timer for room ${roomId}`);
+    }
+
     // Add user to room
     room.members.add(socketId);
     room.memberInfo.set(socketId, {
@@ -109,7 +120,7 @@ export function joinRoom(roomId: string, password: string, userName: string, soc
 export function leaveRoom(roomId: string, socketId: string): { success: boolean; memberCount?: number } {
   try {
     const room = rooms.get(roomId);
-    
+
     if (!room) {
       return { success: false };
     }
@@ -122,10 +133,25 @@ export function leaveRoom(roomId: string, socketId: string): { success: boolean;
     room.members.delete(socketId);
     room.memberInfo.delete(socketId);
 
-    // Delete room if empty
+    // If room is now empty, start a timer to delete it after 5 minutes
     if (room.members.size === 0) {
-      rooms.delete(roomId);
-      console.log(`🗑️ Deleted empty room: ${roomId}`);
+      console.log(`⏰ Room ${roomId} is empty. Will be deleted in 5 minutes if no one rejoins.`);
+
+      // Clear any existing timer
+      if (room.emptyTimer) {
+        clearTimeout(room.emptyTimer);
+      }
+
+      // Set new timer to delete room after 5 minutes
+      room.emptyTimer = setTimeout(() => {
+        const currentRoom = rooms.get(roomId);
+        // Only delete if still empty
+        if (currentRoom && currentRoom.members.size === 0) {
+          rooms.delete(roomId);
+          console.log(`🗑️ Deleted empty room after timeout: ${roomId}`);
+        }
+      }, EMPTY_ROOM_TIMEOUT);
+
       return { success: true, memberCount: 0 };
     }
 

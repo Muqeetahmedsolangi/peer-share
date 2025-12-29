@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 // Backend URL
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
-export default function JoinRoomPage() {
+function JoinRoomContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [roomId, setRoomId] = useState('');
@@ -258,5 +258,17 @@ export default function JoinRoomPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function JoinRoomPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-cyan-900 to-slate-900 flex items-center justify-center">
+        <div className="text-white">Loading...</div>
+      </div>
+    }>
+      <JoinRoomContent />
+    </Suspense>
   );
 }

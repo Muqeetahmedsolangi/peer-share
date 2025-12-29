@@ -311,9 +311,25 @@ export default function RoomPage() {
         handleFileTransferICE(data);
       });
 
-      socketInstance.on('disconnect', () => {
-        console.log('❌ Disconnected from server');
+      socketInstance.on('disconnect', (reason) => {
+        console.log('❌ Disconnected from server:', reason);
         setIsConnected(false);
+
+        // Auto-reconnect if disconnect wasn't intentional
+        if (reason === 'io server disconnect') {
+          // Server disconnected us, try to reconnect
+          console.log('🔄 Server disconnected, attempting to reconnect...');
+          setTimeout(() => socketInstance.connect(), 1000);
+        } else if (reason === 'transport close' || reason === 'ping timeout') {
+          // Network issue, try to reconnect
+          console.log('🔄 Network issue detected, attempting to reconnect...');
+          setTimeout(() => socketInstance.connect(), 1000);
+        }
+      });
+
+      socketInstance.on('reconnect', (attemptNumber) => {
+        console.log('✅ Reconnected after', attemptNumber, 'attempts');
+        setIsConnected(true);
       });
 
       socketInstance.on('connect_error', (error) => {
@@ -329,6 +345,28 @@ export default function RoomPage() {
       };
     }
   }, [isJoined, userName, password, roomId]);
+
+  // Handle page visibility changes to maintain connection
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        console.log('📱 Page hidden (user switched apps)');
+      } else {
+        console.log('👀 Page visible again (user came back)');
+        // Reconnect if disconnected
+        if (socket && !socket.connected && isJoined) {
+          console.log('🔄 Attempting to reconnect...');
+          socket.connect();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [socket, isJoined]);
 
   useEffect(() => {
     setIsVisible(true);
