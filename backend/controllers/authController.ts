@@ -17,4 +17,5 @@ exports.login = (req: any, res: any, next: any) => {
     const token = require('jsonwebtoken').sign({ id: user.id }, 'secret-key', { expiresIn: '1h' });
     res.json({ token, userId: user.id });
   })(req, res, next);
+  
 };
