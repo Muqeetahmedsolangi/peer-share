@@ -18,3 +18,4 @@ exports.login = (req: any, res: any, next: any) => {
     res.json({ token, userId: user.id });
   })(req, res, next);
 };
+
