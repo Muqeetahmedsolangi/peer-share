@@ -11,6 +11,7 @@ exports.signup = async (req: any, res: any) => {
   }
 };
 
+
 exports.login = (req: any, res: any, next: any) => {
   passport.authenticate('local', { session: false }, (err: any, user: any, info: any) => {
     if (err || !user) return res.status(401).json({ error: info ? info.message : 'Login failed' });
