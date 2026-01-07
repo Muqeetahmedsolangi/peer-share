@@ -653,8 +653,22 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  // Remove dark class if it exists
+                  document.documentElement.classList.remove('dark');
+                  // Clear any theme from localStorage
+                  localStorage.removeItem('theme');
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
         <link rel="canonical" href="https://dropsos.com" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
         <meta name="theme-color" content="#ff6b35" />
