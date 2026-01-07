@@ -154,30 +154,30 @@ export default function Home() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
             <div className="text-center">
               <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-1 sm:mb-2">
-                <span className="text-xs sm:text-sm md:text-base font-bold text-orange-600">1</span>
+                <span className="text-[16px] sm:text-lg md:text-xl font-bold text-orange-600">1</span>
               </div>
-              <h3 className="text-[8px] sm:text-xs md:text-sm font-semibold text-gray-900 mb-0.5 sm:mb-1">Create or Join</h3>
+              <h3 className="text-[16px] sm:text-lg md:text-xl font-semibold text-gray-900 mb-0.5 sm:mb-1">Create or Join</h3>
               <p className="text-[8px] sm:text-[10px] md:text-xs text-gray-600 px-0.5 leading-tight">Create a secure room or join with a code. No account needed.</p>
             </div>
             <div className="text-center">
               <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-1 sm:mb-2">
-                <span className="text-xs sm:text-sm md:text-base font-bold text-orange-600">2</span>
+                <span className="text-[16px] sm:text-lg md:text-xl font-bold text-orange-600">2</span>
               </div>
-              <h3 className="text-[8px] sm:text-xs md:text-sm font-semibold text-gray-900 mb-0.5 sm:mb-1">Encrypt Files</h3>
+              <h3 className="text-[16px] sm:text-lg md:text-xl font-semibold text-gray-900 mb-0.5 sm:mb-1">Encrypt Files</h3>
               <p className="text-[8px] sm:text-[10px] md:text-xs text-gray-600 px-0.5 leading-tight">Files are encrypted with AES-256 before transfer begins.</p>
             </div>
             <div className="text-center">
               <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-1 sm:mb-2">
-                <span className="text-xs sm:text-sm md:text-base font-bold text-orange-600">3</span>
+                <span className="text-[16px] sm:text-lg md:text-xl font-bold text-orange-600">3</span>
               </div>
-              <h3 className="text-[8px] sm:text-xs md:text-sm font-semibold text-gray-900 mb-0.5 sm:mb-1">Direct Transfer</h3>
+              <h3 className="text-[16px] sm:text-lg md:text-xl font-semibold text-gray-900 mb-0.5 sm:mb-1">Direct Transfer</h3>
               <p className="text-[8px] sm:text-[10px] md:text-xs text-gray-600 px-0.5 leading-tight">Files transfer directly between devices using WebRTC.</p>
             </div>
             <div className="text-center">
               <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-1 sm:mb-2">
-                <span className="text-xs sm:text-sm md:text-base font-bold text-orange-600">4</span>
+                <span className="text-[16px] sm:text-lg md:text-xl font-bold text-orange-600">4</span>
               </div>
-              <h3 className="text-[8px] sm:text-xs md:text-sm font-semibold text-gray-900 mb-0.5 sm:mb-1">Zero Storage</h3>
+              <h3 className="text-[16px] sm:text-lg md:text-xl font-semibold text-gray-900 mb-0.5 sm:mb-1">Zero Storage</h3>
               <p className="text-[8px] sm:text-[10px] md:text-xs text-gray-600 px-0.5 leading-tight">No files are saved on servers. Complete privacy guaranteed.</p>
             </div>
           </div>
