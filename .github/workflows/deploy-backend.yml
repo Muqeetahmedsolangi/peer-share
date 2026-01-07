@@ -1,0 +1,55 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Build TypeScript
+        working-directory: ./backend
+        run: npm run build
+
+      - name: Copy files to production directory
+        run: |
+          sudo cp -r backend/dist/* /var/www/api/peer-share/backend/dist/
+          sudo cp backend/package*.json /var/www/api/peer-share/backend/
+          sudo cp backend/ecosystem.config.js /var/www/api/peer-share/backend/
+          sudo cp -r backend/config/* /var/www/api/peer-share/backend/config/
+
+      - name: Install production dependencies
+        run: |
+          cd /var/www/api/peer-share/backend
+          sudo npm ci --production
+
+      - name: Restart PM2
+        run: |
+          cd /var/www/api/peer-share/backend
+          sudo -u ubuntu pm2 restart apiserver || sudo -u ubuntu pm2 start ecosystem.config.js
+          sudo -u ubuntu pm2 save
+
+      - name: Health check
+        run: |
+          sleep 5
+          curl -f https://api.dropsos.com/health || exit 1
