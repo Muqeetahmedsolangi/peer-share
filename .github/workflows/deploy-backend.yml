@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - 'backend/**'
-      - '.github/workflows/deploy-backend.yml'  # Add this line
+      - '.github/workflows/deploy-backend.yml'
   workflow_dispatch:
 
 jobs:
@@ -21,8 +21,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
+          # Remove cache for self-hosted runners to avoid tar errors
 
       - name: Install dependencies
         working-directory: ./backend
@@ -34,9 +33,11 @@ jobs:
 
       - name: Copy files to production directory
         run: |
+          sudo mkdir -p /var/www/api/peer-share/backend/dist
           sudo cp -r backend/dist/* /var/www/api/peer-share/backend/dist/
           sudo cp backend/package*.json /var/www/api/peer-share/backend/
           sudo cp backend/ecosystem.config.js /var/www/api/peer-share/backend/
+          sudo mkdir -p /var/www/api/peer-share/backend/config
           sudo cp -r backend/config/* /var/www/api/peer-share/backend/config/
 
       - name: Install production dependencies
