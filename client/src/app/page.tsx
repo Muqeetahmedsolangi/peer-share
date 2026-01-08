@@ -184,6 +184,7 @@ export default function Home() {
         </div>
       </section>
 
+
       {/* Creator Section */}
       <section aria-label="About creator" className="py-12 sm:py-16 bg-white">
         <div className="max-w-7xl xl:max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
