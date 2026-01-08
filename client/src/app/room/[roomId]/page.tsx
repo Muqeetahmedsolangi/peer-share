@@ -1051,54 +1051,47 @@ export default function RoomPage() {
 
 
   // Show join form if not joined yet
-  if (!isJoined) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-0 left-1/4 w-72 h-72 sm:w-96 sm:h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-1/4 w-72 h-72 sm:w-96 sm:h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
-        </div>
-        
-        <div className="relative z-10 min-h-screen flex items-center justify-center p-4 sm:p-6">
+    if (!isJoined) {
+      return (
+        <main className="h-screen bg-white flex flex-col overflow-hidden">
+        <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
           <div className="w-full max-w-md">
-            <div className="text-center mb-6 sm:mb-8">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center">
-                <svg className="w-8 h-8 sm:w-10 sm:h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="text-center mb-4 sm:mb-6">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 bg-orange-500 rounded-xl flex items-center justify-center">
+                <svg className="w-7 h-7 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black mb-3 sm:mb-4 tracking-tight">
-                <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
-                  Join Room
-                </span>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black mb-2 sm:mb-3 tracking-tight text-gray-900">
+                Join Room
               </h1>
               <div className="px-2">
-                <p className="text-sm sm:text-base md:text-lg text-gray-300 font-light mb-2">
-                  Room ID: <span className="font-mono font-bold text-blue-400">{roomId}</span>
+                <p className="text-sm sm:text-base text-gray-700 font-light mb-1">
+                  Room ID: <span className="font-mono font-bold text-orange-600">{roomId}</span>
                 </p>
-                <p className="text-xs sm:text-sm text-gray-400">
+                <p className="text-xs sm:text-sm text-gray-600">
                   Please enter your name and the room password to join
                 </p>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-8">
+            <div className="bg-white border-2 border-gray-200 rounded-2xl p-5 sm:p-6 shadow-lg">
               {joinError && (
-                <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3 mb-4">
-                  <p className="text-red-300 text-sm">{joinError}</p>
+                <div className="bg-red-50 border-2 border-red-200 rounded-xl p-3 mb-3">
+                  <p className="text-red-700 text-sm">{joinError}</p>
                 </div>
               )}
               
-              <div className="space-y-5">
+              <div className="space-y-4">
                 {/* User Name Section - Enhanced */}
-                <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-4">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-3">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <div className="w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
+                      <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                     </div>
-                    <label className="block text-sm font-semibold text-blue-300">
+                    <label className="block text-sm font-semibold text-orange-700">
                       Your Name (Required)
                     </label>
                   </div>
@@ -1107,18 +1100,18 @@ export default function RoomPage() {
                     value={userName}
                     onChange={(e) => setUserName(e.target.value)}
                     placeholder="Enter your display name for the room..."
-                    className="w-full px-4 py-3 bg-slate-800/70 border border-blue-500/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base transition-all duration-300"
+                    className="w-full px-4 py-2.5 bg-white border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm sm:text-base transition-all duration-300"
                     maxLength={50}
                     autoFocus
                   />
-                  <div className="flex justify-between items-center mt-2">
-                    <p className="text-xs text-blue-200 flex items-center space-x-1">
+                  <div className="flex justify-between items-center mt-1.5">
+                    <p className="text-xs text-orange-600 flex items-center space-x-1">
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <span>This name will be shown to other users</span>
                     </p>
-                    <span className={`text-xs ${userName.length > 40 ? 'text-yellow-400' : 'text-gray-400'}`}>
+                    <span className={`text-xs ${userName.length > 40 ? 'text-orange-600' : 'text-gray-500'}`}>
                       {userName.length}/50
                     </span>
                   </div>
@@ -1126,8 +1119,8 @@ export default function RoomPage() {
                 
                 {/* Room Password Section */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center space-x-2">
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center space-x-2">
+                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                     <span>Room Password</span>
@@ -1137,21 +1130,21 @@ export default function RoomPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter room password..."
-                    className="w-full px-4 py-3 bg-slate-800/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base transition-all duration-300"
+                    className="w-full px-4 py-2.5 bg-white border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm sm:text-base transition-all duration-300"
                   />
                 </div>
                 
                 {/* Information Box */}
-                <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-xl p-4">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-5 h-5 bg-cyan-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-3">
+                  <div className="flex items-start space-x-2.5">
+                    <div className="w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
                     <div>
-                      <h4 className="text-cyan-300 font-semibold mb-1 text-sm">What happens next?</h4>
-                      <ul className="text-xs text-cyan-200 space-y-1">
+                      <h4 className="text-orange-700 font-semibold mb-1 text-xs sm:text-sm">What happens next?</h4>
+                      <ul className="text-xs text-orange-600 space-y-0.5">
                         <li>• Your name will appear to other users in the room</li>
                         <li>• You'll see who else is connected in real-time</li>
                         <li>• You can chat and share files securely</li>
@@ -1164,7 +1157,7 @@ export default function RoomPage() {
                 <button
                   onClick={handleJoinRoom}
                   disabled={!userName.trim() || userName.trim().length < 2 || !password.trim() || isJoining}
-                  className="w-full py-3 sm:py-3.5 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-xl hover:from-blue-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 disabled:hover:scale-100 text-sm sm:text-base flex items-center justify-center"
+                  className="w-full py-2.5 sm:py-3 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 disabled:hover:scale-100 text-sm sm:text-base flex items-center justify-center shadow-lg hover:shadow-xl"
                 >
                   {isJoining ? (
                     <>
@@ -1182,12 +1175,12 @@ export default function RoomPage() {
             </div>
           </div>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+    <main className="min-h-screen bg-white pt-16 sm:pt-20">
       {/* VIEWPORT FIX - COMPLETE SOLUTION */}
       <style jsx global>{`
         html, body, #__next {
@@ -1207,7 +1200,7 @@ export default function RoomPage() {
           bottom: 0;
           display: flex;
           flex-direction: column;
-          background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%);
+          background: #ffffff;
         }
         .header-safe-area {
           padding-top: max(env(safe-area-inset-top, 44px), 70px);
@@ -1219,14 +1212,8 @@ export default function RoomPage() {
         }
       `}</style>
       <div className="room-wrapper">
-        {/* Background Effects */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
-        </div>
-
         {/* HEADER WITH SAFE AREA PADDING */}
-        <div className={`header-safe-area relative z-20 pb-3 md:pb-4 border-b border-white/10 transition-all duration-1000 ${
+        <div className={`header-safe-area relative z-20 pb-3 md:pb-4 border-b border-gray-200 bg-white transition-all duration-1000 ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
         }`}>
         <div className="w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
@@ -1237,7 +1224,7 @@ export default function RoomPage() {
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => router.back()}
-                className="group flex items-center text-gray-400 hover:text-white transition-all duration-300 hover:bg-white/5 px-3 py-2 rounded-lg"
+                className="group flex items-center text-gray-600 hover:text-gray-900 transition-all duration-300 hover:bg-gray-50 px-3 py-2 rounded-lg"
               >
                 <svg className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -1246,12 +1233,12 @@ export default function RoomPage() {
               </button>
               
               <div className="flex items-center space-x-3">
-                <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-400 animate-pulse' : 'bg-red-400'} shadow-lg ${isConnected ? 'shadow-green-400/50' : 'shadow-red-400/50'}`}></div>
+                <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'} ${isConnected ? 'animate-pulse' : ''}`}></div>
                 <div>
-                  <h1 className="text-2xl font-bold text-white bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                  <h1 className="text-2xl font-bold text-gray-900">
                     Room #{roomId}
                   </h1>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-gray-600">
                     {roomInfo?.name || `Secure P2P Room`}
                   </p>
                 </div>
@@ -1261,11 +1248,11 @@ export default function RoomPage() {
             {/* Right Side - Desktop Actions */}
             <div className="flex items-center space-x-4">
               {/* Desktop Users Display */}
-              <div className="flex items-center space-x-2 px-4 py-2 bg-green-500/20 border border-green-400/30 rounded-lg backdrop-blur-sm">
-                <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-center space-x-2 px-4 py-2 bg-green-50 border-2 border-green-200 rounded-lg">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                <span className="text-green-300 font-medium">
+                <span className="text-green-700 font-medium">
                   {users.length} {users.length === 1 ? 'user' : 'users'} online
                 </span>
               </div>
@@ -1273,7 +1260,7 @@ export default function RoomPage() {
               {/* Desktop Share Button */}
               <button 
                 onClick={shareRoom}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 flex items-center space-x-2"
+                className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-orange-500/25 flex items-center space-x-2"
                 title="Share room"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1302,7 +1289,7 @@ export default function RoomPage() {
             <div className="flex items-center space-x-3 flex-1 min-w-0">
               <button
                 onClick={() => router.back()}
-                className="group flex items-center text-gray-400 hover:text-white transition-all duration-300 hover:bg-white/5 p-2 rounded-full"
+                className="group flex items-center text-gray-600 hover:text-gray-900 transition-all duration-300 hover:bg-gray-50 p-2 rounded-full"
               >
                 <svg className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -1310,8 +1297,8 @@ export default function RoomPage() {
               </button>
               
               <div className="flex items-center space-x-2 flex-1 min-w-0">
-                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400 animate-pulse' : 'bg-red-400'} shadow-lg ${isConnected ? 'shadow-green-400/50' : 'shadow-red-400/50'}`}></div>
-                <h1 className="text-lg font-bold text-white bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent truncate">
+                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+                <h1 className="text-lg font-bold text-gray-900 truncate">
                   Room #{roomId}
                 </h1>
               </div>
@@ -1322,13 +1309,13 @@ export default function RoomPage() {
               {/* Mobile Users Count - Clickable */}
               <button
                 onClick={() => setShowMobileUsers(true)}
-                className="flex items-center space-x-2 px-3 py-1.5 bg-green-500/20 border border-green-400/30 rounded-full backdrop-blur-sm hover:bg-green-500/30 transition-all duration-300 active:scale-95"
+                className="flex items-center space-x-2 px-3 py-1.5 bg-green-50 border-2 border-green-200 rounded-full hover:bg-green-100 transition-all duration-300 active:scale-95"
               >
-                <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-xs text-green-300 font-medium">
+                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-xs text-green-700 font-medium">
                   {users.length}
                 </span>
-                <svg className="w-3 h-3 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </button>
@@ -1336,7 +1323,7 @@ export default function RoomPage() {
               {/* Mobile Share Button */}
               <button 
                 onClick={shareRoom}
-                className="p-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25"
+                className="p-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-full transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-orange-500/25"
                 title="Share room"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1365,7 +1352,7 @@ export default function RoomPage() {
             <div className="flex flex-col lg:flex-row h-full gap-3 md:gap-4 lg:gap-6 py-2 md:py-4">
             
             {/* Responsive Chat Area */}
-            <div className={`flex-1 flex flex-col bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-xl md:rounded-2xl transition-all duration-1000 delay-300 ${
+            <div className={`flex-1 flex flex-col bg-white border-2 border-gray-200 rounded-xl md:rounded-2xl shadow-lg transition-all duration-1000 delay-300 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}>
               
@@ -1381,10 +1368,10 @@ export default function RoomPage() {
                   >
                     <div className={`${message.type === 'system' ? 'max-w-max' : 'max-w-[85%] md:max-w-[75%] lg:max-w-[65%]'} ${message.type === 'system' ? 'px-3 py-1.5' : 'px-4 md:px-5 py-3 md:py-4'} rounded-2xl transition-all duration-300 ${
                       message.type === 'system'
-                        ? 'bg-slate-700/30 text-slate-400 text-center rounded-full text-xs border border-slate-600/20'
+                        ? 'bg-gray-100 text-gray-600 text-center rounded-full text-xs border-2 border-gray-200'
                         : message.sender === 'You'
-                        ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25 rounded-tl-2xl rounded-tr-sm rounded-bl-2xl rounded-br-2xl hover:shadow-xl hover:shadow-blue-500/30 transform hover:scale-[1.02]'
-                        : 'bg-slate-700/90 text-gray-200 border border-slate-600/50 rounded-tl-sm rounded-tr-2xl rounded-bl-2xl rounded-br-2xl hover:bg-slate-700 transform hover:scale-[1.02]'
+                        ? 'bg-orange-500 text-white shadow-md rounded-tl-2xl rounded-tr-sm rounded-bl-2xl rounded-br-2xl hover:shadow-lg transform hover:scale-[1.02]'
+                        : 'bg-white text-gray-900 border-2 border-gray-200 rounded-tl-sm rounded-tr-2xl rounded-bl-2xl rounded-br-2xl hover:bg-gray-50 transform hover:scale-[1.02]'
                     }`}>
                       {message.type !== 'system' && (
                         <div className="text-xs font-semibold mb-1 opacity-80 flex items-center space-x-1">
@@ -1407,7 +1394,7 @@ export default function RoomPage() {
                       {/* Image preview - WhatsApp style */}
                       {message.type === 'image' && message.fileData && (
                         <div className="mt-1">
-                          <div className="relative rounded-lg overflow-hidden max-w-xs sm:max-w-sm bg-slate-800 group">
+                          <div className="relative rounded-lg overflow-hidden max-w-xs sm:max-w-sm bg-white border-2 border-gray-200 group">
                             {message.fileData.preview ? (
                               <img 
                                 src={message.fileData.preview} 
@@ -1419,9 +1406,9 @@ export default function RoomPage() {
                                   if (fullSizeWindow) {
                                     fullSizeWindow.document.write(`
                                       <html>
-                                        <head><title>${(message.fileData.name)}</title></head>
+                                        <head><title>${(message.fileData?.name || 'Image')}</title></head>
                                         <body style="margin:0; background:#000; display:flex; justify-content:center; align-items:center; height:100vh;">
-                                          <img src="${message.fileData.preview}" style="max-width:100%; max-height:100%; object-fit:contain;" alt="${message.fileData.name}"/>
+                                          <img src="${message.fileData?.preview || ''}" style="max-width:100%; max-height:100%; object-fit:contain;" alt="${message.fileData?.name || 'Image'}"/>
                                         </body>
                                       </html>
                                     `);
@@ -1429,7 +1416,7 @@ export default function RoomPage() {
                                 }}
                               />
                             ) : (
-                              <div className="w-full h-32 flex items-center justify-center bg-slate-700">
+                              <div className="w-full h-32 flex items-center justify-center bg-gray-100">
                                 <span className="text-4xl">🖼️</span>
                               </div>
                             )}
@@ -1475,7 +1462,7 @@ export default function RoomPage() {
                       {/* Video preview - WhatsApp style */}
                       {message.type === 'video' && message.fileData && (
                         <div className="mt-1">
-                          <div className="relative rounded-lg overflow-hidden max-w-xs sm:max-w-sm bg-slate-800 group">
+                          <div className="relative rounded-lg overflow-hidden max-w-xs sm:max-w-sm bg-white border-2 border-gray-200 group">
                             {message.fileData.preview ? (
                               <video 
                                 src={message.fileData.preview}
@@ -1487,7 +1474,7 @@ export default function RoomPage() {
                                 Your browser does not support video playback.
                               </video>
                             ) : (
-                              <div className="w-full h-32 flex items-center justify-center bg-slate-700">
+                              <div className="w-full h-32 flex items-center justify-center bg-gray-100">
                                 <div className="text-center">
                                   <span className="text-4xl block mb-2">🎥</span>
                                   <span className="text-xs text-gray-300">Video</span>
@@ -1534,7 +1521,7 @@ export default function RoomPage() {
 
                       {/* Regular file */}
                       {message.type === 'file' && message.fileData && (
-                        <div className="mt-2 p-3 bg-slate-600/50 rounded-lg hover:bg-slate-600/70 transition-colors duration-300">
+                        <div className="mt-2 p-3 bg-gray-50 border-2 border-gray-200 rounded-lg hover:bg-gray-100 transition-colors duration-300">
                           <div className="flex items-center space-x-3">
                             <span className={`text-2xl ${message.fileData.color}`}>{message.fileData.icon}</span>
                             <div className="flex-1 min-w-0">
@@ -1580,7 +1567,7 @@ export default function RoomPage() {
                 {/* Typing Indicator */}
                 {isTyping && (
                   <div className="flex justify-start">
-                    <div className="bg-slate-700/80 text-gray-200 px-3 py-2 rounded-lg border border-slate-600/50">
+                    <div className="bg-gray-100 text-gray-900 px-3 py-2 rounded-lg border-2 border-gray-200">
                       <div className="flex items-center space-x-1">
                         <span className="text-xs text-gray-400">Someone is typing</span>
                         <div className="flex space-x-1">
@@ -1596,7 +1583,7 @@ export default function RoomPage() {
                 {/* Typing Indicators */}
                 {typingUsers.length > 0 && (
                   <div className="flex justify-start">
-                    <div className="max-w-xs px-4 py-2 bg-slate-700/60 text-gray-300 rounded-lg border border-slate-600/50">
+                    <div className="max-w-xs px-4 py-2 bg-gray-100 text-gray-700 rounded-lg border-2 border-gray-200">
                       <div className="flex items-center space-x-2">
                         <div className="flex space-x-1">
                           <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
@@ -1619,13 +1606,13 @@ export default function RoomPage() {
               </div>
 
               {/* Responsive Message Input */}
-              <div className="p-3 md:p-4 lg:p-6 border-t border-white/10 bg-slate-800/30 backdrop-blur-sm">
+              <div className="p-3 md:p-4 lg:p-6 border-t border-gray-200 bg-gray-50">
                 <div className="flex flex-col space-y-3 md:space-y-4">
                   {/* Responsive Emoji Picker */}
                   {showEmojiPicker && (
                     <div 
                       ref={emojiPickerRef}
-                      className="bg-slate-800/95 backdrop-blur-sm border border-white/20 rounded-xl p-4 max-h-40 md:max-h-48 lg:max-h-56 overflow-y-auto shadow-2xl"
+                      className="bg-white border-2 border-gray-200 rounded-xl p-4 max-h-40 md:max-h-48 lg:max-h-56 overflow-y-auto shadow-lg"
                     >
                       <div className="grid grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-2">
                         {commonEmojis.slice(0, 40).map((emoji, index) => (
@@ -1651,7 +1638,7 @@ export default function RoomPage() {
                         onChange={handleInputChange}
                         onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                         placeholder="Type a message..."
-                        className="w-full pl-5 pr-12 py-4 bg-slate-800/90 border-2 border-blue-500/30 rounded-full text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-base transition-all duration-300 focus:bg-slate-800/95 focus:shadow-lg focus:shadow-blue-500/20"
+                        className="w-full pl-5 pr-12 py-4 bg-white border-2 border-gray-200 rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-base transition-all duration-300 focus:shadow-lg focus:shadow-orange-500/20"
                       />
                       
                       {/* File Button Inside Input - Right Corner */}
@@ -1668,7 +1655,7 @@ export default function RoomPage() {
                         className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full transition-all duration-300 cursor-pointer flex items-center justify-center ${
                           isUploadingFiles
                             ? 'bg-orange-500/20 text-orange-400'
-                            : 'hover:bg-slate-600/50 text-gray-400 hover:text-white'
+                            : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
                         } ${isUploadingFiles ? 'cursor-not-allowed' : ''}`}
                         title={isUploadingFiles ? "Uploading files..." : "Attach file"}
                       >
@@ -1688,7 +1675,7 @@ export default function RoomPage() {
                     {/* Small Emoji Button */}
                     <button
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                      className="p-3 bg-slate-700/80 hover:bg-amber-500 text-white rounded-full transition-all duration-300 active:scale-95 border border-white/10 hover:border-amber-400/30 shadow-md hover:shadow-lg hover:shadow-amber-500/25"
+                      className="p-3 bg-gray-100 hover:bg-orange-500 text-gray-700 hover:text-white rounded-full transition-all duration-300 active:scale-95 border-2 border-gray-200 hover:border-orange-500 shadow-sm hover:shadow-lg hover:shadow-orange-500/25"
                       title="Add emoji"
                     >
                       <span className="text-base">😊</span>
@@ -1701,7 +1688,7 @@ export default function RoomPage() {
                       className={`p-3 rounded-full transition-all duration-300 active:scale-95 ${
                         !newMessage.trim() 
                           ? 'bg-slate-600/70 border border-slate-500/50 text-slate-400 cursor-not-allowed' 
-                          : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border border-blue-500/30 text-white shadow-lg hover:shadow-xl hover:shadow-blue-500/40 transform hover:scale-110 hover:-rotate-12'
+                          : 'bg-orange-500 hover:bg-orange-600 border-2 border-orange-500 text-white shadow-lg hover:shadow-xl hover:shadow-orange-500/40 transform hover:scale-110 hover:-rotate-12'
                       }`}
                       title="Send message"
                     >
@@ -1720,15 +1707,15 @@ export default function RoomPage() {
             }`}>
               
               {/* Connected Users - Optimized */}
-              <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-xl p-3 sm:p-4 hover:border-white/20 transition-all duration-300">
-                <h3 className="text-sm sm:text-base font-semibold text-white mb-3 flex items-center">
-                  <div className="w-4 h-4 mr-2 text-green-400 bg-green-400/20 rounded-full flex items-center justify-center">
+              <div className="bg-white border-2 border-gray-200 rounded-xl p-3 sm:p-4 hover:border-orange-300 transition-all duration-300 shadow-sm">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 flex items-center">
+                  <div className="w-4 h-4 mr-2 text-green-600 bg-green-100 rounded-full flex items-center justify-center">
                     <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </div>
                   <span>Connected Users</span>
-                  <div className="ml-auto text-xs text-green-400 font-medium">
+                  <div className="ml-auto text-xs text-green-600 font-medium">
                     {users.length}
                   </div>
                 </h3>
@@ -1737,25 +1724,25 @@ export default function RoomPage() {
                     users.map((user, index) => (
                       <div 
                         key={user.socketId || `user-${index}`} 
-                        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-white/5 transition-all duration-300 hover:scale-105 bg-green-500/5 border border-green-500/20"
+                        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-green-50 transition-all duration-300 hover:scale-105 bg-green-50 border border-green-200"
                         style={{ animationDelay: `${index * 100}ms` }}
                       >
-                        <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse shadow-lg shadow-green-400/50 transition-all duration-300"></div>
+                        <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse transition-all duration-300"></div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-white truncate flex items-center space-x-1">
+                          <div className="text-sm font-medium text-gray-900 truncate flex items-center space-x-1">
                             <span>{user.name}</span>
-                            <div className="w-1 h-1 bg-green-400 rounded-full animate-pulse"></div>
+                            <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse"></div>
                           </div>
-                          <div className="text-xs text-gray-400 flex items-center space-x-1">
+                          <div className="text-xs text-gray-600 flex items-center space-x-1">
                             <span>Online</span>
-                            <span className="text-green-400">●</span>
+                            <span className="text-green-500">●</span>
                           </div>
                         </div>
                       </div>
                     ))
                   ) : (
                     <div className="text-center py-4">
-                      <div className="text-gray-400 text-sm">
+                      <div className="text-gray-500 text-sm">
                         {isConnected ? 'No other users connected' : 'Connecting...'}
                       </div>
                     </div>
@@ -1765,14 +1752,14 @@ export default function RoomPage() {
 
 
               {/* Security Info - Optimized */}
-              <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-xl p-3 sm:p-4">
-                <h3 className="text-sm sm:text-base font-semibold text-green-300 mb-3 flex items-center">
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-green-50 border-2 border-green-200 rounded-xl p-3 sm:p-4">
+                <h3 className="text-sm sm:text-base font-semibold text-green-700 mb-3 flex items-center">
+                  <svg className="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                   Security
                 </h3>
-                <div className="text-sm text-green-200 space-y-1">
+                <div className="text-sm text-green-700 space-y-1">
                   <div>• End-to-end encrypted</div>
                   <div>• Peer-to-peer sharing</div>
                   <div>• Secure file transfer</div>
@@ -1791,23 +1778,23 @@ export default function RoomPage() {
             className="fixed inset-0" 
             onClick={() => setShowMobileUsers(false)}
           ></div>
-          <div className="w-full bg-gradient-to-br from-slate-800 to-slate-900 border-t border-white/10 rounded-t-3xl p-6 shadow-2xl transform translate-y-0 transition-all duration-300 ease-out max-h-[80vh] overflow-hidden">
+          <div className="w-full bg-white border-t-2 border-gray-200 rounded-t-3xl p-6 shadow-2xl transform translate-y-0 transition-all duration-300 ease-out max-h-[80vh] overflow-hidden">
             {/* Modal Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white">Connected Users</h3>
-                  <p className="text-sm text-gray-400">{users.length} online</p>
+                  <h3 className="text-xl font-bold text-gray-900">Connected Users</h3>
+                  <p className="text-sm text-gray-600">{users.length} online</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowMobileUsers(false)}
-                className="text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10"
+                className="text-gray-600 hover:text-gray-900 transition-colors p-2 rounded-full hover:bg-gray-100"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1821,17 +1808,17 @@ export default function RoomPage() {
                 users.map((user, index) => (
                   <div 
                     key={user.socketId || `user-${index}`} 
-                    className="flex items-center space-x-4 p-4 rounded-2xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-400/20 backdrop-blur-sm"
+                    className="flex items-center space-x-4 p-4 rounded-2xl bg-green-50 border-2 border-green-200"
                   >
-                    <div className="w-4 h-4 rounded-full bg-green-400 animate-pulse shadow-lg shadow-green-400/50"></div>
+                    <div className="w-4 h-4 rounded-full bg-green-500 animate-pulse"></div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-base font-semibold text-white truncate">{user.name}</div>
-                      <div className="text-sm text-green-300 flex items-center space-x-2">
+                      <div className="text-base font-semibold text-gray-900 truncate">{user.name}</div>
+                      <div className="text-sm text-green-700 flex items-center space-x-2">
                         <span>Online</span>
-                        <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
                       </div>
                     </div>
-                    <div className="text-green-400">
+                    <div className="text-green-600">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
@@ -1840,12 +1827,12 @@ export default function RoomPage() {
                 ))
               ) : (
                 <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </div>
-                  <div className="text-gray-400 text-lg font-medium">
+                  <div className="text-gray-600 text-lg font-medium">
                     {isConnected ? 'No other users connected' : 'Connecting...'}
                   </div>
                   <div className="text-gray-500 text-sm mt-1">
@@ -1860,24 +1847,24 @@ export default function RoomPage() {
 
       {/* Share Room Modal - Mobile Responsive & Compact */}
       {showShareModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 xs:p-4">
-          <div className="share-modal bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-xl xs:rounded-2xl p-4 xs:p-5 sm:p-6 w-full max-w-[90vw] xs:max-w-sm sm:max-w-md mx-auto shadow-2xl max-h-[85vh] xs:max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 xs:p-4">
+          <div className="share-modal bg-white border-2 border-gray-200 rounded-xl xs:rounded-2xl p-4 xs:p-5 sm:p-6 w-full max-w-[90vw] xs:max-w-sm sm:max-w-md mx-auto shadow-2xl max-h-[85vh] xs:max-h-[90vh] overflow-y-auto">
             {/* Modal Header - Compact */}
             <div className="flex items-center justify-between mb-4 xs:mb-5">
               <div className="flex items-center space-x-2 xs:space-x-3 min-w-0 flex-1">
-                <div className="w-8 h-8 xs:w-10 xs:h-10 bg-blue-500 rounded-lg xs:rounded-xl flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 xs:w-10 xs:h-10 bg-orange-500 rounded-lg xs:rounded-xl flex items-center justify-center flex-shrink-0">
                   <svg className="w-4 h-4 xs:w-5 xs:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
                   </svg>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-base xs:text-lg font-bold text-white truncate">Share Room</h3>
-                  <p className="text-xs xs:text-sm text-gray-400 truncate">{roomInfo?.name || `Room ${roomId}`}</p>
+                  <h3 className="text-base xs:text-lg font-bold text-gray-900 truncate">Share Room</h3>
+                  <p className="text-xs xs:text-sm text-gray-600 truncate">{roomInfo?.name || `Room ${roomId}`}</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowShareModal(false)}
-                className="text-gray-400 hover:text-white transition-colors flex-shrink-0 ml-2"
+                className="text-gray-600 hover:text-gray-900 transition-colors flex-shrink-0 ml-2"
               >
                 <svg className="w-5 h-5 xs:w-6 xs:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1887,56 +1874,56 @@ export default function RoomPage() {
 
             {/* Success Message - Compact */}
             {copySuccess && (
-              <div className="mb-3 xs:mb-4 p-2 xs:p-3 bg-green-500/20 border border-green-500/30 rounded-lg">
-                <p className="text-green-300 text-xs xs:text-sm text-center">{copySuccess}</p>
+              <div className="mb-3 xs:mb-4 p-2 xs:p-3 bg-green-50 border-2 border-green-200 rounded-lg">
+                <p className="text-green-700 text-xs xs:text-sm text-center">{copySuccess}</p>
               </div>
             )}
 
             {/* Share Options - Compact */}
             <div className="space-y-3 xs:space-y-4">
               {/* Room ID - Compact */}
-              <div className="bg-slate-700/50 rounded-lg xs:rounded-xl p-3 xs:p-4 border border-white/10">
+              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg xs:rounded-xl p-3 xs:p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs xs:text-sm font-medium text-gray-300">Room ID</label>
+                  <label className="text-xs xs:text-sm font-medium text-gray-700">Room ID</label>
                   <button
                     onClick={() => copyToClipboard(roomId, 'Room ID')}
-                    className="text-blue-400 hover:text-blue-300 transition-colors p-1"
+                    className="text-orange-600 hover:text-orange-700 transition-colors p-1"
                   >
                     <svg className="w-3.5 h-3.5 xs:w-4 xs:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                   </button>
                 </div>
-                <div className="font-mono text-base xs:text-lg text-white bg-slate-800/50 px-2.5 xs:px-3 py-1.5 xs:py-2 rounded-lg border border-white/10">
+                <div className="font-mono text-base xs:text-lg text-gray-900 bg-white border-2 border-gray-200 px-2.5 xs:px-3 py-1.5 xs:py-2 rounded-lg">
                   {roomId}
                 </div>
-                <p className="text-[10px] xs:text-xs text-gray-400 mt-1.5 xs:mt-2">Share this ID with others to join the room</p>
+                <p className="text-[10px] xs:text-xs text-gray-600 mt-1.5 xs:mt-2">Share this ID with others to join the room</p>
               </div>
 
               {/* Join Page Link - Compact */}
-              <div className="bg-slate-700/50 rounded-lg xs:rounded-xl p-3 xs:p-4 border border-white/10">
+              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg xs:rounded-xl p-3 xs:p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs xs:text-sm font-medium text-gray-300">Join Page Link</label>
+                  <label className="text-xs xs:text-sm font-medium text-gray-700">Join Page Link</label>
                   <button
                     onClick={() => copyToClipboard(getRoomLink(), 'Join link')}
-                    className="text-blue-400 hover:text-blue-300 transition-colors p-1"
+                    className="text-orange-600 hover:text-orange-700 transition-colors p-1"
                   >
                     <svg className="w-3.5 h-3.5 xs:w-4 xs:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                   </button>
                 </div>
-                <div className="text-xs xs:text-sm text-white bg-slate-800/50 px-2.5 xs:px-3 py-1.5 xs:py-2 rounded-lg border border-white/10 break-all">
+                <div className="text-xs xs:text-sm text-gray-900 bg-white border-2 border-gray-200 px-2.5 xs:px-3 py-1.5 xs:py-2 rounded-lg break-all">
                   {getRoomLink()}
                 </div>
-                <p className="text-[10px] xs:text-xs text-gray-400 mt-1.5 xs:mt-2">Direct link to join page - requires room ID and password</p>
+                <p className="text-[10px] xs:text-xs text-gray-600 mt-1.5 xs:mt-2">Direct link to join page - requires room ID and password</p>
               </div>
 
               {/* Action Buttons - Compact */}
               <div className="flex flex-col xs:flex-row gap-2 xs:gap-3">
                 <button
                   onClick={shareViaWebShare}
-                  className="flex-1 py-2.5 xs:py-3 px-3 xs:px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg xs:rounded-xl transition-all duration-300 transform active:scale-95 xs:hover:scale-105 flex items-center justify-center space-x-2"
+                  className="flex-1 py-2.5 xs:py-3 px-3 xs:px-4 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg xs:rounded-xl transition-all duration-300 transform active:scale-95 xs:hover:scale-105 flex items-center justify-center space-x-2"
                 >
                   <svg className="w-4 h-4 xs:w-5 xs:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -1945,7 +1932,7 @@ export default function RoomPage() {
                 </button>
                 <button
                   onClick={() => copyToClipboard(getRoomLink(), 'Room link')}
-                  className="flex-1 py-2.5 xs:py-3 px-3 xs:px-4 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-lg xs:rounded-xl transition-all duration-300 transform active:scale-95 xs:hover:scale-105 flex items-center justify-center space-x-2"
+                  className="flex-1 py-2.5 xs:py-3 px-3 xs:px-4 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold rounded-lg xs:rounded-xl transition-all duration-300 transform active:scale-95 xs:hover:scale-105 flex items-center justify-center space-x-2"
                 >
                   <svg className="w-4 h-4 xs:w-5 xs:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -1955,16 +1942,16 @@ export default function RoomPage() {
               </div>
 
               {/* Security Notice - Compact */}
-              <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg xs:rounded-xl p-3 xs:p-4">
+              <div className="bg-orange-50 border-2 border-orange-200 rounded-lg xs:rounded-xl p-3 xs:p-4">
                 <div className="flex items-start space-x-2 xs:space-x-3">
-                  <div className="w-4 h-4 xs:w-5 xs:h-5 bg-amber-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-4 h-4 xs:w-5 xs:h-5 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                     <svg className="w-2.5 h-2.5 xs:w-3 xs:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.732 15.5c-.77.833.192 2.5 1.732 2.5z" />
                     </svg>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h4 className="text-amber-300 font-semibold mb-0.5 xs:mb-1 text-xs xs:text-sm">Security Notice</h4>
-                    <p className="text-[10px] xs:text-xs text-amber-200 leading-snug">
+                    <h4 className="text-orange-700 font-semibold mb-0.5 xs:mb-1 text-xs xs:text-sm">Security Notice</h4>
+                    <p className="text-[10px] xs:text-xs text-orange-600 leading-snug">
                       Users will still need the room password to join. Only share with trusted people.
                     </p>
                   </div>
@@ -1974,7 +1961,7 @@ export default function RoomPage() {
           </div>
         </div>
       )}
-      </div> {/* Close room-container */}
-    </div>
+      </div> {/* Close room-wrapper */}
+    </main>
   );
 }
