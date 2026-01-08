@@ -92,7 +92,7 @@ export const blogPosts: BlogPost[] = [
     readTime: '10 min read',
     category: 'Security',
     tags: ['Security', 'File Sharing', 'Best Practices', 'Encryption', 'Cybersecurity', 'Data Protection'],
-    featuredImage: '/api/placeholder/800/400',
+    featuredImage: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&h=400&fit=crop',
     seoTitle: 'Secure File Sharing Best Practices 2024 | Dropsos',
     seoDescription: 'Learn essential security practices for file sharing in 2024. Protect your data with proven strategies for encryption, authentication, and access control. Discover enterprise-grade file sharing solutions.',
     seoKeywords: 'secure file sharing, file security, encryption, data protection, cybersecurity, AES-256 encryption, file sharing best practices, secure file transfer, enterprise file sharing security'
@@ -198,7 +198,7 @@ export const blogPosts: BlogPost[] = [
     readTime: '12 min read',
     category: 'Technology',
     tags: ['P2P', 'Technology', 'File Sharing', 'Decentralized', 'WebRTC', 'Network Architecture'],
-    featuredImage: '/api/placeholder/800/400',
+    featuredImage: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=400&fit=crop',
     seoTitle: 'Peer-to-Peer Technology: Future of File Sharing | Dropsos',
     seoDescription: 'Discover how peer-to-peer technology is revolutionizing file sharing with enhanced security, performance, and cost efficiency. Learn about P2P architecture, WebRTC, and decentralized file sharing.',
     seoKeywords: 'peer to peer, P2P technology, file sharing, decentralized, blockchain, WebRTC, P2P file sharing, decentralized file sharing, peer-to-peer network'
@@ -404,7 +404,7 @@ export const blogPosts: BlogPost[] = [
     readTime: '15 min read',
     category: 'Enterprise',
     tags: ['Enterprise', 'File Sharing', 'Security', 'Compliance', 'Business', 'Collaboration'],
-    featuredImage: '/api/placeholder/800/400',
+    featuredImage: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=400&fit=crop',
     seoTitle: 'Enterprise File Sharing Solutions: Complete Guide 2024 | Dropsos',
     seoDescription: 'Complete guide to enterprise file sharing solutions including security requirements, implementation best practices, solution evaluation, and compliance considerations for 2024.',
     seoKeywords: 'enterprise file sharing, business file sharing, enterprise security, compliance, file sharing solutions, enterprise collaboration, secure file sharing for business'
@@ -418,4 +418,3 @@ export function getBlogPostBySlug(slug: string): BlogPost | undefined {
 export function getAllBlogPosts(): BlogPost[] {
   return blogPosts;
 }
-

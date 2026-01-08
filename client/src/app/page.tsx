@@ -255,6 +255,7 @@ export default function Home() {
                 © {new Date().getFullYear()} Dropsos. Secure file sharing platform with end-to-end encryption. Created by <Link href="https://muqeet.dropsos.com" className="text-orange-500 font-semibold hover:text-orange-600 transition-colors">Muqeet Ahmed</Link>
               </p>
               <div className="flex justify-center flex-wrap gap-4 sm:gap-6 mt-4 text-xs text-gray-500">
+                <Link href="/blog" className="hover:text-orange-500 transition-colors">Blog</Link>
                 <Link href="/privacy" className="hover:text-orange-500 transition-colors">Privacy Policy</Link>
                 <Link href="/terms" className="hover:text-orange-500 transition-colors">Terms of Service</Link>
                 <Link href="/security" className="hover:text-orange-500 transition-colors">Security</Link>

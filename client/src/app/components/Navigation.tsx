@@ -13,6 +13,7 @@ export default function Navigation() {
   const menuItems = [
     { id: 'home', label: 'Home', href: '/' },
     { id: 'about', label: 'About', href: '/about' },
+    { id: 'blog', label: 'Blog', href: '/blog' },
     { id: 'pricing', label: 'Pricing', href: '/pricing' },
     { id: 'create-room', label: 'Create Room', href: '/create-room' },
     { id: 'same-wifi', label: 'Same WiFi', href: '/same-wifi' },
@@ -21,6 +22,7 @@ export default function Navigation() {
   const getActiveSection = () => {
     if (pathname === '/') return 'home';
     if (pathname === '/about') return 'about';
+    if (pathname === '/blog' || pathname.startsWith('/blog/')) return 'blog';
     if (pathname === '/pricing') return 'pricing';
     if (pathname === '/create-room') return 'create-room';
     if (pathname === '/same-wifi') return 'same-wifi';

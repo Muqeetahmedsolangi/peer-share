@@ -702,18 +702,35 @@ export default function SameWifiPage() {
         }
     };
 
-    // Get file icon based on type
+    // Get file icon based on type - Returns SVG component
     const getFileIcon = (file: File) => {
         const type = file.type.toLowerCase();
-        if (type.startsWith('image/')) return '🖼️';
-        if (type.startsWith('video/')) return '🎥';
-        if (type.startsWith('audio/')) return '🎵';
-        if (type.includes('pdf')) return '📄';
-        if (type.includes('word') || type.includes('document')) return '📝';
-        if (type.includes('excel') || type.includes('spreadsheet')) return '📊';
-        if (type.includes('zip') || type.includes('rar') || type.includes('compressed')) return '📦';
-        if (type.includes('text')) return '📃';
-        return '📁';
+        const iconClass = "w-5 h-5";
+        if (type.startsWith('image/')) {
+            return <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>;
+        }
+        if (type.startsWith('video/')) {
+            return <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>;
+        }
+        if (type.startsWith('audio/')) {
+            return <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>;
+        }
+        if (type.includes('pdf')) {
+            return <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>;
+        }
+        if (type.includes('word') || type.includes('document')) {
+            return <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>;
+        }
+        if (type.includes('excel') || type.includes('spreadsheet')) {
+            return <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>;
+        }
+        if (type.includes('zip') || type.includes('rar') || type.includes('compressed')) {
+            return <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>;
+        }
+        if (type.includes('text')) {
+            return <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>;
+        }
+        return <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>;
     };
 
     // Check if file can be previewed
@@ -777,32 +794,38 @@ export default function SameWifiPage() {
 
         return (
             <div
-                className="fixed inset-0 bg-black/95 backdrop-blur-sm z-[100] flex items-center justify-center p-3 sm:p-4"
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-3 sm:p-4"
                 onClick={closePreview}
             >
                 <div
-                    className="relative w-full max-w-6xl max-h-[90vh] bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-xl sm:rounded-2xl overflow-hidden"
+                    className="relative w-full max-w-6xl max-h-[90vh] bg-white border-2 border-gray-200 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="bg-slate-800/90 p-3 sm:p-4 flex items-center justify-between border-b border-white/10">
+                    <div className="bg-gray-50 p-3 sm:p-4 flex items-center justify-between border-b border-gray-200">
                         <div className="flex-1 min-w-0 mr-3">
-                            <h3 className="text-white font-semibold truncate text-sm sm:text-base">{previewFile.name}</h3>
-                            <p className="text-gray-400 text-xs sm:text-sm">
+                            <h3 className="text-gray-900 font-semibold truncate text-sm sm:text-base">{previewFile.name}</h3>
+                            <p className="text-gray-500 text-xs sm:text-sm">
                                 {(previewFile.size / 1024 / 1024).toFixed(2)} MB
                             </p>
                         </div>
                         <div className="flex gap-2 flex-shrink-0">
                             <button
                                 onClick={() => downloadFile(previewFile)}
-                                className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-all duration-300 text-xs sm:text-sm"
+                                className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-300 text-xs sm:text-sm flex items-center gap-1.5"
                             >
-                                💾
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Download
                             </button>
                             <button
                                 onClick={closePreview}
-                                className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-all duration-300 text-xs sm:text-sm"
+                                className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all duration-300 text-xs sm:text-sm flex items-center gap-1.5"
                             >
-                                ✕
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                Close
                             </button>
                         </div>
                     </div>
@@ -828,7 +851,11 @@ export default function SameWifiPage() {
 
                         {fileType.startsWith('audio/') && (
                             <div className="flex flex-col items-center justify-center py-8 sm:py-12">
-                                <div className="text-4xl sm:text-6xl mb-4 sm:mb-6">🎵</div>
+                                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-orange-100 rounded-full flex items-center justify-center mb-4 sm:mb-6">
+                                    <svg className="w-8 h-8 sm:w-10 sm:h-10 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                                    </svg>
+                                </div>
                                 <audio
                                     src={fileUrl}
                                     controls
@@ -1142,36 +1169,44 @@ export default function SameWifiPage() {
 
         return (
             <div
-                className="fixed inset-0 bg-black/95 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4"
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4"
                 onClick={() => setShowTextModal(false)}
             >
                 <div
-                    className="relative w-full max-w-4xl max-h-[90vh] bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-xl sm:rounded-2xl overflow-hidden flex flex-col"
+                    className="relative w-full max-w-4xl max-h-[90vh] bg-white border-2 border-gray-200 rounded-xl sm:rounded-2xl overflow-hidden flex flex-col shadow-2xl"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="bg-gradient-to-r from-slate-800 to-slate-700 p-4 flex items-center justify-between border-b border-white/10 flex-shrink-0 shadow-lg">
+                    <div className="bg-gray-50 p-4 flex items-center justify-between border-b border-gray-200 flex-shrink-0">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
-                                <span className="text-white text-lg">💬</span>
+                            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                </svg>
                             </div>
                             <div>
-                                <h3 className="text-white font-semibold text-base sm:text-lg">Messages</h3>
-                                <p className="text-xs text-gray-400">{receivedMessages.length} message{receivedMessages.length !== 1 ? 's' : ''}</p>
+                                <h3 className="text-gray-900 font-semibold text-base sm:text-lg">Messages</h3>
+                                <p className="text-xs text-gray-500">{receivedMessages.length} message{receivedMessages.length !== 1 ? 's' : ''}</p>
                             </div>
                         </div>
                         <button
                             onClick={() => setShowTextModal(false)}
-                            className="w-8 h-8 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-full transition-all duration-300 hover:scale-110"
+                            className="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full transition-all duration-300 hover:scale-110"
                             title="Close"
                         >
-                            ✕
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
                         </button>
                     </div>
 
-                    <div className="flex-1 overflow-auto p-4 sm:p-6 bg-gradient-to-b from-slate-900/50 to-slate-800/50">
+                    <div className="flex-1 overflow-auto p-4 sm:p-6 bg-gray-50">
                         {receivedMessages.length === 0 ? (
                             <div className="text-center text-gray-500 py-12">
-                                <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">💬</div>
+                                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                    </svg>
+                                </div>
                                 <p className="text-sm sm:text-base">No messages yet</p>
                             </div>
                         ) : (
@@ -1194,9 +1229,9 @@ export default function SameWifiPage() {
                                                 )}
                                                 
                                                 {/* Message bubble */}
-                                                <div className={`relative px-4 py-2.5 rounded-2xl shadow-lg break-words overflow-hidden ${isYou
-                                                        ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-tr-sm shadow-lg shadow-green-500/20'
-                                                        : 'bg-slate-700 text-white rounded-tl-sm border border-white/10'
+                                                <div className={`relative px-4 py-2.5 rounded-2xl shadow-sm break-words overflow-hidden ${isYou
+                                                        ? 'bg-orange-500 text-white rounded-tr-sm'
+                                                        : 'bg-white text-gray-900 rounded-tl-sm border-2 border-gray-200'
                                                     }`} style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                                                     {msg.type === 'code' ? (
                                                         <div className="space-y-2 w-full">
@@ -1233,18 +1268,22 @@ export default function SameWifiPage() {
                                                                     msg.isImage ? msg.content : msg.fileData!, 
                                                                     msg.fileName || (msg.isImage ? 'image.png' : 'download')
                                                                 )}
-                                                                className="relative p-2 bg-gradient-to-r from-blue-500/30 via-cyan-500/30 to-blue-500/30 rounded-lg flex-shrink-0 transition-all duration-300 hover:scale-110 shadow-lg shadow-blue-500/30 animate-pulse hover:animate-none hover:shadow-blue-500/50"
+                                                                className="relative p-2 bg-blue-100 hover:bg-blue-200 rounded-lg flex-shrink-0 transition-all duration-300 hover:scale-110"
                                                                 title="Save"
                                                             >
-                                                                <span className="text-base block">💾</span>
+                                                                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                                </svg>
                                                             </button>
                                                         ) : null}
                                             <button
                                                 onClick={() => copyToClipboard(msg.content)}
-                                                            className="relative p-2 bg-gradient-to-r from-blue-500/30 via-purple-500/30 to-cyan-500/30 rounded-lg flex-shrink-0 transition-all duration-300 hover:scale-110 shadow-lg shadow-blue-500/30 animate-pulse hover:animate-none hover:shadow-blue-500/50"
+                                                            className="relative p-2 bg-gray-100 hover:bg-gray-200 rounded-lg flex-shrink-0 transition-all duration-300 hover:scale-110"
                                                             title="Copy"
                                             >
-                                                            <span className="text-base block">📋</span>
+                                                            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                            </svg>
                                             </button>
                                         </div>
                                     </div>
@@ -1295,39 +1334,45 @@ export default function SameWifiPage() {
 
         return (
             <div
-                className="fixed inset-0 bg-black/95 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4"
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4"
                 onClick={() => setShowClipModal(false)}
             >
                 <div
-                    className="relative w-full max-w-4xl max-h-[90vh] bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-xl sm:rounded-2xl overflow-hidden flex flex-col"
+                    className="relative w-full max-w-4xl max-h-[90vh] bg-white border-2 border-gray-200 rounded-xl sm:rounded-2xl overflow-hidden flex flex-col shadow-2xl"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="bg-gradient-to-r from-slate-800 to-slate-700 p-4 flex items-center justify-between border-b border-white/10 flex-shrink-0 shadow-lg">
+                    <div className="bg-gray-50 p-4 flex items-center justify-between border-b border-gray-200 flex-shrink-0">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg shadow-purple-500/50">
-                                <span className="text-white text-lg">💾</span>
+                            <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                                <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
                             </div>
                             <div>
-                                <h3 className="text-white font-semibold text-base sm:text-lg">Saved Clips</h3>
-                                <p className="text-xs text-gray-400">{validClips.length} clip{validClips.length !== 1 ? 's' : ''} • expires in 30 min</p>
+                                <h3 className="text-gray-900 font-semibold text-base sm:text-lg">Saved Clips</h3>
+                                <p className="text-xs text-gray-500">{validClips.length} clip{validClips.length !== 1 ? 's' : ''} • expires in 30 min</p>
                             </div>
                         </div>
                         <button
                             onClick={() => setShowClipModal(false)}
-                            className="w-8 h-8 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-full transition-all duration-300 hover:scale-110"
+                            className="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full transition-all duration-300 hover:scale-110"
                             title="Close"
                         >
-                            ✕
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
                         </button>
                     </div>
 
-                    <div className="flex-1 overflow-auto p-4 sm:p-6 bg-gradient-to-b from-slate-900/50 to-slate-800/50">
+                    <div className="flex-1 overflow-auto p-4 sm:p-6 bg-gray-50">
                         {validClips.length === 0 ? (
                             <div className="text-center text-gray-500 py-16">
-                                <div className="w-20 h-20 mx-auto mb-4 bg-purple-500/10 rounded-full flex items-center justify-center">
-                                    <span className="text-4xl">💾</span>
+                                <div className="w-20 h-20 mx-auto mb-4 bg-orange-100 rounded-full flex items-center justify-center">
+                                    <svg className="w-10 h-10 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
                                 </div>
-                                <p className="text-base font-medium mb-2">No saved clips yet</p>
+                                <p className="text-base font-medium mb-2 text-gray-900">No saved clips yet</p>
                                 <p className="text-sm text-gray-600">Save content to create clips</p>
                             </div>
                                     ) : (
@@ -1348,24 +1393,27 @@ export default function SameWifiPage() {
                                     return (
                                         <div
                                             key={clip.clipId}
-                                            className="p-4 bg-gradient-to-r from-purple-600/20 via-purple-500/15 to-purple-600/20 border border-purple-400/30 rounded-xl backdrop-blur-sm hover:border-purple-400/50 hover:shadow-lg hover:shadow-purple-500/20 transition-all duration-300"
+                                            className="p-4 bg-white border-2 border-gray-200 rounded-xl hover:border-orange-300 hover:shadow-md transition-all duration-300"
                                         >
                                             <div className="flex items-start justify-between gap-4">
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2 mb-3 flex-wrap">
-                                                        <div className="flex items-center gap-2 px-2.5 py-1 bg-purple-500/20 rounded-full border border-purple-400/30">
-                                                            <span className="text-purple-300 font-semibold text-sm">💾 Clip #{index + 1}</span>
+                                                        <div className="flex items-center gap-2 px-2.5 py-1 bg-orange-100 rounded-full border border-orange-200">
+                                                            <svg className="w-3.5 h-3.5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                            <span className="text-orange-700 font-semibold text-sm">Clip #{index + 1}</span>
                                                         </div>
                                                         {clip.savedBy && (
-                                                            <span className="text-xs text-gray-400">by <span className="text-purple-300 font-semibold">{clip.savedBy}</span></span>
+                                                            <span className="text-xs text-gray-500">by <span className="text-orange-600 font-semibold">{clip.savedBy}</span></span>
                                                         )}
                                                         {timeAgo && (
                                                             <span className="text-xs text-gray-500">• {timeAgo}</span>
                                     )}
                                 </div>
                                                     {clip.preview && (
-                                                        <div className="bg-slate-900/60 px-4 py-3 rounded-lg border border-white/10 shadow-inner">
-                                                            <p className="text-gray-100 text-sm sm:text-base whitespace-pre-wrap break-words leading-relaxed" title={clip.preview}>
+                                                        <div className="bg-gray-50 px-4 py-3 rounded-lg border border-gray-200">
+                                                            <p className="text-gray-900 text-sm sm:text-base whitespace-pre-wrap break-words leading-relaxed" title={clip.preview}>
                                                                 {clip.preview}
                                                             </p>
                                                         </div>
@@ -1377,35 +1425,48 @@ export default function SameWifiPage() {
                                                             {canPreview({ name: clip.fileName, type: clip.fileType || '' } as File) && (
                                                                 <button
                                                                     onClick={() => previewClipFile(clip.clipId, clip.fileName!, clip.fileType)}
-                                                                    className="px-3 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-500 hover:to-purple-600 transition-all duration-300 shadow-md hover:shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 text-sm font-medium"
+                                                                    className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-300 shadow-sm hover:shadow-md text-sm font-medium flex items-center gap-1.5"
                                                                     title="Preview File"
                                                                 >
-                                                                    👁️
+                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                    </svg>
+                                                                    Preview
                                                                 </button>
                                                             )}
                                                             <button
                                                                 onClick={() => downloadClipFile(clip.clipId, clip.fileName!, clip.fileType)}
-                                                                className="px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-500 hover:to-blue-600 transition-all duration-300 shadow-md hover:shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 text-sm font-medium"
+                                                                className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-300 shadow-sm hover:shadow-md text-sm font-medium flex items-center gap-1.5"
                                                                 title="Download File"
                                                             >
-                                                                💾
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                                </svg>
+                                                                Download
                                                             </button>
                                                         </>
                                                     ) : (
                                                         <>
                                                             <button
                                                                 onClick={() => copyClipContent(clip.clipId)}
-                                                                className="px-3 py-2 bg-gradient-to-r from-slate-600 to-slate-700 text-white rounded-lg hover:from-slate-500 hover:to-slate-600 transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
+                                                                className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all duration-300 shadow-sm hover:shadow-md text-sm font-medium flex items-center gap-1.5"
                                                                 title="Copy Content"
                                                             >
-                                                                📋
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                                </svg>
+                                                                Copy
                                                             </button>
                                                             <button
                                                                 onClick={() => getClipFromRedis(clip.clipId)}
-                                                                className="px-3 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-500 hover:to-purple-600 transition-all duration-300 shadow-md hover:shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 text-sm font-medium"
+                                                                className="px-3 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all duration-300 shadow-sm hover:shadow-md text-sm font-medium flex items-center gap-1.5"
                                                                 title="Load into Editor"
                                                             >
-                                                                📖
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                                                </svg>
+                                                                Load
                                                             </button>
                                                         </>
                                                     )}
@@ -1422,101 +1483,85 @@ export default function SameWifiPage() {
         );
     };
 
-    // Join Screen - Mobile Optimized
+    // Join Screen - Professional White Theme
     if (!isJoined) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-cyan-900 to-slate-900 relative overflow-hidden">
-                {/* Background Effects */}
-                <div className="absolute inset-0">
-                    <div className="absolute top-0 left-1/4 w-72 h-72 sm:w-96 sm:h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
-                    <div className="absolute bottom-0 right-1/4 w-72 h-72 sm:w-96 sm:h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
-                </div>
-
-                <div className="relative z-10 min-h-screen flex items-center justify-center p-4 sm:p-6">
-                    <div className="w-full max-w-md">
-                        <div className={`text-center mb-6 sm:mb-8 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                        }`}>
-                            <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-2xl flex items-center justify-center">
-                                <svg className="w-8 h-8 sm:w-10 sm:h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+            <main className="min-h-screen bg-white pt-16 sm:pt-20">
+                <section className="bg-gradient-to-b from-white via-orange-50/20 to-white py-12 sm:py-16 md:py-20">
+                    <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className={`text-center mb-8 sm:mb-10 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+                            <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-6 bg-orange-100 rounded-2xl flex items-center justify-center">
+                                <svg className="w-10 h-10 sm:w-12 sm:h-12 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
                                 </svg>
                             </div>
-                            <h1 className="text-3xl sm:text-4xl md:text-5xl font-black mb-3 sm:mb-4 tracking-tight">
-                                <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-teal-400 bg-clip-text text-transparent">
-                                    Same WiFi
-                                </span>
+                            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
+                                Same <span className="text-orange-500">WiFi</span>
                             </h1>
-                            <p className="text-sm sm:text-base md:text-lg text-gray-300 font-light px-2">
+                            <p className="text-lg sm:text-xl text-gray-600 mb-2">
                                 Join your WiFi network for instant file sharing
+                            </p>
+                            <p className="text-sm sm:text-base text-gray-500">
+                                Share files directly between devices on the same network
                             </p>
                         </div>
 
-                        <div className={`bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-8 transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                        }`}>
+                        <div className={`bg-white border-2 border-gray-200 rounded-2xl p-6 sm:p-8 shadow-lg transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
                             <input
                                 type="text"
                                 placeholder="Enter your name (optional)"
                                 value={userName}
                                 onChange={(e) => {
                                     setUserName(e.target.value);
-                                    // Update storage when user types (iOS Safari compatible)
                                     if (e.target.value.trim()) {
                                         saveToStorage('peershare-username', e.target.value);
                                     }
                                 }}
                                 onKeyPress={(e) => e.key === 'Enter' && handleJoin()}
-                                className="w-full px-4 py-3 bg-slate-800/50 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-sm sm:text-base mb-3 sm:mb-4 transition-all duration-300"
+                                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm sm:text-base mb-4 transition-all duration-300"
                             />
                             <button
                                 onClick={handleJoin}
-                                className="w-full px-6 py-3 sm:py-3.5 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-semibold rounded-xl hover:from-cyan-500 hover:to-blue-500 transition-all duration-300 transform active:scale-95 text-sm sm:text-base"
+                                className="w-full px-6 py-3 sm:py-4 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl text-base sm:text-lg"
                             >
                                 Join Network
                             </button>
                         </div>
                     </div>
-                </div>
-            </div>
+                </section>
+            </main>
         );
     }
 
-    // Main Interface - Mobile First Design
+    // Main Interface - Professional White Theme
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-cyan-900 to-slate-900 relative overflow-hidden">
-            {/* Background Effects */}
-            <div className="absolute inset-0">
-                <div className="absolute top-0 left-1/4 w-72 h-72 sm:w-96 sm:h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
-                <div className="absolute bottom-0 right-1/4 w-72 h-72 sm:w-96 sm:h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
-            </div>
-
-            {/* Header - Mobile Optimized */}
-            <div className={`relative z-10 pt-20 sm:pt-24 md:pt-28 lg:pt-32 pb-4 sm:pb-6 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
-            }`}>
-                <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* Back Button */}
-                    <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <main className="min-h-screen bg-white pt-16 sm:pt-20">
+            {/* Header */}
+            <section className="bg-gradient-to-b from-white via-orange-50/20 to-white py-8 sm:py-10">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex items-center justify-between mb-6">
                         <button
                             onClick={() => router.back()}
-                            className="flex items-center text-gray-400 hover:text-white transition-colors duration-300"
+                            className="group flex items-center text-gray-600 hover:text-gray-900 transition-colors"
                         >
-                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                             </svg>
                             <span className="text-sm sm:text-base">Back</span>
                         </button>
 
-                        {/* Status in Corner - Beautiful */}
-                        <div className="flex items-center gap-3 px-3 py-2 rounded-full bg-gradient-to-r from-slate-800/80 to-slate-900/80 backdrop-blur-md border border-white/10 shadow-lg">
+                        {/* Status Badge */}
+                        <div className="flex items-center gap-3 px-4 py-2 bg-white border-2 border-gray-200 rounded-full shadow-sm">
                             <div className="flex items-center gap-2">
-                                <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-green-400 shadow-lg shadow-green-400/50' : 'bg-red-400 shadow-lg shadow-red-400/50'} animate-pulse`}></div>
-                                <span className={`text-xs font-semibold ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
+                                <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'} ${isConnected ? 'animate-pulse' : ''}`}></div>
+                                <span className={`text-xs font-semibold ${isConnected ? 'text-green-600' : 'text-red-600'}`}>
                                     {isConnected ? 'Connected' : 'Disconnected'}
                                 </span>
                             </div>
-                            <div className="w-px h-4 bg-gradient-to-b from-transparent via-white/30 to-transparent"></div>
+                            <div className="w-px h-4 bg-gray-300"></div>
                             <div className="flex items-center gap-2">
-                                <span className="text-xs text-gray-400 font-medium">Users</span>
-                                <span className="px-2 py-0.5 bg-cyan-500/20 text-xs font-bold text-cyan-400 rounded-full">{roomUsers.length}</span>
+                                <span className="text-xs text-gray-500 font-medium">Users</span>
+                                <span className="px-2 py-0.5 bg-orange-100 text-xs font-bold text-orange-600 rounded-full">{roomUsers.length}</span>
                             </div>
                         </div>
                     </div>
@@ -1534,71 +1579,79 @@ export default function SameWifiPage() {
                         </p>
                     </div> */}
                 </div>
-            </div>
+            </section>
 
-            {/* Main Content - Mobile First */}
-            <div className="relative z-10 pb-6 sm:pb-8">
-                <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* Users List - Beautiful Horizontal Line */}
+            {/* Main Content */}
+            <section className="py-8 sm:py-10 bg-white">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    {/* Users List */}
                     {roomUsers.length > 0 && (
-                        <div className={`mb-4 transition-all duration-1000 delay-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                    }`}>
-                            <div className="flex items-center gap-4 sm:gap-5 flex-wrap px-3 py-2 bg-gradient-to-r from-slate-800/40 to-slate-900/40 backdrop-blur-sm rounded-full border border-white/5">
-                                <span className="text-xs sm:text-sm text-gray-400 font-medium">Users</span>
-                                <div className="flex items-center gap-3 sm:gap-4">
+                        <div className={`mb-6 transition-all duration-1000 delay-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+                            <div className="flex items-center gap-4 flex-wrap px-4 py-3 bg-white border-2 border-gray-200 rounded-full shadow-sm">
+                                <span className="text-sm text-gray-600 font-medium">Users:</span>
+                                <div className="flex items-center gap-3 flex-wrap">
                                     {roomUsers.map((user) => (
                                         <div
                                             key={user.socketId}
-                                            className="flex items-center gap-2 px-3 py-1 bg-slate-700/30 rounded-full border border-white/5 hover:border-green-400/30 transition-all duration-300"
+                                            className="flex items-center gap-2 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-full hover:bg-orange-100 transition-all duration-300"
                                         >
-                                            <div className="w-2 h-2 rounded-full bg-green-400 shadow-lg shadow-green-400/50 animate-pulse"></div>
-                                            <span className="text-sm sm:text-base text-white font-medium">{user.name}</span>
-                                                </div>
-                                    ))}
-                                            </div>
+                                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                            <span className="text-sm text-gray-900 font-medium">{user.name}</span>
                                         </div>
+                                    ))}
                                 </div>
-                            )}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Split Layout: 55% Input, 45% Messages */}
                     <div className="flex flex-col lg:flex-row gap-4">
                         {/* Input Area - 55% */}
                         <div className="flex-[0.55] min-w-0">
                             <div className="space-y-3 sm:space-y-4">
-                                {/* Text/Code Sharing - Beautiful Design */}
-                                <div className={`bg-gradient-to-br from-slate-800/70 via-slate-800/60 to-slate-900/70 backdrop-blur-2xl border border-white/10 rounded-2xl p-4 sm:p-5 shadow-2xl transition-all duration-1000 delay-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                                {/* Text/Code Sharing - Professional Design */}
+                                <div className={`bg-white border-2 border-gray-200 rounded-2xl p-4 sm:p-5 shadow-lg transition-all duration-1000 delay-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                                     } h-[600px] flex flex-col`}>
                                     {/* Tabs */}
                                     <div className="flex items-center justify-between mb-4 flex-shrink-0">
-                                        <div className="flex gap-2 bg-slate-900/50 p-1 rounded-lg border border-white/10">
+                                        <div className="flex gap-2 bg-gray-50 p-1 rounded-lg border border-gray-200">
                             <button
                                     onClick={() => setActiveTab('text')}
-                                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
+                                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center gap-2 ${
                                         activeTab === 'text'
-                                            ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/50'
-                                            : 'text-gray-400 hover:text-white'
+                                            ? 'bg-orange-500 text-white shadow-md'
+                                            : 'text-gray-600 hover:text-gray-900'
                                     }`}
                             >
-                                    💬 Share Text
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                    </svg>
+                                    Share Text
                             </button>
                                             <button
                                     onClick={() => setActiveTab('files')}
-                                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
+                                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center gap-2 ${
                                         activeTab === 'files'
-                                            ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-lg shadow-purple-500/50'
-                                            : 'text-gray-400 hover:text-white'
+                                            ? 'bg-orange-500 text-white shadow-md'
+                                            : 'text-gray-600 hover:text-gray-900'
                                     }`}
                                             >
-                                    📁 Share Files
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                                    </svg>
+                                    Share Files
                                             </button>
                                     </div>
                                         <div className="flex gap-2">
                                             {savedClipIds.length > 0 && (
                                 <button
                                                     onClick={() => setShowClipModal(true)}
-                                                    className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg text-sm font-medium shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 transition-all duration-300"
+                                                    className="px-3 py-1.5 bg-orange-500 text-white rounded-lg text-sm font-medium shadow-md hover:bg-orange-600 transition-all duration-300 flex items-center gap-1.5"
                                     >
-                                                    💾 {savedClipIds.length}
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    {savedClipIds.length}
                                     </button>
                                 )}
                             </div>
@@ -1615,24 +1668,28 @@ export default function SameWifiPage() {
                                     }
                                 }}
                                                 placeholder="Type your message or paste code here..."
-                                                className="w-full h-full px-4 py-3 pr-28 bg-slate-900/50 border-2 border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 resize-none text-sm sm:text-base transition-all duration-300 font-mono"
+                                                className="w-full h-full px-4 py-3 pr-28 bg-white border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none text-sm sm:text-base transition-all duration-300 font-mono"
                                             />
                                             {/* Small buttons in bottom-right corner */}
                                             <div className="absolute bottom-3 right-3 flex gap-2">
                                                 <button
                                                     onClick={saveToRedis}
                                                     disabled={!textInput.trim() || !socket}
-                                                    className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md flex items-center gap-1.5"
+                                                    className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md flex items-center gap-1.5"
                                                 >
-                                                    <span>💾</span>
+                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                    </svg>
                                                     <span>Save</span>
                                                 </button>
                             <button
                                 onClick={sendTextMessage}
                                 disabled={!textInput.trim()}
-                                                    className="px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white rounded-lg text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md flex items-center gap-1.5"
+                                                    className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white rounded-lg text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md flex items-center gap-1.5"
                             >
-                                                    <span>💬</span>
+                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                                    </svg>
                                                     <span>Send</span>
                             </button>
                                             </div>
@@ -1649,8 +1706,8 @@ export default function SameWifiPage() {
                                         selectedFile ? 'flex-[0.8]' : 'flex-1'
                                     } ${
                                         isDragging
-                                            ? 'border-cyan-400 bg-cyan-500/10'
-                                            : 'border-white/20 hover:border-cyan-400/50 hover:bg-cyan-500/5'
+                                            ? 'border-orange-400 bg-orange-50'
+                                            : 'border-gray-300 hover:border-orange-400 hover:bg-orange-50/30'
                                     }`}
                                 >
                                     <input
@@ -1661,14 +1718,16 @@ export default function SameWifiPage() {
                                         accept="*/*"
                                     />
                                     <div className="flex flex-col items-center gap-4 p-6">
-                                        <div className="w-16 h-16 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-full flex items-center justify-center">
-                                            <span className="text-4xl">📁</span>
+                                        <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
+                                            <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                                            </svg>
                                         </div>
-                                        <div>
-                                            <p className="text-white font-semibold text-base sm:text-lg mb-1">
+                                        <div className="text-center">
+                                            <p className="text-gray-900 font-semibold text-base sm:text-lg mb-1">
                                                 {isDragging ? 'Drop file here' : 'Click or drag file here'}
                                             </p>
-                                            <p className="text-gray-400 text-sm">
+                                            <p className="text-gray-500 text-sm">
                                                 Maximum file size: 10MB
                                             </p>
                                         </div>
@@ -1678,15 +1737,17 @@ export default function SameWifiPage() {
                                 {/* Selected File Display - 20% when file selected */}
                                 {selectedFile && (
                                     <div className="flex-[0.2] mt-3">
-                                        <div className="p-3 bg-gradient-to-r from-slate-700/60 to-slate-800/60 backdrop-blur-sm rounded-xl border border-white/10 shadow-lg h-full flex flex-col">
+                                        <div className="p-3 bg-white border-2 border-gray-200 rounded-xl shadow-sm h-full flex flex-col">
                                             {/* File Info */}
                                             <div className="flex items-center gap-3 mb-3">
-                                                <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-cyan-500/20 to-purple-500/20 rounded-lg flex items-center justify-center border border-white/10">
-                                                    <span className="text-xl">{getFileIcon(selectedFile)}</span>
+                                                <div className="flex-shrink-0 w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center border border-orange-200">
+                                                    <div className="text-orange-600">
+                                                        {getFileIcon(selectedFile)}
+                                                    </div>
                                                 </div>
                                             <div className="flex-1 min-w-0">
-                                                    <p className="text-white font-semibold truncate text-xs mb-0.5">{selectedFile.name}</p>
-                                                    <p className="text-xs text-gray-400">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                                                    <p className="text-gray-900 font-semibold truncate text-xs mb-0.5">{selectedFile.name}</p>
+                                                    <p className="text-xs text-gray-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
                                             </div>
                                         </div>
                                             
@@ -1695,28 +1756,34 @@ export default function SameWifiPage() {
                                                 {canPreview(selectedFile) && (
                                                 <button
                                                         onClick={() => openPreview(selectedFile)}
-                                                        className="flex-1 px-2 py-1.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-500 hover:to-purple-600 transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-purple-500/50 text-xs font-medium"
+                                                        className="flex-1 px-2 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-300 shadow-sm hover:shadow-md text-xs font-medium flex items-center justify-center gap-1"
                                                 >
-                                                    👁️ Preview
+                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
+                                                    Preview
                                                 </button>
                                             )}
                                             <button
                                                     onClick={saveFileToRedis}
                                                     disabled={!socket}
-                                                    className="flex-1 px-2 py-1.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 bg-size-200 bg-pos-0 hover:bg-pos-100 text-white font-semibold rounded-lg hover:shadow-xl hover:shadow-purple-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 active:scale-[0.98] text-xs shadow-lg"
-                                                    style={{
-                                                        backgroundSize: '200% 200%',
-                                                        transition: 'background-position 0.3s ease'
-                                                    }}
+                                                    className="flex-1 px-2 py-1.5 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-xs shadow-sm hover:shadow-md flex items-center justify-center gap-1"
                                             >
-                                                    💾 Save
+                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    Save
                                                 </button>
                                                 <button
                                                     onClick={sendFileToChat}
                                                     disabled={!socket}
-                                                    className="flex-1 px-2 py-1.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-400 hover:to-green-500 transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-green-500/50 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium"
+                                                    className="flex-1 px-2 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all duration-300 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium flex items-center justify-center gap-1"
                                                 >
-                                                    💬 Send
+                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                                    </svg>
+                                                    Send
                                             </button>
                                         </div>
                                     </div>
@@ -1730,26 +1797,32 @@ export default function SameWifiPage() {
 
                         {/* Messages Area - 45% */}
                         <div className="flex-[0.45] min-w-0">
-                            <div className={`bg-gradient-to-br from-slate-800/70 via-slate-800/60 to-slate-900/70 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl transition-all duration-1000 delay-1100 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                            <div className={`bg-white border-2 border-gray-200 rounded-2xl shadow-lg transition-all duration-1000 delay-1100 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                                 } h-[600px] flex flex-col`}>
                                 {/* Messages Header */}
-                                <div className="bg-gradient-to-r from-slate-800 to-slate-700 p-4 flex items-center justify-between border-b border-white/10 flex-shrink-0">
+                                <div className="bg-gray-50 p-4 flex items-center justify-between border-b border-gray-200 flex-shrink-0">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
-                                            <span className="text-white text-lg">💬</span>
+                                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                            </svg>
                                             </div>
                                         <div>
-                                            <h3 className="text-white font-semibold text-base sm:text-lg">Messages</h3>
-                                            <p className="text-xs text-gray-400">{receivedMessages.length} message{receivedMessages.length !== 1 ? 's' : ''}</p>
+                                            <h3 className="text-gray-900 font-semibold text-base sm:text-lg">Messages</h3>
+                                            <p className="text-xs text-gray-500">{receivedMessages.length} message{receivedMessages.length !== 1 ? 's' : ''}</p>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Messages Content */}
-                                <div className="flex-1 overflow-auto p-4 bg-gradient-to-b from-slate-900/50 to-slate-800/50">
+                                <div className="flex-1 overflow-auto p-4 bg-gray-50">
                                     {receivedMessages.length === 0 ? (
                                         <div className="text-center text-gray-500 py-12">
-                                            <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">💬</div>
+                                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                                </svg>
+                                            </div>
                                             <p className="text-sm sm:text-base">No messages yet</p>
                                         </div>
                                     ) : (
@@ -1772,9 +1845,9 @@ export default function SameWifiPage() {
                                                             )}
                                                             
                                                             {/* Message bubble */}
-                                                            <div className={`relative px-4 py-2.5 rounded-2xl shadow-lg break-words overflow-hidden ${isYou
-                                                                    ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-tr-sm shadow-lg shadow-green-500/20'
-                                                                    : 'bg-slate-700 text-white rounded-tl-sm border border-white/10'
+                                                            <div className={`relative px-4 py-2.5 rounded-2xl shadow-sm break-words overflow-hidden ${isYou
+                                                                    ? 'bg-orange-500 text-white rounded-tr-sm'
+                                                                    : 'bg-white text-gray-900 rounded-tl-sm border-2 border-gray-200'
                                                                 }`} style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                                                                 {msg.type === 'code' ? (
                                                                     <div className="space-y-2 w-full">
@@ -1811,18 +1884,22 @@ export default function SameWifiPage() {
                                                                                 msg.isImage ? msg.content : msg.fileData!, 
                                                                                 msg.fileName || (msg.isImage ? 'image.png' : 'download')
                                                                             )}
-                                                                            className="relative p-2 bg-gradient-to-r from-blue-500/30 via-cyan-500/30 to-blue-500/30 rounded-lg flex-shrink-0 transition-all duration-300 hover:scale-110 shadow-lg shadow-blue-500/30 animate-pulse hover:animate-none hover:shadow-blue-500/50"
+                                                                            className="relative p-2 bg-blue-100 hover:bg-blue-200 rounded-lg flex-shrink-0 transition-all duration-300 hover:scale-110"
                                                                             title="Save"
                                                 >
-                                                                            <span className="text-base block">💾</span>
+                                                                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                                            </svg>
                                                 </button>
                                                                     ) : null}
                                             <button
                                                                         onClick={() => copyToClipboard(msg.content)}
-                                                                        className="relative p-2 bg-gradient-to-r from-blue-500/30 via-purple-500/30 to-cyan-500/30 rounded-lg flex-shrink-0 transition-all duration-300 hover:scale-110 shadow-lg shadow-blue-500/30 animate-pulse hover:animate-none hover:shadow-blue-500/50"
+                                                                        className="relative p-2 bg-gray-100 hover:bg-gray-200 rounded-lg flex-shrink-0 transition-all duration-300 hover:scale-110"
                                                                         title="Copy"
                                             >
-                                                                        <span className="text-base block">📋</span>
+                                                                        <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                                        </svg>
                                             </button>
                                         </div>
                                     </div>
@@ -1838,12 +1915,12 @@ export default function SameWifiPage() {
                         </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
             {/* Modals */}
             <PreviewModal />
             <TextMessagesModal />
             <SavedClipsModal />
-        </div>
+        </main>
     );
 }
