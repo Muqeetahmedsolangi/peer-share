@@ -147,22 +147,17 @@ export default function Documentation() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 relative scroll-smooth overflow-x-hidden pt-20 sm:pt-24 md:pt-28 lg:pt-32">
-      {/* Background Mesh */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(76,29,149,0.1),rgba(15,23,42,0.1))]"></div>
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
-
+    <main className="min-h-screen bg-white pt-16 sm:pt-20">
       {/* Main Content */}
-      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className={`max-w-7xl mx-auto transition-all duration-1000 ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
         }`}>
           {/* Header */}
-          <div className="text-center mb-12">
+          <div className="text-center mb-8 sm:mb-12">
             <button
               onClick={() => router.back()}
-              className="group flex items-center text-gray-400 hover:text-white transition-colors duration-300 mb-6 mx-auto"
+              className="group flex items-center text-gray-600 hover:text-gray-900 transition-colors duration-300 mb-6 mx-auto"
             >
               <svg className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -170,35 +165,33 @@ export default function Documentation() {
               Back
             </button>
             
-            <h1 className="text-5xl sm:text-6xl md:text-7xl font-black mb-6 tracking-tight leading-none">
-              <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent drop-shadow-2xl">
-                Documentation
-              </span>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black mb-4 sm:mb-6 tracking-tight leading-none text-gray-900">
+              Documentation
             </h1>
-            <p className="text-xl text-gray-300 font-light leading-relaxed max-w-3xl mx-auto">
+            <p className="text-lg sm:text-xl text-gray-600 font-light leading-relaxed max-w-3xl mx-auto">
               Complete guides and API reference for Dropsos
             </p>
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
             {/* Sidebar */}
             <div className="lg:w-1/4">
               <div className="sticky top-24">
-                <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">Table of Contents</h3>
+                <div className="bg-white border-2 border-gray-200 rounded-2xl p-5 sm:p-6 shadow-sm">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Table of Contents</h3>
                   <nav className="space-y-2">
                     {sections.map((section) => (
                       <button
                         key={section.id}
                         onClick={() => setActiveSection(section.id)}
-                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-300 ${
+                        className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-left transition-all duration-300 ${
                           activeSection === section.id
-                            ? 'bg-blue-500/20 text-white border border-blue-400/30'
-                            : 'text-gray-300 hover:text-white hover:bg-white/10'
+                            ? 'bg-orange-50 text-orange-700 border-2 border-orange-200'
+                            : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50 border-2 border-transparent'
                         }`}
                       >
                         <span className="text-lg">{section.icon}</span>
-                        <span className="font-medium">{section.title}</span>
+                        <span className="font-medium text-sm sm:text-base">{section.title}</span>
                       </button>
                     ))}
                   </nav>
@@ -208,31 +201,31 @@ export default function Documentation() {
 
             {/* Main Content */}
             <div className="lg:w-3/4">
-              <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-8">
-                <h2 className="text-3xl font-bold text-white mb-8">
+              <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">
                   {content[activeSection as keyof typeof content]?.title}
                 </h2>
                 
-                <div className="space-y-8">
+                <div className="space-y-6 sm:space-y-8">
                   {content[activeSection as keyof typeof content]?.content.map((item, index) => (
                     <div
                       key={index}
-                      className={`border-l-4 border-blue-500 pl-6 py-4 ${
+                      className={`border-l-4 border-orange-500 pl-5 sm:pl-6 py-4 bg-orange-50/30 rounded-r-lg ${
                         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                       }`}
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
-                      <h3 className="text-xl font-semibold text-white mb-3">{item.title}</h3>
-                      <p className="text-gray-300 leading-relaxed">{item.content}</p>
+                      <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3">{item.title}</h3>
+                      <p className="text-gray-700 leading-relaxed text-sm sm:text-base">{item.content}</p>
                     </div>
                   ))}
                 </div>
 
                 {/* Code Example */}
                 {activeSection === 'getting-started' && (
-                  <div className="mt-8 bg-slate-900/50 border border-white/10 rounded-xl p-6">
-                    <h4 className="text-lg font-semibold text-white mb-4">Quick Start Example</h4>
-                    <pre className="text-sm text-gray-300 overflow-x-auto">
+                  <div className="mt-8 bg-gray-50 border-2 border-gray-200 rounded-xl p-5 sm:p-6">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Quick Start Example</h4>
+                    <pre className="text-xs sm:text-sm text-gray-800 overflow-x-auto bg-white border-2 border-gray-200 rounded-lg p-4">
                       <code>{`// Initialize Dropsos
 import { Dropsos } from 'dropsos';
 
@@ -256,53 +249,53 @@ console.log('Room created:', room.code);`}</code>
           </div>
 
           {/* Additional Resources */}
-          <div className="mt-16 grid md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 text-center">
-              <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="mt-12 sm:mt-16 grid md:grid-cols-3 gap-4 sm:gap-6">
+            <div className="bg-white border-2 border-gray-200 rounded-2xl p-5 sm:p-6 text-center shadow-sm hover:border-orange-300 transition-all">
+              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">API Reference</h3>
-              <p className="text-gray-400 text-sm">Complete API documentation with examples</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">API Reference</h3>
+              <p className="text-gray-600 text-sm">Complete API documentation with examples</p>
             </div>
 
-            <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 text-center">
-              <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-white border-2 border-gray-200 rounded-2xl p-5 sm:p-6 text-center shadow-sm hover:border-orange-300 transition-all">
+              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Code Examples</h3>
-              <p className="text-gray-400 text-sm">Ready-to-use code snippets and examples</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Code Examples</h3>
+              <p className="text-gray-600 text-sm">Ready-to-use code snippets and examples</p>
             </div>
 
-            <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 text-center">
-              <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-white border-2 border-gray-200 rounded-2xl p-5 sm:p-6 text-center shadow-sm hover:border-orange-300 transition-all">
+              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Support</h3>
-              <p className="text-gray-400 text-sm">Get help from our community and support team</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Support</h3>
+              <p className="text-gray-600 text-sm">Get help from our community and support team</p>
             </div>
           </div>
 
           {/* Contact Information */}
-          <div className="mt-16 bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-8 text-center">
-            <h3 className="text-2xl font-bold text-white mb-4">Need More Help?</h3>
-            <p className="text-gray-300 mb-6">Can&apos;t find what you&apos;re looking for? Our documentation team is here to help!</p>
+          <div className="mt-12 sm:mt-16 bg-white border-2 border-gray-200 rounded-2xl p-6 sm:p-8 text-center shadow-sm">
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">Need More Help?</h3>
+            <p className="text-gray-700 mb-6">Can&apos;t find what you&apos;re looking for? Our documentation team is here to help!</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="/contact" className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-500 hover:to-purple-500 transition-all duration-300 transform hover:scale-105">
+              <a href="/contact" className="px-6 py-3 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 transition-all duration-300 transform hover:scale-105 shadow-md">
                 Contact Us
               </a>
-              <a href="mailto:docs@dropsos.com" className="px-6 py-3 border border-white/20 text-white font-semibold rounded-xl hover:bg-white/10 transition-all duration-300">
+              <a href="mailto:docs@dropsos.com" className="px-6 py-3 border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-orange-300 transition-all duration-300">
                 Email Documentation Team
               </a>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
