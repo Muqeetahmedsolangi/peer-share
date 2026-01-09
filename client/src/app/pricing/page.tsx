@@ -143,7 +143,7 @@ export default function Pricing() {
             {plans.map((plan) => (
               <div
                 key={plan.id}
-                className={`relative bg-white border-2 rounded-2xl p-8 sm:p-10 lg:p-12 shadow-lg hover:shadow-xl transition-all duration-300 ${
+                className={`relative bg-white border-2 rounded-2xl p-8 sm:p-10 lg:p-12 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col ${
                   plan.popular 
                     ? 'border-orange-500' 
                     : 'border-gray-200 hover:border-orange-300'
@@ -176,7 +176,7 @@ export default function Pricing() {
                   </div>
                 </div>
 
-                <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
+                <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8 flex-grow">
                   {plan.features.map((feature, index) => (
                     <div key={index} className="flex items-start gap-3">
                       <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -189,7 +189,7 @@ export default function Pricing() {
 
                 <button
                   onClick={() => handleGetStarted(plan.id)}
-                  className={`w-full py-4 sm:py-5 rounded-xl font-bold text-base sm:text-lg transition-all duration-300 ${
+                  className={`w-full py-4 sm:py-5 rounded-xl font-bold text-base sm:text-lg transition-all duration-300 mt-auto ${
                     plan.popular
                       ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]'
                       : plan.id === 'free'
