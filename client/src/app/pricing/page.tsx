@@ -194,7 +194,7 @@ export default function Pricing() {
                       ? 'bg-orange-500 text-white hover:bg-orange-600 shadow-lg'
                       : plan.id === 'free'
                       ? 'bg-gray-100 text-gray-900 hover:bg-gray-200 border-2 border-gray-200'
-                      : 'bg-gray-900 text-white hover:bg-gray-800'
+                      : 'bg-orange-500 text-white hover:bg-orange-600'
                   }`}
                 >
                   {plan.id === 'free' ? 'Get Started Free' : 'Start Free Trial'}
