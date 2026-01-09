@@ -30,7 +30,7 @@ export default function Pricing() {
       id: 'pro',
       name: 'Pro',
       description: 'Ideal for growing teams and businesses',
-      price: { monthly: 29, annual: 290 },
+      price: { monthly: 9, annual: 100 },
       features: [
         'Everything in Free',
         'Priority support',
@@ -48,7 +48,7 @@ export default function Pricing() {
       id: 'enterprise',
       name: 'Enterprise',
       description: 'For large organizations with custom needs',
-      price: { monthly: 99, annual: 990 },
+      price: { monthly: 19, annual: 200 },
       features: [
         'Everything in Pro',
         'Military-grade encryption',
@@ -103,8 +103,8 @@ export default function Pricing() {
   return (
     <main className="min-h-screen bg-white pt-16 sm:pt-20">
       {/* Hero Section - Simple */}
-      <section className="bg-gradient-to-b from-white via-orange-50/20 to-white py-12 sm:py-16 md:py-20">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="bg-gradient-to-b from-white via-orange-50/20 to-white py-8 sm:py-10 md:py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
               Simple, <span className="text-orange-500">Transparent</span> Pricing
@@ -137,13 +137,13 @@ export default function Pricing() {
       </section>
 
       {/* Pricing Cards - Simple */}
-      <section className="py-12 sm:py-16 md:py-20 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+      <section className="py-8 sm:py-10 md:py-12 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10 lg:gap-12">
             {plans.map((plan) => (
               <div
                 key={plan.id}
-                className={`relative bg-white border-2 rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300 ${
+                className={`relative bg-white border-2 rounded-2xl p-8 sm:p-10 lg:p-12 shadow-lg hover:shadow-xl transition-all duration-300 ${
                   plan.popular 
                     ? 'border-orange-500' 
                     : 'border-gray-200 hover:border-orange-300'
