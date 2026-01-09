@@ -153,18 +153,19 @@ export default function Documentation() {
         <div className={`max-w-7xl mx-auto transition-all duration-1000 ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
         }`}>
+          {/* Back Button */}
+          <button
+            onClick={() => router.back()}
+            className="group flex items-center text-gray-600 hover:text-gray-900 transition-colors duration-300 mb-6 sm:mb-8"
+          >
+            <svg className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
+          </button>
+
           {/* Header */}
           <div className="text-center mb-8 sm:mb-12">
-            <button
-              onClick={() => router.back()}
-              className="group flex items-center text-gray-600 hover:text-gray-900 transition-colors duration-300 mb-6 mx-auto"
-            >
-              <svg className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Back
-            </button>
-            
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black mb-4 sm:mb-6 tracking-tight leading-none text-gray-900">
               Documentation
             </h1>
