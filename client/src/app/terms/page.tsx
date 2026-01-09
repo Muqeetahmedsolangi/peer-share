@@ -13,18 +13,114 @@ export default function TermsOfService() {
   }, []);
 
   const sections = [
-    { id: 'acceptance', title: 'Acceptance of Terms', icon: '✅' },
-    { id: 'description', title: 'Service Description', icon: '📋' },
-    { id: 'user-accounts', title: 'User Accounts', icon: '👤' },
-    { id: 'acceptable-use', title: 'Acceptable Use', icon: '⚖️' },
-    { id: 'prohibited-uses', title: 'Prohibited Uses', icon: '🚫' },
-    { id: 'intellectual-property', title: 'Intellectual Property', icon: '💡' },
-    { id: 'privacy', title: 'Privacy', icon: '🔒' },
-    { id: 'disclaimers', title: 'Disclaimers', icon: '⚠️' },
-    { id: 'limitation-liability', title: 'Limitation of Liability', icon: '🛡️' },
-    { id: 'termination', title: 'Termination', icon: '🔚' },
-    { id: 'governing-law', title: 'Governing Law', icon: '⚖️' },
-    { id: 'changes', title: 'Changes to Terms', icon: '📝' }
+    { 
+      id: 'acceptance', 
+      title: 'Acceptance of Terms', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      )
+    },
+    { 
+      id: 'description', 
+      title: 'Service Description', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      )
+    },
+    { 
+      id: 'user-accounts', 
+      title: 'User Accounts', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      )
+    },
+    { 
+      id: 'acceptable-use', 
+      title: 'Acceptable Use', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+      )
+    },
+    { 
+      id: 'prohibited-uses', 
+      title: 'Prohibited Uses', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+        </svg>
+      )
+    },
+    { 
+      id: 'intellectual-property', 
+      title: 'Intellectual Property', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg>
+      )
+    },
+    { 
+      id: 'privacy', 
+      title: 'Privacy', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      )
+    },
+    { 
+      id: 'disclaimers', 
+      title: 'Disclaimers', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+        </svg>
+      )
+    },
+    { 
+      id: 'limitation-liability', 
+      title: 'Limitation of Liability', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+      )
+    },
+    { 
+      id: 'termination', 
+      title: 'Termination', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      )
+    },
+    { 
+      id: 'governing-law', 
+      title: 'Governing Law', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+        </svg>
+      )
+    },
+    { 
+      id: 'changes', 
+      title: 'Changes to Terms', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+      )
+    }
   ];
 
   const content = {
@@ -236,35 +332,29 @@ export default function TermsOfService() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 relative scroll-smooth overflow-x-hidden pt-20 sm:pt-24 md:pt-28 lg:pt-32">
-      {/* Background Mesh */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(76,29,149,0.1),rgba(15,23,42,0.1))]"></div>
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
-
+    <main className="min-h-screen bg-white pt-16 sm:pt-20">
       {/* Main Content */}
-      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className={`max-w-7xl mx-auto transition-all duration-1000 ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
         }`}>
+          {/* Back Button */}
+          <button
+            onClick={() => router.back()}
+            className="group flex items-center text-gray-600 hover:text-gray-900 transition-colors duration-300 mb-6 sm:mb-8"
+          >
+            <svg className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
+          </button>
+
           {/* Header */}
-          <div className="text-center mb-12">
-            <button
-              onClick={() => router.back()}
-              className="group flex items-center text-gray-400 hover:text-white transition-colors duration-300 mb-6 mx-auto"
-            >
-              <svg className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Back
-            </button>
-            
-            <h1 className="text-5xl sm:text-6xl md:text-7xl font-black mb-6 tracking-tight leading-none">
-              <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent drop-shadow-2xl">
-                Terms of Service
-              </span>
+          <div className="text-center mb-8 sm:mb-12">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black mb-4 sm:mb-6 tracking-tight leading-none text-gray-900">
+              Terms of Service
             </h1>
-            <p className="text-xl text-gray-300 font-light leading-relaxed max-w-3xl mx-auto">
+            <p className="text-lg sm:text-xl text-gray-600 font-light leading-relaxed max-w-3xl mx-auto">
               The terms and conditions governing your use of Dropsos services
             </p>
             <p className="text-sm text-gray-500 mt-4">
@@ -272,25 +362,29 @@ export default function TermsOfService() {
             </p>
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
             {/* Sidebar */}
             <div className="lg:w-1/4">
               <div className="sticky top-24">
-                <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">Table of Contents</h3>
+                <div className="bg-white border-2 border-gray-200 rounded-2xl p-5 sm:p-6 shadow-sm">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Table of Contents</h3>
                   <nav className="space-y-2">
                     {sections.map((section) => (
                       <button
                         key={section.id}
                         onClick={() => setActiveSection(section.id)}
-                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-300 ${
+                        className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-left transition-all duration-300 ${
                           activeSection === section.id
-                            ? 'bg-blue-500/20 text-white border border-blue-400/30'
-                            : 'text-gray-300 hover:text-white hover:bg-white/10'
+                            ? 'bg-orange-50 text-orange-700 border-2 border-orange-200'
+                            : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50 border-2 border-transparent'
                         }`}
                       >
-                        <span className="text-lg">{section.icon}</span>
-                        <span className="font-medium">{section.title}</span>
+                        <div className={`flex-shrink-0 ${
+                          activeSection === section.id ? 'text-orange-600' : 'text-gray-600'
+                        }`}>
+                          {section.icon}
+                        </div>
+                        <span className="font-medium text-sm sm:text-base">{section.title}</span>
                       </button>
                     ))}
                   </nav>
@@ -300,35 +394,35 @@ export default function TermsOfService() {
 
             {/* Main Content */}
             <div className="lg:w-3/4">
-              <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-8">
-                <h2 className="text-3xl font-bold text-white mb-8">
+              <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">
                   {content[activeSection as keyof typeof content]?.title}
                 </h2>
                 
-                <div className="space-y-8">
+                <div className="space-y-6 sm:space-y-8">
                   {content[activeSection as keyof typeof content]?.content.map((item, index) => (
                     <div
                       key={index}
-                      className={`${
+                      className={`border-l-4 border-orange-500 pl-5 sm:pl-6 py-4 bg-orange-50/30 rounded-r-lg ${
                         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                       }`}
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
-                      <h3 className="text-xl font-semibold text-white mb-4">{item.title}</h3>
-                      <p className="text-gray-300 leading-relaxed">{item.text}</p>
+                      <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-4">{item.title}</h3>
+                      <p className="text-gray-700 leading-relaxed text-sm sm:text-base">{item.text}</p>
                     </div>
                   ))}
                 </div>
 
                 {/* Important Notice */}
                 {activeSection === 'acceptance' && (
-                  <div className="mt-8 bg-yellow-500/10 border border-yellow-400/30 rounded-xl p-6">
-                    <h4 className="text-lg font-semibold text-yellow-400 mb-4">Important Notice</h4>
-                    <p className="text-gray-300 mb-4">
+                  <div className="mt-8 bg-orange-50 border-2 border-orange-200 rounded-xl p-5 sm:p-6">
+                    <h4 className="text-lg font-semibold text-orange-700 mb-4">Important Notice</h4>
+                    <p className="text-gray-700 mb-4 text-sm sm:text-base">
                       By using Dropsos services, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.
                     </p>
-                    <div className="flex items-center space-x-2 text-sm text-gray-400">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex items-center space-x-2 text-sm text-gray-600">
+                      <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                       </svg>
                       <span>These terms constitute a legally binding agreement between you and Dropsos.</span>
@@ -340,20 +434,20 @@ export default function TermsOfService() {
           </div>
 
           {/* Contact Information */}
-          <div className="mt-16 bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-8 text-center">
-            <h3 className="text-2xl font-bold text-white mb-4">Questions About These Terms?</h3>
-            <p className="text-gray-300 mb-6">If you have any questions about these Terms of Service, please contact us</p>
+          <div className="mt-12 sm:mt-16 bg-white border-2 border-gray-200 rounded-2xl p-6 sm:p-8 text-center shadow-sm">
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">Questions About These Terms?</h3>
+            <p className="text-gray-700 mb-6">If you have any questions about these Terms of Service, please contact us</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="/contact" className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-500 hover:to-purple-500 transition-all duration-300 transform hover:scale-105">
+              <a href="/contact" className="px-6 py-3 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 transition-all duration-300 transform hover:scale-105 shadow-md">
                 Contact Us
               </a>
-              <a href="mailto:legal@dropsos.com" className="px-6 py-3 border border-white/20 text-white font-semibold rounded-xl hover:bg-white/10 transition-all duration-300">
+              <a href="mailto:legal@dropsos.com" className="px-6 py-3 border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-orange-300 transition-all duration-300">
                 Email Legal Team
               </a>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

@@ -13,14 +13,78 @@ export default function PrivacyClient() {
   }, []);
 
   const sections = [
-    { id: 'overview', title: 'Overview', icon: '📋' },
-    { id: 'data-collection', title: 'Data Collection', icon: '📊' },
-    { id: 'data-usage', title: 'Data Usage', icon: '🔍' },
-    { id: 'data-sharing', title: 'Data Sharing', icon: '🤝' },
-    { id: 'data-security', title: 'Data Security', icon: '🔒' },
-    { id: 'your-rights', title: 'Your Rights', icon: '⚖️' },
-    { id: 'cookies', title: 'Cookies', icon: '🍪' },
-    { id: 'changes', title: 'Policy Changes', icon: '📝' }
+    { 
+      id: 'overview', 
+      title: 'Overview', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      )
+    },
+    { 
+      id: 'data-collection', 
+      title: 'Data Collection', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      )
+    },
+    { 
+      id: 'data-usage', 
+      title: 'Data Usage', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      )
+    },
+    { 
+      id: 'data-sharing', 
+      title: 'Data Sharing', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      )
+    },
+    { 
+      id: 'data-security', 
+      title: 'Data Security', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      )
+    },
+    { 
+      id: 'your-rights', 
+      title: 'Your Rights', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+      )
+    },
+    { 
+      id: 'cookies', 
+      title: 'Cookies', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+        </svg>
+      )
+    },
+    { 
+      id: 'changes', 
+      title: 'Policy Changes', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+      )
+    }
   ];
 
   const content = {
@@ -164,35 +228,29 @@ export default function PrivacyClient() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 relative scroll-smooth overflow-x-hidden pt-20 sm:pt-24 md:pt-28 lg:pt-32">
-      {/* Background Mesh */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(76,29,149,0.1),rgba(15,23,42,0.1))]"></div>
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
-
+    <main className="min-h-screen bg-white pt-16 sm:pt-20">
       {/* Main Content */}
-      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className={`max-w-7xl mx-auto transition-all duration-1000 ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
         }`}>
+          {/* Back Button */}
+          <button
+            onClick={() => router.back()}
+            className="group flex items-center text-gray-600 hover:text-gray-900 transition-colors duration-300 mb-6 sm:mb-8"
+          >
+            <svg className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
+          </button>
+
           {/* Header */}
-          <div className="text-center mb-12">
-            <button
-              onClick={() => router.back()}
-              className="group flex items-center text-gray-400 hover:text-white transition-colors duration-300 mb-6 mx-auto"
-            >
-              <svg className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Back
-            </button>
-            
-            <h1 className="text-5xl sm:text-6xl md:text-7xl font-black mb-6 tracking-tight leading-none">
-              <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent drop-shadow-2xl">
-                Privacy Policy
-              </span>
+          <div className="text-center mb-8 sm:mb-12">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black mb-4 sm:mb-6 tracking-tight leading-none text-gray-900">
+              Privacy Policy
             </h1>
-            <p className="text-xl text-gray-300 font-light leading-relaxed max-w-3xl mx-auto">
+            <p className="text-lg sm:text-xl text-gray-600 font-light leading-relaxed max-w-3xl mx-auto">
               How we collect, use, and protect your personal information
             </p>
             <p className="text-sm text-gray-500 mt-4">
@@ -200,25 +258,29 @@ export default function PrivacyClient() {
             </p>
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
             {/* Sidebar */}
             <div className="lg:w-1/4">
               <div className="sticky top-24">
-                <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">Table of Contents</h3>
+                <div className="bg-white border-2 border-gray-200 rounded-2xl p-5 sm:p-6 shadow-sm">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Table of Contents</h3>
                   <nav className="space-y-2">
                     {sections.map((section) => (
                       <button
                         key={section.id}
                         onClick={() => setActiveSection(section.id)}
-                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-300 ${
+                        className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-left transition-all duration-300 ${
                           activeSection === section.id
-                            ? 'bg-blue-500/20 text-white border border-blue-400/30'
-                            : 'text-gray-300 hover:text-white hover:bg-white/10'
+                            ? 'bg-orange-50 text-orange-700 border-2 border-orange-200'
+                            : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50 border-2 border-transparent'
                         }`}
                       >
-                        <span className="text-lg">{section.icon}</span>
-                        <span className="font-medium">{section.title}</span>
+                        <div className={`flex-shrink-0 ${
+                          activeSection === section.id ? 'text-orange-600' : 'text-gray-600'
+                        }`}>
+                          {section.icon}
+                        </div>
+                        <span className="font-medium text-sm sm:text-base">{section.title}</span>
                       </button>
                     ))}
                   </nav>
@@ -228,54 +290,54 @@ export default function PrivacyClient() {
 
             {/* Main Content */}
             <div className="lg:w-3/4">
-              <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-8">
-                <h2 className="text-3xl font-bold text-white mb-8">
+              <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">
                   {content[activeSection as keyof typeof content]?.title}
                 </h2>
                 
-                <div className="space-y-8">
+                <div className="space-y-6 sm:space-y-8">
                   {content[activeSection as keyof typeof content]?.content.map((item, index) => (
                     <div
                       key={index}
-                      className={`${
+                      className={`border-l-4 border-orange-500 pl-5 sm:pl-6 py-4 bg-orange-50/30 rounded-r-lg ${
                         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                       }`}
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
-                      <h3 className="text-xl font-semibold text-white mb-4">{item.title}</h3>
-                      <p className="text-gray-300 leading-relaxed">{item.text}</p>
+                      <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-4">{item.title}</h3>
+                      <p className="text-gray-700 leading-relaxed text-sm sm:text-base">{item.text}</p>
                     </div>
                   ))}
                 </div>
 
                 {/* Key Points Highlight */}
                 {activeSection === 'overview' && (
-                  <div className="mt-8 bg-blue-500/10 border border-blue-400/30 rounded-xl p-6">
-                    <h4 className="text-lg font-semibold text-blue-400 mb-4">Key Privacy Points</h4>
-                    <ul className="space-y-2 text-gray-300">
+                  <div className="mt-8 bg-green-50 border-2 border-green-200 rounded-xl p-5 sm:p-6">
+                    <h4 className="text-lg font-semibold text-green-700 mb-4">Key Privacy Points</h4>
+                    <ul className="space-y-2 text-gray-700">
                       <li className="flex items-center space-x-2">
-                        <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
-                        <span>We never store your file content</span>
+                        <span className="text-sm sm:text-base">We never store your file content</span>
                       </li>
                       <li className="flex items-center space-x-2">
-                        <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
-                        <span>All file sharing is peer-to-peer</span>
+                        <span className="text-sm sm:text-base">All file sharing is peer-to-peer</span>
                       </li>
                       <li className="flex items-center space-x-2">
-                        <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
-                        <span>End-to-end encryption for all transfers</span>
+                        <span className="text-sm sm:text-base">End-to-end encryption for all transfers</span>
                       </li>
                       <li className="flex items-center space-x-2">
-                        <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
-                        <span>We don&apos;t sell your data to third parties</span>
+                        <span className="text-sm sm:text-base">We don&apos;t sell your data to third parties</span>
                       </li>
                     </ul>
                   </div>
@@ -285,21 +347,21 @@ export default function PrivacyClient() {
           </div>
 
           {/* Contact Information */}
-          <div className="mt-16 bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-2xl p-8 text-center">
-            <h3 className="text-2xl font-bold text-white mb-4">Questions About Privacy?</h3>
-            <p className="text-gray-300 mb-6">We&apos;re here to help with any privacy-related questions or concerns</p>
+          <div className="mt-12 sm:mt-16 bg-white border-2 border-gray-200 rounded-2xl p-6 sm:p-8 text-center shadow-sm">
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">Questions About Privacy?</h3>
+            <p className="text-gray-700 mb-6">We&apos;re here to help with any privacy-related questions or concerns</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="/contact" className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-500 hover:to-purple-500 transition-all duration-300 transform hover:scale-105">
+              <a href="/contact" className="px-6 py-3 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 transition-all duration-300 transform hover:scale-105 shadow-md">
                 Contact Us
               </a>
-              <a href="mailto:privacy@dropsos.com" className="px-6 py-3 border border-white/20 text-white font-semibold rounded-xl hover:bg-white/10 transition-all duration-300">
+              <a href="mailto:privacy@dropsos.com" className="px-6 py-3 border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-orange-300 transition-all duration-300">
                 Email Privacy Team
               </a>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 
