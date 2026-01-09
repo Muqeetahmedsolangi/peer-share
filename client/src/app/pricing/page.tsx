@@ -189,12 +189,12 @@ export default function Pricing() {
 
                 <button
                   onClick={() => handleGetStarted(plan.id)}
-                  className={`w-full py-3 sm:py-4 rounded-xl font-semibold text-base sm:text-lg transition-all duration-300 ${
+                  className={`w-full py-4 sm:py-5 rounded-xl font-bold text-base sm:text-lg transition-all duration-300 ${
                     plan.popular
-                      ? 'bg-orange-500 text-white hover:bg-orange-600 shadow-lg'
+                      ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]'
                       : plan.id === 'free'
-                      ? 'bg-gray-100 text-gray-900 hover:bg-gray-200 border-2 border-gray-200'
-                      : 'bg-orange-500 text-white hover:bg-orange-600'
+                      ? 'bg-white text-gray-900 hover:bg-gray-50 border-2 border-gray-300 hover:border-orange-300 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98]'
+                      : 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]'
                   }`}
                 >
                   {plan.id === 'free' ? 'Get Started Free' : 'Start Free Trial'}
