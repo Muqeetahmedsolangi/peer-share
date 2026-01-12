@@ -1153,7 +1153,6 @@ export default function RoomPage() {
                     </div>
                   </div>
                 </div>
-                
                 <button
                   onClick={handleJoinRoom}
                   disabled={!userName.trim() || userName.trim().length < 2 || !password.trim() || isJoining}
