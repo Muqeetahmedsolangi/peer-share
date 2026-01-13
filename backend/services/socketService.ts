@@ -764,6 +764,100 @@ export function initializeSocket(server: HttpServer) {
         isTyping: data.isTyping
       });
     });
+
+    // ========== VIDEO/AUDIO CALL HANDLERS ==========
+    
+    // Call started - notify others in room
+    socket.on('call-started', (data: { roomId: string; mode: 'video' | 'audio'; socketId: string }) => {
+      const user = users.get(socket.id);
+      if (!user) return;
+
+      if (!isUserInRoom(data.roomId, socket.id)) return;
+
+      console.log(`📞 Call started by ${user.name} in room ${data.roomId} (${data.mode} mode)`);
+      
+      // Notify others in room
+      socket.to(data.roomId).emit('call-started', {
+        socketId: socket.id,
+        mode: data.mode
+      });
+    });
+
+    // Call offer - forward to target user
+    socket.on('call-offer', (data: { targetSocketId: string; offer: any; mode: 'video' | 'audio'; roomId: string }) => {
+      const user = users.get(socket.id);
+      if (!user) return;
+
+      if (!isUserInRoom(data.roomId, socket.id)) return;
+
+      console.log(`📥 Call offer from ${user.name} to ${data.targetSocketId}`);
+      
+      // Forward offer to target
+      io.to(data.targetSocketId).emit('call-offer', {
+        offer: data.offer,
+        senderSocketId: socket.id,
+        mode: data.mode
+      });
+    });
+
+    // Call answer - forward to caller
+    socket.on('call-answer', (data: { targetSocketId: string; answer: any; roomId: string }) => {
+      const user = users.get(socket.id);
+      if (!user) return;
+
+      if (!isUserInRoom(data.roomId, socket.id)) return;
+
+      console.log(`📤 Call answer from ${user.name} to ${data.targetSocketId}`);
+      
+      // Forward answer to caller
+      io.to(data.targetSocketId).emit('call-answer', {
+        answer: data.answer,
+        senderSocketId: socket.id
+      });
+    });
+
+    // Call ICE candidate - forward to target
+    socket.on('call-ice-candidate', (data: { targetSocketId: string; candidate: any; roomId: string }) => {
+      const user = users.get(socket.id);
+      if (!user) return;
+
+      if (!isUserInRoom(data.roomId, socket.id)) return;
+
+      // Forward ICE candidate to target
+      io.to(data.targetSocketId).emit('call-ice-candidate', {
+        candidate: data.candidate,
+        senderSocketId: socket.id
+      });
+    });
+
+    // Call ended - notify others
+    socket.on('call-ended', (data: { roomId: string; socketId: string }) => {
+      const user = users.get(socket.id);
+      if (!user) return;
+
+      if (!isUserInRoom(data.roomId, socket.id)) return;
+
+      console.log(`📞 Call ended by ${user.name} in room ${data.roomId}`);
+      
+      // Notify others in room
+      socket.to(data.roomId).emit('call-ended', {
+        socketId: socket.id
+      });
+    });
+
+    // Call mode changed - notify others
+    socket.on('call-mode-changed', (data: { roomId: string; mode: 'video' | 'audio'; socketId: string }) => {
+      const user = users.get(socket.id);
+      if (!user) return;
+
+      if (!isUserInRoom(data.roomId, socket.id)) return;
+
+      // Notify others (optional - for UI updates)
+      socket.to(data.roomId).emit('call-mode-changed', {
+        socketId: socket.id,
+        mode: data.mode
+      });
+    });
     
     // Handle disconnection
     socket.on('disconnect', () => {

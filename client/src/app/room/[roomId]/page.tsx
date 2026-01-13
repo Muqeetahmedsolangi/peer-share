@@ -76,9 +76,28 @@ export default function RoomPage() {
   const [isUploadingFiles, setIsUploadingFiles] = useState(false);
   const [showMobileUsers, setShowMobileUsers] = useState(false);
   
+  // Video/Audio Call State
+  const [isInCall, setIsInCall] = useState(false);
+  const [callMode, setCallMode] = useState<'video' | 'audio'>('video');
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
+  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [callPeerConnections, setCallPeerConnections] = useState<Map<string, RTCPeerConnection>>(new Map());
+  
+  // Audio visualization state
+  const [localAudioLevel, setLocalAudioLevel] = useState(0);
+  const [remoteAudioLevels, setRemoteAudioLevels] = useState<Map<string, number>>(new Map());
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const remoteAnalysersRef = useRef<Map<string, AnalyserNode>>(new Map());
+  const animationFrameRef = useRef<number | null>(null);
 
   // File type detection with icons
   const fileTypes: FileType[] = [
@@ -312,6 +331,148 @@ export default function RoomPage() {
         handleFileTransferICE(data);
       });
 
+      // ========== VIDEO/AUDIO CALL EVENT HANDLERS ==========
+      
+      // Someone started a call
+      socketInstance.on('call-started', async (data: { socketId: string; mode: 'video' | 'audio' }) => {
+        console.log('📞 Call started by:', data.socketId, 'Mode:', data.mode);
+        // If we're not in a call, we can join automatically or show notification
+        // For simplicity, we'll auto-join if we have permissions
+      });
+
+      // Receive call offer
+      socketInstance.on('call-offer', async (data: { offer: RTCSessionDescriptionInit; senderSocketId: string; mode: 'video' | 'audio' }) => {
+        console.log('📥 Received call offer from:', data.senderSocketId);
+        
+        if (!isInCall) {
+          // Auto-join the call
+          try {
+            const constraints: MediaStreamConstraints = {
+              video: data.mode === 'video' ? { width: 1280, height: 720 } : false,
+              audio: true
+            };
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            setLocalStream(stream);
+            setIsInCall(true);
+            setCallMode(data.mode);
+            setIsVideoEnabled(data.mode === 'video');
+            setIsAudioEnabled(true);
+
+            if (localVideoRef.current) {
+              localVideoRef.current.srcObject = stream;
+            }
+
+            // Create peer connection
+            const peerConnection = new RTCPeerConnection({
+              iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            });
+
+            // Add local tracks
+            stream.getTracks().forEach(track => {
+              peerConnection.addTrack(track, stream);
+            });
+
+            // Handle remote stream
+            peerConnection.ontrack = (event) => {
+              console.log('📹 Received remote stream from:', data.senderSocketId);
+              const remoteStream = event.streams[0];
+              
+              // Update remote streams state
+              setRemoteStreams(prev => {
+                const newMap = new Map(prev);
+                newMap.set(data.senderSocketId, remoteStream);
+                return newMap;
+              });
+              
+              // Force update video element
+              setTimeout(() => {
+                const videoElement = remoteVideoRefs.current.get(data.senderSocketId);
+                if (videoElement) {
+                  videoElement.srcObject = remoteStream;
+                  videoElement.play().catch(err => console.error('Error playing remote video:', err));
+                } else {
+                  // If element doesn't exist yet, it will be set in the useEffect
+                  console.log('Video element not found yet, will be set by useEffect');
+                }
+              }, 100);
+            };
+
+            // Handle ICE candidates
+            peerConnection.onicecandidate = (event) => {
+              if (event.candidate && socketInstance) {
+                socketInstance.emit('call-ice-candidate', {
+                  targetSocketId: data.senderSocketId,
+                  candidate: event.candidate,
+                  roomId: roomId
+                });
+              }
+            };
+
+            // Set remote description and create answer
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+
+            // Send answer
+            socketInstance.emit('call-answer', {
+              targetSocketId: data.senderSocketId,
+              answer: answer,
+              roomId: roomId
+            });
+
+            // Store connection
+            setCallPeerConnections(prev => {
+              const newMap = new Map(prev);
+              newMap.set(data.senderSocketId, peerConnection);
+              return newMap;
+            });
+          } catch (error: any) {
+            console.error('Error joining call:', error);
+            if (error.name === 'NotAllowedError') {
+              alert('Camera/microphone access denied. Cannot join call.');
+            }
+          }
+        }
+      });
+
+      // Receive call answer
+      socketInstance.on('call-answer', async (data: { answer: RTCSessionDescriptionInit; senderSocketId: string }) => {
+        console.log('📤 Received call answer from:', data.senderSocketId);
+        const peerConnection = callPeerConnections.get(data.senderSocketId);
+        if (peerConnection) {
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+        }
+      });
+
+      // Receive ICE candidate for call
+      socketInstance.on('call-ice-candidate', async (data: { candidate: RTCIceCandidateInit; senderSocketId: string }) => {
+        const peerConnection = callPeerConnections.get(data.senderSocketId);
+        if (peerConnection) {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        }
+      });
+
+      // Call ended
+      socketInstance.on('call-ended', (data: { socketId: string }) => {
+        console.log('📞 Call ended by:', data.socketId);
+        // Remove remote stream
+        setRemoteStreams(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(data.socketId);
+          return newMap;
+        });
+        // Close peer connection
+        const peerConnection = callPeerConnections.get(data.socketId);
+        if (peerConnection) {
+          peerConnection.close();
+          setCallPeerConnections(prev => {
+            const newMap = new Map(prev);
+            newMap.delete(data.socketId);
+            return newMap;
+          });
+        }
+      });
+
       socketInstance.on('disconnect', (reason) => {
         console.log('❌ Disconnected from server:', reason);
         setIsConnected(false);
@@ -342,10 +503,167 @@ export default function RoomPage() {
 
       return () => {
         console.log('🧹 Cleaning up socket connection');
+        // End call if active
+        if (isInCall && localStream) {
+          localStream.getTracks().forEach(track => track.stop());
+        }
+        callPeerConnections.forEach(pc => pc.close());
         socketInstance.disconnect();
       };
     }
   }, [isJoined, userName, password, roomId]);
+
+  // Update local video when stream changes
+  useEffect(() => {
+    if (localVideoRef.current && localStream) {
+      localVideoRef.current.srcObject = localStream;
+      console.log('✅ Local video stream attached');
+      // Ensure video plays
+      localVideoRef.current.play().catch(err => {
+        console.error('Error playing local video:', err);
+      });
+    } else if (localVideoRef.current && !localStream) {
+      // Clear video when stream is removed
+      localVideoRef.current.srcObject = null;
+    }
+  }, [localStream]);
+
+  // Update remote videos when streams change
+  useEffect(() => {
+    remoteStreams.forEach((stream, socketId) => {
+      // Use a small delay to ensure DOM is ready
+      setTimeout(() => {
+        const videoElement = remoteVideoRefs.current.get(socketId);
+        if (videoElement) {
+          if (videoElement.srcObject !== stream) {
+            videoElement.srcObject = stream;
+            console.log('✅ Remote video stream attached for:', socketId);
+          }
+          // Ensure video plays
+          videoElement.play().catch(err => {
+            console.error('Error playing remote video:', err);
+          });
+        } else {
+          console.log('Video element not found for socketId:', socketId);
+        }
+      }, 50);
+    });
+  }, [remoteStreams]);
+
+  // Setup audio visualization for local stream
+  useEffect(() => {
+    if (!localStream || !isInCall) {
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+        analyserRef.current = null;
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      setLocalAudioLevel(0);
+      return;
+    }
+
+    try {
+      // Create audio context and analyser
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
+
+      const source = audioContext.createMediaStreamSource(localStream);
+      source.connect(analyser);
+
+      audioContextRef.current = audioContext;
+      analyserRef.current = analyser;
+
+      // Monitor audio levels
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      
+      const updateAudioLevel = () => {
+        if (!analyserRef.current) return;
+        
+        analyserRef.current.getByteFrequencyData(dataArray);
+        const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
+        const normalizedLevel = Math.min(average / 128, 1); // Normalize to 0-1
+        setLocalAudioLevel(normalizedLevel);
+        
+        animationFrameRef.current = requestAnimationFrame(updateAudioLevel);
+      };
+      
+      updateAudioLevel();
+    } catch (error) {
+      console.error('Error setting up audio visualization:', error);
+    }
+
+    return () => {
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      analyserRef.current = null;
+      setLocalAudioLevel(0);
+    };
+  }, [localStream, isInCall]);
+
+  // Setup audio visualization for remote streams
+  useEffect(() => {
+    if (!isInCall) {
+      remoteAnalysersRef.current.clear();
+      setRemoteAudioLevels(new Map());
+      return;
+    }
+
+    remoteStreams.forEach((stream, socketId) => {
+      if (remoteAnalysersRef.current.has(socketId)) return; // Already set up
+
+      try {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.8;
+
+        const source = audioContext.createMediaStreamSource(stream);
+        source.connect(analyser);
+
+        remoteAnalysersRef.current.set(socketId, analyser);
+
+        // Monitor audio levels for this remote stream
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        
+        const updateRemoteAudioLevel = () => {
+          const analyser = remoteAnalysersRef.current.get(socketId);
+          if (!analyser) return;
+          
+          analyser.getByteFrequencyData(dataArray);
+          const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
+          const normalizedLevel = Math.min(average / 128, 1);
+          
+          setRemoteAudioLevels(prev => {
+            const newMap = new Map(prev);
+            newMap.set(socketId, normalizedLevel);
+            return newMap;
+          });
+          
+          requestAnimationFrame(updateRemoteAudioLevel);
+        };
+        
+        updateRemoteAudioLevel();
+      } catch (error) {
+        console.error('Error setting up remote audio visualization:', error);
+      }
+    });
+
+    return () => {
+      remoteAnalysersRef.current.clear();
+    };
+  }, [remoteStreams, isInCall]);
 
   // Handle page visibility changes to maintain connection
   useEffect(() => {
@@ -890,6 +1208,223 @@ export default function RoomPage() {
     }
   };
 
+  // ========== VIDEO/AUDIO CALL FUNCTIONS ==========
+  
+  // Start video or audio call
+  const startCall = async (mode: 'video' | 'audio') => {
+    if (!socket || !isConnected) {
+      alert('Not connected to room. Please wait...');
+      return;
+    }
+
+    try {
+      // Request camera/microphone access
+      const constraints: MediaStreamConstraints = {
+        video: mode === 'video' ? { width: 1280, height: 720 } : false,
+        audio: true
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      setLocalStream(stream);
+      setIsInCall(true);
+      setCallMode(mode);
+      setIsVideoEnabled(mode === 'video');
+      setIsAudioEnabled(true);
+
+      // Attach local stream to video element
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+
+      // Create peer connections for all other users in room
+      const otherUsers = users.filter(u => u.socketId !== socket.id);
+      
+      for (const user of otherUsers) {
+        await createPeerConnectionForCall(user.socketId, stream);
+      }
+
+      // Notify others that call has started
+      socket.emit('call-started', {
+        roomId: roomId,
+        mode: mode,
+        socketId: socket.id
+      });
+
+    } catch (error: any) {
+      console.error('Error starting call:', error);
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        alert('Camera/microphone access denied. Please allow permissions and try again.');
+      } else {
+        alert('Failed to start call. Please try again.');
+      }
+    }
+  };
+
+  // Create peer connection for call
+  const createPeerConnectionForCall = async (targetSocketId: string, localStream: MediaStream) => {
+    const peerConnection = new RTCPeerConnection({
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    });
+
+    // Add local stream tracks
+    localStream.getTracks().forEach(track => {
+      peerConnection.addTrack(track, localStream);
+    });
+
+    // Handle remote stream
+    peerConnection.ontrack = (event) => {
+      console.log('📹 Received remote stream from:', targetSocketId);
+      const remoteStream = event.streams[0];
+      
+      // Update remote streams state
+      setRemoteStreams(prev => {
+        const newMap = new Map(prev);
+        newMap.set(targetSocketId, remoteStream);
+        return newMap;
+      });
+
+      // Force update video element
+      setTimeout(() => {
+        const videoElement = remoteVideoRefs.current.get(targetSocketId);
+        if (videoElement) {
+          videoElement.srcObject = remoteStream;
+          videoElement.play().catch(err => console.error('Error playing remote video:', err));
+        } else {
+          // If element doesn't exist yet, it will be set in the useEffect
+          console.log('Video element not found yet, will be set by useEffect');
+        }
+      }, 100);
+    };
+
+    // Handle ICE candidates
+    peerConnection.onicecandidate = (event) => {
+      if (event.candidate && socket) {
+        socket.emit('call-ice-candidate', {
+          targetSocketId: targetSocketId,
+          candidate: event.candidate,
+          roomId: roomId
+        });
+      }
+    };
+
+    // Store connection
+    setCallPeerConnections(prev => {
+      const newMap = new Map(prev);
+      newMap.set(targetSocketId, peerConnection);
+      return newMap;
+    });
+
+    // Create and send offer
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+
+    if (socket) {
+      socket.emit('call-offer', {
+        targetSocketId: targetSocketId,
+        offer: offer,
+        mode: callMode,
+        roomId: roomId
+      });
+    }
+
+    return peerConnection;
+  };
+
+  // End call
+  const endCall = () => {
+    // Stop local stream
+    if (localStream) {
+      localStream.getTracks().forEach(track => track.stop());
+      setLocalStream(null);
+    }
+
+    // Close all peer connections
+    callPeerConnections.forEach((pc, socketId) => {
+      pc.close();
+    });
+    setCallPeerConnections(new Map());
+
+    // Clear remote streams
+    setRemoteStreams(new Map());
+
+    // Notify others
+    if (socket) {
+      socket.emit('call-ended', {
+        roomId: roomId,
+        socketId: socket.id
+      });
+    }
+
+    setIsInCall(false);
+    setIsVideoEnabled(false);
+    setIsAudioEnabled(false);
+  };
+
+  // Toggle video on/off
+  const toggleVideo = () => {
+    if (localStream) {
+      const videoTrack = localStream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !isVideoEnabled;
+        setIsVideoEnabled(!isVideoEnabled);
+      }
+    }
+  };
+
+  // Toggle audio on/off (mute/unmute)
+  const toggleAudio = () => {
+    if (localStream) {
+      const audioTrack = localStream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !isAudioEnabled;
+        setIsAudioEnabled(!isAudioEnabled);
+      }
+    }
+  };
+
+  // Switch between video and audio call
+  const switchCallMode = async (newMode: 'video' | 'audio') => {
+    if (!isInCall || !localStream) return;
+
+    const videoTrack = localStream.getVideoTracks()[0];
+    
+    if (newMode === 'audio' && videoTrack) {
+      // Switch to audio: stop video track
+      videoTrack.stop();
+      localStream.removeTrack(videoTrack);
+      setIsVideoEnabled(false);
+    } else if (newMode === 'video' && !videoTrack) {
+      // Switch to video: add video track
+      try {
+        const newStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const newVideoTrack = newStream.getVideoTracks()[0];
+        localStream.addTrack(newVideoTrack);
+        
+        // Update all peer connections
+        callPeerConnections.forEach((pc) => {
+          pc.addTrack(newVideoTrack, localStream);
+        });
+        
+        setIsVideoEnabled(true);
+      } catch (error) {
+        console.error('Error switching to video:', error);
+        alert('Failed to enable video. Please check camera permissions.');
+        return;
+      }
+    }
+
+    setCallMode(newMode);
+    
+    // Notify others
+    if (socket) {
+      socket.emit('call-mode-changed', {
+        roomId: roomId,
+        mode: newMode,
+        socketId: socket.id
+      });
+    }
+  };
+
   const downloadFileFromPeer = async (fileInfo: {
     fileShareId: string;
     fileName: string;
@@ -1257,6 +1792,63 @@ export default function RoomPage() {
                 </span>
               </div>
               
+              {/* Desktop Call Buttons */}
+              {!isInCall ? (
+                <div className="flex items-center space-x-2">
+                  <button 
+                    onClick={() => startCall('video')}
+                    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 flex items-center space-x-2"
+                    title="Start video call"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <span>Video Call</span>
+                  </button>
+                  <button 
+                    onClick={() => startCall('audio')}
+                    className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-green-500/25 flex items-center space-x-2"
+                    title="Start audio call"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                    </svg>
+                    <span>Audio Call</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <button 
+                    onClick={toggleVideo}
+                    className={`p-2 rounded-lg transition-all duration-300 ${isVideoEnabled ? 'bg-gray-200 hover:bg-gray-300' : 'bg-red-500 hover:bg-red-600 text-white'}`}
+                    title={isVideoEnabled ? 'Turn off video' : 'Turn on video'}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                  <button 
+                    onClick={toggleAudio}
+                    className={`p-2 rounded-lg transition-all duration-300 ${isAudioEnabled ? 'bg-gray-200 hover:bg-gray-300' : 'bg-red-500 hover:bg-red-600 text-white'}`}
+                    title={isAudioEnabled ? 'Mute' : 'Unmute'}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                    </svg>
+                  </button>
+                  <button 
+                    onClick={endCall}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-red-500/25 flex items-center space-x-2"
+                    title="End call"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-1a2 2 0 00-2-2H7a3 3 0 01-3-3V5a2 2 0 00-2-2z" />
+                    </svg>
+                    <span>End Call</span>
+                  </button>
+                </div>
+              )}
+              
               {/* Desktop Share Button */}
               <button 
                 onClick={shareRoom}
@@ -1320,6 +1912,60 @@ export default function RoomPage() {
                 </svg>
               </button>
               
+              {/* Mobile Call Buttons */}
+              {!isInCall ? (
+                <>
+                  <button 
+                    onClick={() => startCall('video')}
+                    className="p-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-all duration-300 transform hover:scale-105"
+                    title="Start video call"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                  <button 
+                    onClick={() => startCall('audio')}
+                    className="p-2.5 bg-green-500 hover:bg-green-600 text-white rounded-full transition-all duration-300 transform hover:scale-105"
+                    title="Start audio call"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                    </svg>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button 
+                    onClick={toggleVideo}
+                    className={`p-2.5 rounded-full transition-all duration-300 ${isVideoEnabled ? 'bg-gray-200 hover:bg-gray-300' : 'bg-red-500 hover:bg-red-600 text-white'}`}
+                    title={isVideoEnabled ? 'Turn off video' : 'Turn on video'}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                  <button 
+                    onClick={toggleAudio}
+                    className={`p-2.5 rounded-full transition-all duration-300 ${isAudioEnabled ? 'bg-gray-200 hover:bg-gray-300' : 'bg-red-500 hover:bg-red-600 text-white'}`}
+                    title={isAudioEnabled ? 'Mute' : 'Unmute'}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                    </svg>
+                  </button>
+                  <button 
+                    onClick={endCall}
+                    className="p-2.5 bg-red-600 hover:bg-red-700 text-white rounded-full transition-all duration-300 transform hover:scale-105"
+                    title="End call"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-1a2 2 0 00-2-2H7a3 3 0 01-3-3V5a2 2 0 00-2-2z" />
+                    </svg>
+                  </button>
+                </>
+              )}
+              
               {/* Mobile Share Button */}
               <button 
                 onClick={shareRoom}
@@ -1351,7 +1997,179 @@ export default function RoomPage() {
           <div className="w-full max-w-7xl mx-auto h-full px-2 md:px-4 lg:px-6">
             <div className="flex flex-col lg:flex-row h-full gap-3 md:gap-4 lg:gap-6 py-2 md:py-4">
             
-            {/* Responsive Chat Area */}
+            {/* Video Call Grid - Shows when in call */}
+            {isInCall && (
+              <div className="w-full h-full bg-gray-900 rounded-xl md:rounded-2xl overflow-hidden relative">
+                {/* Video Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4 p-2 md:p-4 h-full">
+                  {/* Local Video */}
+                  <div className="relative bg-gray-800 rounded-lg overflow-hidden">
+                    <video
+                      ref={localVideoRef}
+                      autoPlay
+                      muted
+                      playsInline
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-xs flex items-center gap-2">
+                      <span>You {callMode === 'video' ? '(Video)' : '(Audio)'}</span>
+                      {/* Audio Visualization - Local */}
+                      {isInCall && localAudioLevel > 0.1 && (
+                        <div className="flex items-center gap-0.5">
+                          {[...Array(5)].map((_, i) => (
+                            <div
+                              key={i}
+                              className={`w-1 bg-green-400 rounded-full transition-all duration-75 ${
+                                localAudioLevel > (i + 1) / 5 ? 'h-3' : 'h-1'
+                              }`}
+                              style={{
+                                height: localAudioLevel > (i + 1) / 5 
+                                  ? `${3 + localAudioLevel * 4}px` 
+                                  : '4px'
+                              }}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {!isVideoEnabled && (
+                      <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
+                        <div className="text-center">
+                          <svg className="w-16 h-16 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          <p className="text-gray-400 text-sm">{userName}</p>
+                          {/* Audio Visualization when video is off */}
+                          {isInCall && localAudioLevel > 0.1 && (
+                            <div className="flex items-center justify-center gap-1 mt-3">
+                              {[...Array(7)].map((_, i) => (
+                                <div
+                                  key={i}
+                                  className="w-1 bg-green-400 rounded-full transition-all duration-75"
+                                  style={{
+                                    height: localAudioLevel > (i + 1) / 7 
+                                      ? `${8 + localAudioLevel * 12}px` 
+                                      : '8px'
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Remote Videos */}
+                  {Array.from(remoteStreams.entries()).map(([socketId, stream]) => {
+                    const user = users.find(u => u.socketId === socketId);
+                    const audioLevel = remoteAudioLevels.get(socketId) || 0;
+                    const hasVideo = stream.getVideoTracks().length > 0 && stream.getVideoTracks()[0].enabled;
+                    return (
+                      <div key={socketId} className="relative bg-gray-800 rounded-lg overflow-hidden">
+                        <video
+                          ref={(el) => {
+                            if (el) {
+                              remoteVideoRefs.current.set(socketId, el);
+                              if (el.srcObject !== stream) {
+                                el.srcObject = stream;
+                              }
+                            }
+                          }}
+                          autoPlay
+                          playsInline
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-xs flex items-center gap-2">
+                          <span>{user?.name || 'User'}</span>
+                          {/* Audio Visualization - Remote */}
+                          {isInCall && audioLevel > 0.1 && (
+                            <div className="flex items-center gap-0.5">
+                              {[...Array(5)].map((_, i) => (
+                                <div
+                                  key={i}
+                                  className={`w-1 bg-green-400 rounded-full transition-all duration-75 ${
+                                    audioLevel > (i + 1) / 5 ? 'h-3' : 'h-1'
+                                  }`}
+                                  style={{
+                                    height: audioLevel > (i + 1) / 5 
+                                      ? `${3 + audioLevel * 4}px` 
+                                      : '4px'
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {/* Show avatar when video is off */}
+                        {!hasVideo && (
+                          <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
+                            <div className="text-center">
+                              <div className="w-20 h-20 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-2">
+                                <span className="text-2xl text-gray-300 font-bold">
+                                  {(user?.name || 'U')[0].toUpperCase()}
+                                </span>
+                              </div>
+                              <p className="text-gray-400 text-sm">{user?.name || 'User'}</p>
+                              {/* Audio Visualization when video is off */}
+                              {isInCall && audioLevel > 0.1 && (
+                                <div className="flex items-center justify-center gap-1 mt-3">
+                                  {[...Array(7)].map((_, i) => (
+                                    <div
+                                      key={i}
+                                      className="w-1 bg-green-400 rounded-full transition-all duration-75"
+                                      style={{
+                                        height: audioLevel > (i + 1) / 7 
+                                          ? `${8 + audioLevel * 12}px` 
+                                          : '8px'
+                                      }}
+                                    />
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Call Controls - Bottom Center */}
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center space-x-3 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-full">
+                  <button
+                    onClick={toggleVideo}
+                    className={`p-2 rounded-full transition-all ${isVideoEnabled ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-red-500 hover:bg-red-600 text-white'}`}
+                    title={isVideoEnabled ? 'Turn off video' : 'Turn on video'}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={toggleAudio}
+                    className={`p-2 rounded-full transition-all ${isAudioEnabled ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-red-500 hover:bg-red-600 text-white'}`}
+                    title={isAudioEnabled ? 'Mute' : 'Unmute'}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={endCall}
+                    className="p-3 bg-red-600 hover:bg-red-700 text-white rounded-full transition-all"
+                    title="End call"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-1a2 2 0 00-2-2H7a3 3 0 01-3-3V5a2 2 0 00-2-2z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Responsive Chat Area - Hidden when in call */}
+            {!isInCall && (
             <div className={`flex-1 flex flex-col bg-white border-2 border-gray-200 rounded-xl md:rounded-2xl shadow-lg transition-all duration-1000 delay-300 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}>
@@ -1700,8 +2518,10 @@ export default function RoomPage() {
                 </div>
               </div>
             </div>
+            )}
 
-            {/* Desktop Sidebar - Hidden on Mobile */}
+            {/* Desktop Sidebar - Hidden on Mobile and during calls */}
+            {!isInCall && (
             <div className={`hidden lg:flex lg:w-72 flex-shrink-0 flex-col space-y-4 transition-all duration-1000 delay-500 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}>
@@ -1767,6 +2587,7 @@ export default function RoomPage() {
                 </div>
               </div>
             </div>
+            )}
           </div>
         </div>
       </div>
