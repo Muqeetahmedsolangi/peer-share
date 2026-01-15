@@ -413,6 +413,30 @@ class CallService {
   }
 
   private async connectToPeer(peerSocket: string, peerName: string, peerVisitorId: string) {
+    const mySocketId = this.socket?.id || '';
+
+    // Only the socket with the "lower" ID creates the offer to avoid both sides offering simultaneously
+    const shouldCreateOffer = mySocketId < peerSocket;
+
+    // If we shouldn't create offer, the other side will - just add member info and wait
+    if (!shouldCreateOffer) {
+      // Add member placeholder so we know about them
+      if (!this.members.has(peerSocket)) {
+        this.members.set(peerSocket, {
+          odId: peerSocket,
+          visitorId: peerVisitorId,
+          displayName: peerName,
+          odSocket: peerSocket,
+          stream: undefined,
+          isSpeaking: false,
+          isVideoEnabled: false,
+          isAudioEnabled: false
+        });
+        this.notifyUpdate();
+      }
+      return;
+    }
+
     const pc = new RTCPeerConnection({ iceServers: this.iceServers });
     this.peerConnections.set(peerSocket, pc);
 
