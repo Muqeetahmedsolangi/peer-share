@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import io, { Socket } from 'socket.io-client';
+import callService, { CallParticipant, CallState, IncomingCallData, ActiveCallInfo } from '../../../services/callService';
+import IncomingCallModal from '../../../components/IncomingCallModal';
+import ActiveCall from '../../../components/ActiveCall';
 
 // Backend URL
 const SOCKET_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
@@ -75,7 +78,20 @@ export default function RoomPage() {
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   const [isUploadingFiles, setIsUploadingFiles] = useState(false);
   const [showMobileUsers, setShowMobileUsers] = useState(false);
-  
+
+  // Call state
+  const [callState, setCallState] = useState<Partial<CallState>>({
+    isInCall: false,
+    isCallCreator: false,
+    callType: 'audio',
+    localStream: null,
+    isRinging: false,
+    incomingCall: null,
+    activeCallInRoom: null
+  });
+  const [callParticipants, setCallParticipants] = useState<Map<string, CallParticipant>>(new Map());
+  const [showCallMenu, setShowCallMenu] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -157,7 +173,13 @@ export default function RoomPage() {
       socketInstance.on('connect', () => {
         console.log('✅ Connected to server for room session!', socketInstance.id);
         setIsConnected(true);
-        
+
+        // Initialize call service
+        callService.initialize(socketInstance, {
+          onUpdate: (participants) => setCallParticipants(new Map(participants)),
+          onStateChange: (state) => setCallState(prev => ({ ...prev, ...state }))
+        });
+
         // Join the room - we already validated credentials
         socketInstance.emit('join-room', {
           roomId: roomId,
@@ -178,6 +200,9 @@ export default function RoomPage() {
             timestamp: new Date(),
             type: 'system'
           }]);
+
+          // Check if there's an active call in the room
+          socketInstance.emit('call-check-active', { roomCode: roomId });
         } else {
           console.error('❌ Failed to join room session:', data.error);
           // If join fails after validation, something is wrong - go back to join form
@@ -412,6 +437,20 @@ export default function RoomPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Close call menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showCallMenu && !(event.target as Element).closest('.relative')) {
+        setShowCallMenu(false);
+      }
+    };
+
+    if (showCallMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showCallMenu]);
+
   // Typing indicator effect
   useEffect(() => {
     if (isTyping) {
@@ -565,6 +604,67 @@ export default function RoomPage() {
 
   const shareRoom = () => {
     setShowShareModal(true);
+  };
+
+  // Call handlers
+  const handleStartCall = async (callType: 'audio' | 'video') => {
+    setShowCallMenu(false);
+    const success = await callService.startCall(roomId, callType, userName, socket?.id || '');
+    if (!success) {
+      showNotification('Failed to start call. Please check your camera/microphone permissions.', 'error');
+    }
+  };
+
+  const handleAcceptCall = async () => {
+    if (callState.incomingCall) {
+      const success = await callService.acceptCall(callState.incomingCall, userName, socket?.id || '');
+      if (!success) {
+        showNotification('Failed to accept call. Please check your permissions.', 'error');
+      }
+    }
+  };
+
+  const handleRejectCall = () => {
+    if (callState.incomingCall) {
+      callService.rejectCall(callState.incomingCall, userName);
+    }
+  };
+
+  const handleEndCall = () => {
+    callService.leaveCall();
+  };
+
+  const handleToggleAudio = () => {
+    return callService.toggleAudio();
+  };
+
+  const handleToggleVideo = async () => {
+    return callService.toggleVideo();
+  };
+
+  const handleUpgradeToVideo = async () => {
+    return callService.upgradeToVideo();
+  };
+
+  const handleJoinOngoingCall = async () => {
+    if (callState.activeCallInRoom) {
+      const success = await callService.joinOngoingCall(
+        callState.activeCallInRoom,
+        userName,
+        socket?.id || '',
+        roomId
+      );
+      if (!success) {
+        showNotification('Failed to join call. Please check your permissions.', 'error');
+      }
+    }
+  };
+
+  // Check for active call in room
+  const checkForActiveCall = () => {
+    if (socket && isConnected) {
+      socket.emit('call-check-active', { roomCode: roomId });
+    }
   };
 
   const getRoomLink = () => {
@@ -1181,6 +1281,28 @@ export default function RoomPage() {
 
   return (
     <main className="min-h-screen bg-white pt-16 sm:pt-20">
+      {/* Incoming Call Modal */}
+      {callState.isRinging && callState.incomingCall && (
+        <IncomingCallModal
+          incomingCall={callState.incomingCall}
+          onAccept={handleAcceptCall}
+          onReject={handleRejectCall}
+        />
+      )}
+
+      {/* Active Call Overlay */}
+      {callState.isInCall && (
+        <ActiveCall
+          participants={callParticipants}
+          localStream={callState.localStream || null}
+          callType={callState.callType || 'audio'}
+          onEndCall={handleEndCall}
+          onToggleAudio={handleToggleAudio}
+          onToggleVideo={handleToggleVideo}
+          onUpgradeToVideo={handleUpgradeToVideo}
+        />
+      )}
+
       {/* VIEWPORT FIX - COMPLETE SOLUTION */}
       <style jsx global>{`
         html, body, #__next {
@@ -1257,8 +1379,69 @@ export default function RoomPage() {
                 </span>
               </div>
               
+              {/* Desktop Call Button / Join Active Call */}
+              {callState.activeCallInRoom ? (
+                <button
+                  onClick={handleJoinOngoingCall}
+                  className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-green-500/25 flex items-center space-x-2 animate-pulse"
+                  title="Join ongoing call"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                  <span>{callState.activeCallInRoom.participantCount} in call - Join</span>
+                </button>
+              ) : (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowCallMenu(!showCallMenu)}
+                    className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-green-500/25 flex items-center space-x-2"
+                    title="Start call"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    <span>Call</span>
+                  </button>
+
+                  {/* Call Menu Dropdown */}
+                  {showCallMenu && (
+                    <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50">
+                      <button
+                        onClick={() => handleStartCall('audio')}
+                        className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                          <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                          </svg>
+                        </div>
+                        <div className="text-left">
+                          <p className="font-medium text-gray-900">Audio Call</p>
+                          <p className="text-xs text-gray-500">Voice only</p>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => handleStartCall('video')}
+                        className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 transition-colors border-t border-gray-100"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <div className="text-left">
+                          <p className="font-medium text-gray-900">Video Call</p>
+                          <p className="text-xs text-gray-500">With camera</p>
+                        </div>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Desktop Share Button */}
-              <button 
+              <button
                 onClick={shareRoom}
                 className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-orange-500/25 flex items-center space-x-2"
                 title="Share room"
@@ -1320,8 +1503,62 @@ export default function RoomPage() {
                 </svg>
               </button>
               
+              {/* Mobile Call Button / Join Active Call */}
+              {callState.activeCallInRoom ? (
+                <button
+                  onClick={handleJoinOngoingCall}
+                  className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white rounded-full transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-green-500/25 flex items-center space-x-1.5 animate-pulse"
+                  title="Join ongoing call"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                  <span className="text-xs font-medium">{callState.activeCallInRoom.participantCount} Join</span>
+                </button>
+              ) : (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowCallMenu(!showCallMenu)}
+                    className="p-2.5 bg-green-500 hover:bg-green-600 text-white rounded-full transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-green-500/25"
+                    title="Start call"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                  </button>
+
+                  {/* Mobile Call Menu Dropdown */}
+                  {showCallMenu && (
+                    <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50">
+                      <button
+                        onClick={() => handleStartCall('audio')}
+                        className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                          <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                          </svg>
+                        </div>
+                        <span className="font-medium text-gray-900 text-sm">Audio Call</span>
+                      </button>
+                      <button
+                        onClick={() => handleStartCall('video')}
+                        className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 transition-colors border-t border-gray-100"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <span className="font-medium text-gray-900 text-sm">Video Call</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Mobile Share Button */}
-              <button 
+              <button
                 onClick={shareRoom}
                 className="p-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-full transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-orange-500/25"
                 title="Share room"

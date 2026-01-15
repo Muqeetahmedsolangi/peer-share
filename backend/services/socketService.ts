@@ -10,6 +10,17 @@ const rooms = new Map<string, Set<string>>(); // roomId -> Set of socketIds
 const users = new Map<string, UserInfo>(); // socketId -> user info
 const roomClips = new Map<string, Set<string>>(); // roomId -> Set of clipIds (track clips per room)
 
+// Active calls tracking
+interface ActiveCall {
+  callCode: string;
+  roomCode: string;
+  callType: 'audio' | 'video';
+  creatorSocket: string;
+  creatorName: string;
+  participants: Set<string>;
+}
+const activeCalls = new Map<string, ActiveCall>(); // roomCode -> ActiveCall
+
 interface UserInfo {
   id: string;
   socketId: string;
@@ -25,6 +36,28 @@ interface FileShare {
   senderId: string;
   senderName: string;
   roomId: string;
+}
+
+// Helper function to broadcast active call status to room
+function broadcastActiveCallStatus(io: SocketServer, roomCode: string) {
+  const activeCall = activeCalls.get(roomCode);
+  if (activeCall && activeCall.participants.size > 0) {
+    // Send to users NOT in the call
+    const roomInfo = getRoomInfo(roomCode);
+    if (roomInfo) {
+      roomInfo.members.forEach((socketId: string) => {
+        if (!activeCall.participants.has(socketId)) {
+          io.to(socketId).emit('call-active-in-room', {
+            callCode: activeCall.callCode,
+            participantCount: activeCall.participants.size,
+            callType: activeCall.callType,
+            creatorSocket: activeCall.creatorSocket,
+            creatorName: activeCall.creatorName
+          });
+        }
+      });
+    }
+  }
 }
 
 // Extract network subnet from IP address
@@ -764,13 +797,313 @@ export function initializeSocket(server: HttpServer) {
         isTyping: data.isTyping
       });
     });
-    
+
+    // ========================================
+    // AUDIO/VIDEO CALLING EVENTS
+    // ========================================
+
+    // Start a call in a room
+    socket.on('call-start', (data: { callCode: string; roomCode: string; callType: 'audio' | 'video'; callerName: string; visitorId: string }) => {
+      const user = users.get(socket.id);
+      if (!user) return;
+
+      console.log(`📞 ${data.callerName} starting ${data.callType} call in room ${data.roomCode}`);
+
+      // Store active call info
+      if (!activeCalls.has(data.roomCode)) {
+        activeCalls.set(data.roomCode, {
+          callCode: data.callCode,
+          roomCode: data.roomCode,
+          callType: data.callType,
+          creatorSocket: socket.id,
+          creatorName: data.callerName,
+          participants: new Set([socket.id])
+        });
+      }
+
+      // Notify all other users in the room about incoming call
+      socket.to(data.roomCode).emit('call-incoming', {
+        callCode: data.callCode,
+        odRoom: data.roomCode,
+        callerName: data.callerName,
+        callerSocket: socket.id,
+        callType: data.callType,
+        callerVisitorId: data.visitorId
+      });
+    });
+
+    // Accept a call
+    socket.on('call-accept', (data: { callCode: string; odRoom: string; peerName: string; peerVisitorId: string; callerSocket: string }) => {
+      const user = users.get(socket.id);
+      if (!user) return;
+
+      console.log(`✅ ${data.peerName} accepted call ${data.callCode}`);
+
+      // Add participant to active call
+      const activeCall = activeCalls.get(data.odRoom);
+      if (activeCall) {
+        // Get existing participants BEFORE adding new one
+        const existingParticipants: Array<{ socketId: string; userName: string; visitorId: string }> = [];
+        activeCall.participants.forEach((participantSocket: string) => {
+          const participantUser = users.get(participantSocket);
+          if (participantUser) {
+            existingParticipants.push({
+              socketId: participantSocket,
+              userName: participantUser.name,
+              visitorId: participantUser.id
+            });
+          }
+        });
+
+        // Add new participant
+        activeCall.participants.add(socket.id);
+
+        // Send list of ALL existing participants to the person who accepted
+        socket.emit('call-existing-participants', {
+          callCode: data.callCode,
+          participants: existingParticipants
+        });
+
+        // Notify ALL existing participants about the new person (not just creator)
+        activeCall.participants.forEach((participantSocket: string) => {
+          if (participantSocket !== socket.id) {
+            io.to(participantSocket).emit('call-new-participant', {
+              callCode: data.callCode,
+              socketId: socket.id,
+              userName: data.peerName,
+              visitorId: data.peerVisitorId
+            });
+          }
+        });
+
+        // Notify all users in room about updated call status
+        broadcastActiveCallStatus(io, data.odRoom);
+      }
+    });
+
+    // Join ongoing call (for late joiners)
+    socket.on('call-join-ongoing', (data: { callCode: string; roomCode: string; userName: string; visitorId: string }) => {
+      const user = users.get(socket.id);
+      if (!user) return;
+
+      const activeCall = activeCalls.get(data.roomCode);
+      if (!activeCall || activeCall.callCode !== data.callCode) {
+        socket.emit('call-no-active');
+        return;
+      }
+
+      console.log(`🔔 ${data.userName} joining ongoing call ${data.callCode}`);
+
+      // Get existing participants BEFORE adding new one
+      const existingParticipants: Array<{ socketId: string; userName: string; visitorId: string }> = [];
+      activeCall.participants.forEach((participantSocket: string) => {
+        const participantUser = users.get(participantSocket);
+        if (participantUser) {
+          existingParticipants.push({
+            socketId: participantSocket,
+            userName: participantUser.name,
+            visitorId: participantUser.id
+          });
+        }
+      });
+
+      // Add to participants
+      activeCall.participants.add(socket.id);
+
+      // Send list of existing participants to the new joiner so they can connect to everyone
+      socket.emit('call-existing-participants', {
+        callCode: data.callCode,
+        participants: existingParticipants
+      });
+
+      // Notify all existing participants about new joiner
+      activeCall.participants.forEach((participantSocket: string) => {
+        if (participantSocket !== socket.id) {
+          io.to(participantSocket).emit('call-new-participant', {
+            callCode: data.callCode,
+            socketId: socket.id,
+            userName: data.userName,
+            visitorId: data.visitorId
+          });
+        }
+      });
+
+      // Update call status for room
+      broadcastActiveCallStatus(io, data.roomCode);
+    });
+
+    // Reject a call
+    socket.on('call-reject', (data: { callCode: string; odRoom: string; userName: string; callerSocket: string }) => {
+      console.log(`❌ ${data.userName} rejected call ${data.callCode}`);
+
+      // Notify the caller that call was rejected
+      io.to(data.callerSocket).emit('call-rejected', {
+        userName: data.userName
+      });
+    });
+
+    // Creator ends call - everyone must leave
+    socket.on('call-end-by-creator', (data: { callCode: string }) => {
+      const user = users.get(socket.id);
+      if (!user) return;
+
+      const activeCall = activeCalls.get(user.roomId);
+      if (!activeCall || activeCall.creatorSocket !== socket.id) return;
+
+      console.log(`📴 Creator ended call: ${data.callCode}`);
+
+      // Notify all participants that call ended
+      activeCall.participants.forEach((participantSocket: string) => {
+        if (participantSocket !== socket.id) {
+          io.to(participantSocket).emit('call-ended-by-creator');
+        }
+      });
+
+      // Remove active call
+      activeCalls.delete(user.roomId);
+
+      // Notify room there's no active call
+      io.to(user.roomId).emit('call-no-active');
+    });
+
+    // Participant leaves call (not creator)
+    socket.on('call-leave', (data: { callCode: string }) => {
+      const user = users.get(socket.id);
+      if (!user) return;
+
+      const activeCall = activeCalls.get(user.roomId);
+      if (!activeCall) return;
+
+      console.log(`👋 ${user.name} left call: ${data.callCode}`);
+
+      // Remove from participants
+      activeCall.participants.delete(socket.id);
+
+      // Notify others in call
+      activeCall.participants.forEach((participantSocket: string) => {
+        io.to(participantSocket).emit('call-participant-left', {
+          socketId: socket.id,
+          userName: user.name
+        });
+      });
+
+      // Update call status
+      broadcastActiveCallStatus(io, user.roomId);
+
+      // If only creator left, end the call
+      if (activeCall.participants.size === 1 && activeCall.participants.has(activeCall.creatorSocket)) {
+        console.log(`📴 Call ended - only creator remaining`);
+        io.to(activeCall.creatorSocket).emit('call-ended-by-creator');
+        activeCalls.delete(user.roomId);
+        io.to(user.roomId).emit('call-no-active');
+      }
+    });
+
+    // Video upgrade notification
+    socket.on('call-video-upgrade', (data: { callCode: string }) => {
+      const user = users.get(socket.id);
+      if (!user) return;
+
+      const activeCall = activeCalls.get(user.roomId);
+      if (activeCall) {
+        activeCall.callType = 'video';
+        // Notify all participants
+        activeCall.participants.forEach((participantSocket: string) => {
+          if (participantSocket !== socket.id) {
+            io.to(participantSocket).emit('call-video-upgraded', {
+              socketId: socket.id
+            });
+          }
+        });
+      }
+    });
+
+    // Check for active call when user requests
+    socket.on('call-check-active', (data: { roomCode: string }) => {
+      const activeCall = activeCalls.get(data.roomCode);
+      if (activeCall && activeCall.participants.size > 0) {
+        socket.emit('call-active-in-room', {
+          callCode: activeCall.callCode,
+          participantCount: activeCall.participants.size,
+          callType: activeCall.callType,
+          creatorSocket: activeCall.creatorSocket,
+          creatorName: activeCall.creatorName
+        });
+      } else {
+        socket.emit('call-no-active');
+      }
+    });
+
+    // WebRTC call offer
+    socket.on('call-offer', (data: { offer: any; targetSocket: string }) => {
+      const user = users.get(socket.id);
+      io.to(data.targetSocket).emit('call-offer', {
+        offer: data.offer,
+        fromSocket: socket.id,
+        fromName: user?.name || 'Unknown',
+        fromVisitorId: user?.id || ''
+      });
+    });
+
+    // WebRTC call answer
+    socket.on('call-answer', (data: { answer: any; targetSocket: string }) => {
+      io.to(data.targetSocket).emit('call-answer', {
+        answer: data.answer,
+        fromSocket: socket.id
+      });
+    });
+
+    // WebRTC ICE candidate for calls
+    socket.on('call-ice-candidate', (data: { candidate: any; targetSocket: string }) => {
+      io.to(data.targetSocket).emit('call-ice-candidate', {
+        candidate: data.candidate,
+        fromSocket: socket.id
+      });
+    });
+
+    // ========================================
+    // END AUDIO/VIDEO CALLING EVENTS
+    // ========================================
+
     // Handle disconnection
     socket.on('disconnect', () => {
       console.log('❌ User disconnected:', socket.id);
-      
+
       const user = users.get(socket.id);
       if (user) {
+        // Handle call cleanup on disconnect
+        const activeCall = activeCalls.get(user.roomId);
+        if (activeCall && activeCall.participants.has(socket.id)) {
+          if (activeCall.creatorSocket === socket.id) {
+            // Creator disconnected - end call for everyone
+            console.log(`📴 Call creator disconnected, ending call`);
+            activeCall.participants.forEach((participantSocket: string) => {
+              if (participantSocket !== socket.id) {
+                io.to(participantSocket).emit('call-ended-by-creator');
+              }
+            });
+            activeCalls.delete(user.roomId);
+            io.to(user.roomId).emit('call-no-active');
+          } else {
+            // Participant disconnected
+            activeCall.participants.delete(socket.id);
+            activeCall.participants.forEach((participantSocket: string) => {
+              io.to(participantSocket).emit('call-participant-left', {
+                socketId: socket.id,
+                userName: user.name
+              });
+            });
+            broadcastActiveCallStatus(io, user.roomId);
+
+            // If only creator left, end the call
+            if (activeCall.participants.size === 1 && activeCall.participants.has(activeCall.creatorSocket)) {
+              io.to(activeCall.creatorSocket).emit('call-ended-by-creator');
+              activeCalls.delete(user.roomId);
+              io.to(user.roomId).emit('call-no-active');
+            }
+          }
+        }
+
         // Check if this is a custom room (not WiFi-based)
         const roomInfo = getRoomInfo(user.roomId);
         if (roomInfo) {
